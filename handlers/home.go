@@ -13,7 +13,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := template.ParseFiles("templates/index.html")
 	if err != nil {
-		http.Error(w, "Template error", 500)
+		HandleError(w, 500, "Template error")
 		return
 	}
 
