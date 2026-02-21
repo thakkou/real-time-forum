@@ -1,17 +1,17 @@
-package zone
+package handlers
 
 import (
 	"database/sql"
 	"html/template"
 	"net/http"
 
-	"zone/database"
+	"forum/database"
 
 	"github.com/google/uuid"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/Login" {
+	if r.URL.Path != "/login" {
 		HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
@@ -57,11 +57,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			HttpOnly: true,
 		})
 
-		http.Redirect(w, r, "/Dashboard", http.StatusSeeOther)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	tmpl, err := template.ParseFiles("templates/Login.html")
+	tmpl, err := template.ParseFiles("templates/login.html")
 	if err != nil {
 		HandleError(w, 500, "Template error")
 		return

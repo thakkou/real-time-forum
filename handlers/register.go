@@ -1,10 +1,10 @@
-package zone
+package handlers
 
 import (
 	"html/template"
 	"net/http"
 
-	"zone/database"
+	"forum/database"
 )
 
 type User struct {
@@ -14,7 +14,7 @@ type User struct {
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/Register" {
+	if r.URL.Path != "/register" {
 		HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
@@ -42,7 +42,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("templates/Register.html")
+	tmpl, err := template.ParseFiles("templates/register.html")
 	if err != nil {
 		HandleError(w, 500, "Template error")
 		return

@@ -2,14 +2,118 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home</title>
+    <title>Simple Forum</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
-    <h1>Welcome to Forum</h1>
+    <!-- HEADER -->
+    <header class="navbar">
+        <div class="logo">01Forum</div>
+        <div class="auth-buttons">
+            {{if .IsLoggedIn}}
+            <!-- Show when logged in -->
+            <span class="welcome">Welcome, {{.User.Name}}</span>
+            <a type="button" href="/logout" class="btn logout">Logout</a>
+            {{else}}
+            <!-- Show when NOT logged in -->
+            <a type="button" href="/login" class="btn login">Login</a>
+            <a type="button" href="/register" class="btn register">Register</a>
+            {{end}}
+        </div>
+    </header>
 
-    <a href="/Register">Register</a><br>
-    <a href="/Login">login</a>
+    <div class="container">
+
+        <!-- FILTER SECTION -->
+        <aside class="sidebar">
+            <h3>Filter Posts</h3>
+
+            <div class="filter-group">
+                <h4>By Category</h4>
+                <label><input type="checkbox"> General</label>
+                <label><input type="checkbox"> Programming</label>
+                <label><input type="checkbox"> Gaming</label>
+                <label><input type="checkbox"> Technology</label>
+            </div>
+
+            <!-- Visible only for logged-in users -->
+            <div class="filter-group registered-only">
+                <h4>My Activity</h4>
+                <button class="filter-btn">My Created Posts</button>
+                <button class="filter-btn">Posts I Liked</button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="content">
+
+            <!-- CREATE POST (REGISTERED USERS ONLY) -->
+            <section class="create-post registered-only">
+                <h2>Create New Post</h2>
+                <form>
+                    <input type="text" placeholder="Post title" required>
+                    
+                    <textarea placeholder="Write your post..." required></textarea>
+
+                    <div class="categories">
+                        <label><input type="checkbox"> General</label>
+                        <label><input type="checkbox"> Programming</label>
+                        <label><input type="checkbox"> Gaming</label>
+                        <label><input type="checkbox"> Technology</label>
+                    </div>
+
+                    <button type="submit" class="btn primary">Publish</button>
+                </form>
+            </section>
+
+            <!-- POSTS LIST -->
+            <section class="posts">
+
+                <!-- SINGLE POST -->
+                <article class="post">
+                    <div class="post-header">
+                        <h3>How to learn CSS properly?</h3>
+                        <span class="post-meta">Posted by JohnDoe · 2 hours ago</span>
+                    </div>
+
+                    <div class="post-body">
+                        <p>I'm struggling with layouts. Any tips or resources?</p>
+                    </div>
+
+                    <div class="post-categories">
+                        <span class="category">Programming</span>
+                        <span class="category">Technology</span>
+                    </div>
+
+                    <div class="post-actions">
+                        <button class="like">👍 12</button>
+                        <button class="dislike">👎 2</button>
+                    </div>
+
+                    <!-- COMMENTS -->
+                    <div class="comments">
+                        <h4>Comments</h4>
+
+                        <div class="comment">
+                            <p><strong>Alice:</strong> Practice Flexbox and Grid!</p>
+                            <div class="comment-actions">
+                                <button class="like small">👍 4</button>
+                                <button class="dislike small">👎 0</button>
+                            </div>
+                        </div>
+
+                        <!-- Add Comment (REGISTERED USERS ONLY) -->
+                        <div class="add-comment registered-only">
+                            <input type="text" placeholder="Write a comment...">
+                            <button class="btn small primary">Comment</button>
+                        </div>
+                    </div>
+                </article>
+
+            </section>
+        </main>
+    </div>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-package zone
+package handlers
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 
 // HandleError renders an error page with the given status and message
 func HandleError(w http.ResponseWriter, status int, message string) {
-	tmpl, err := template.ParseFiles("templates/err.html")
+	tmpl, err := template.ParseFiles("templates/error.html")
 	if err != nil {
 		http.Error(w, "Internal Server Error", 500)
 	}
