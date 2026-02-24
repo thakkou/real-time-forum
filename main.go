@@ -16,10 +16,16 @@ func main() {
 	}
 
 	http.HandleFunc("/", handlers.Forum) // use middleware when separated to home & feed
+
+	// Auth
 	http.HandleFunc("/register", middlewares.CheckSessionCookie(handlers.Register, false))
 	http.HandleFunc("/login", middlewares.CheckSessionCookie(handlers.Login, false))
 	http.HandleFunc("/logout", middlewares.CheckSessionCookie(handlers.Logout, true))
 
+	// Posts
+	http.HandleFunc("/posts/create", middlewares.CheckSessionCookie(handlers.CreatePost, true))
+
+	// Static
 	http.HandleFunc("/static/styles.css", handlers.Styles)
 	// http.HandleFunc("/static/", zone.HandleStatic)
 

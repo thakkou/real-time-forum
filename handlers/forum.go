@@ -43,6 +43,7 @@ func Styles(w http.ResponseWriter, r *http.Request) {
 type TemplateData struct {
 	IsLoggedIn bool
 	User       User
+	Posts      []database.Post
 }
 
 func Forum(w http.ResponseWriter, r *http.Request) {
@@ -61,10 +62,13 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get posts
+	posts, err := database.GetPosts()
+
 	var buf bytes.Buffer
 	cookie, err := r.Cookie("session_id")
 	if err != nil { // http.ErrNoCookie
-		if err := t.Execute(&buf, nil); err != nil {
+		if err := t.Execute(&buf, TemplateData{Posts: posts}); err != nil {
 			log.Printf("home template execute error: %v", err)
 			return // ?
 		}
@@ -73,10 +77,11 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get User
 	user, err := getUser(cookie.Value)
 	if err != nil { // sql.ErrNoRows
 		// what is the default behavior when session cookie not found -> serve as not logged in ?
-		if err := t.Execute(&buf, nil); err != nil {
+		if err := t.Execute(&buf, TemplateData{Posts: posts}); err != nil {
 			log.Printf("home template execute error: %v", err)
 			return // ?
 		}
@@ -87,6 +92,7 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 	data := TemplateData{
 		IsLoggedIn: true,
 		User:       user,
+		Posts:      posts,
 	}
 	err = t.Execute(&buf, data)
 	if err != nil {

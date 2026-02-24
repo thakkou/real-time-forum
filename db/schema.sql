@@ -1,3 +1,4 @@
+-- USERS
 CREATE TABLE IF NOT EXISTS USERS (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
@@ -5,9 +6,33 @@ CREATE TABLE IF NOT EXISTS USERS (
     password TEXT NOT NULL
 );
 
+-- SESSIONS
 CREATE TABLE IF NOT EXISTS SESSIONS (
     id TEXT PRIMARY KEY, -- uuid
     expires_at DATETIME NOT NULL,
     user_id INTEGER NOT NULL UNIQUE,
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- POSTS
+CREATE TABLE IF NOT EXISTS POSTS (
+    id         INTEGER  NOT NULL UNIQUE,
+    user_id    INTEGER  NOT NULL,
+    created_at DATETIME NOT NULL, -- ~ 1GB
+    title      TEXT     NULL    ,
+    text       TEXT     NULL    ,
+    PRIMARY KEY (id AUTOINCREMENT),
+    FOREIGN KEY (user_id) REFERENCES USERS (id)
+);
+
+-- COMMENTS
+CREATE TABLE IF NOT EXISTS COMMENTS (
+    id         INTEGER  NOT NULL UNIQUE,
+    user_id    INTEGER  NOT NULL,
+    post_id    INTEGER  NOT NULL,
+    created_at DATETIME NOT NULL,
+    text       TEXT     NULL    ,
+    PRIMARY KEY (id AUTOINCREMENT),
+    FOREIGN KEY (user_id) REFERENCES USERS (id),
+    FOREIGN KEY (post_id) REFERENCES POSTS (id)
 );

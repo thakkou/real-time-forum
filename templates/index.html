@@ -71,17 +71,17 @@
             <!-- CREATE POST (REGISTERED USERS ONLY) -->
             <section class="create-post registered-only">
                 <h2>Create New Post</h2>
-                <form>
-                    <input type="text" placeholder="Post title" required>
+                <form action="/posts/create" method="POST">
+                    <input type="text" name="title" placeholder="Post title" required>
                     
-                    <textarea placeholder="Write your post..." required></textarea>
+                    <textarea name="text" placeholder="Write your post..." required></textarea>
 
-                    <div class="categories">
+                    <!-- <div class="categories">
                         <label><input type="checkbox"> General</label>
                         <label><input type="checkbox"> Programming</label>
                         <label><input type="checkbox"> Gaming</label>
                         <label><input type="checkbox"> Technology</label>
-                    </div>
+                    </div> -->
 
                     <button type="submit" class="btn primary">Publish</button>
                 </form>
@@ -90,15 +90,16 @@
             <!-- POSTS LIST -->
             <section class="posts">
 
+                {{range .Posts}}
                 <!-- SINGLE POST -->
                 <article class="post">
                     <div class="post-header">
-                        <h3>How to learn CSS properly?</h3>
+                        <h3>{{.Title}}</h3>
                         <span class="post-meta">Posted by JohnDoe · 2 hours ago</span>
                     </div>
 
                     <div class="post-body">
-                        <p>I'm struggling with layouts. Any tips or resources?</p>
+                        <p>{{.Text}}</p>
                     </div>
 
                     <div class="post-categories">
@@ -130,6 +131,7 @@
                         </div>
                     </div>
                 </article>
+                {{end}}
 
             </section>
         </main>
