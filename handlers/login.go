@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"html/template"
 	"log"
 	"net/http"
@@ -26,9 +27,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			HandleError(w, http.StatusInternalServerError, "Template error")
 			return
 		}
-		if err := t.Execute(w, nil); err != nil {
-			log.Printf("login template execute error: %v", err)
+		var buf bytes.Buffer
+		if err := t.Execute(&buf, nil); err != nil {
+			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			return
 		}
+		buf.WriteTo(w)
 
 	case http.MethodPost:
 		email := strings.TrimSpace(r.FormValue("email"))
