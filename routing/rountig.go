@@ -9,13 +9,11 @@ import (
 )
 
 func RegisterRoutes() {
-
 	http.HandleFunc(
 		"/posts/create",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.CreatePost, true),
-			5,
-			time.Minute,
+			2*time.Second,
 		),
 	)
 
@@ -23,8 +21,7 @@ func RegisterRoutes() {
 		"/comments/create",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.CreateComment, true),
-			10,
-			time.Minute,
+			2*time.Second,
 		),
 	)
 
@@ -32,8 +29,7 @@ func RegisterRoutes() {
 		"/login",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.Login, false),
-			3,
-			time.Minute,
+			2*time.Second,
 		),
 	)
 
@@ -41,8 +37,7 @@ func RegisterRoutes() {
 		"/register",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.Register, false),
-			3,
-			time.Minute,
+			2*time.Second,
 		),
 	)
 
@@ -50,8 +45,7 @@ func RegisterRoutes() {
 		"/logout",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.Logout, true),
-			5,
-			time.Minute,
+			2*time.Second,
 		),
 	)
 }
