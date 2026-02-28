@@ -41,11 +41,11 @@ func main() {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
 
+	http.HandleFunc("/static/", handlers.HandleStatic)
 	http.HandleFunc("/", handlers.Forum) // use middleware when separated to home & feed
 
 	Routing.RegisterRoutes()
 	// Static
-	http.HandleFunc("/static/styles.css", handlers.Styles)
 	// http.HandleFunc("/static/", zone.HandleStatic)
 
 	fmt.Println("Server running on http://localhost:8080")
