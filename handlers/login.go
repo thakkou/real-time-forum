@@ -1,9 +1,6 @@
 package handlers
 
 import (
-	"bytes"
-	"html/template"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -22,17 +19,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		t, err := template.ParseFiles("templates/login.html")
-		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Template error")
-			return
-		}
-		var buf bytes.Buffer
-		if err := t.Execute(&buf, nil); err != nil {
-			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		buf.WriteTo(w)
+		RenderTemplate(w, 200, "login.html", nil)
 
 	case http.MethodPost:
 		email := strings.TrimSpace(r.FormValue("email"))
@@ -52,8 +39,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		).Scan(&userID, &hashedPassword)
 		if err != nil { // sql.ErrNoRows
 			// Don't reveal whether email exists or not
-			HandleError(w, http.StatusUnauthorized, "Invalid email or password") // 401 ?
+			user := User{Message: "Invalid email or password"}
+			RenderTemplate(w, 400, "login.html", user)
 			return
+			// HandleError(w, http.StatusUnauthorized, "Invalid email or password") // 401
 		}
 
 		if err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)); err != nil {
@@ -74,7 +63,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		)
 		if err != nil {
 			HandleError(w, http.StatusInternalServerError, "Server error") // message
-			log.Println(err)
 			return
 		}
 
