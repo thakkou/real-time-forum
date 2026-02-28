@@ -54,15 +54,15 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			HandleError(w, http.StatusBadRequest, "Invalid email address")
 			return
 		}
-		if len(user.Password) < 6 {
-			HandleError(w, http.StatusBadRequest, "Password must be at least 6 characters")
+		if len(user.Password) < 6 || len(user.Password) > 20 {
+			HandleError(w, http.StatusBadRequest, "Password must be between 6 and 20 characters")
 			return
 		}
 
 		// Check if email already exists
 		var exists bool
 		err := database.Database.QueryRow(
-			"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)", user.Email,
+			"SELECT EXISTS(SELECT * FROM users WHERE email = ?)", user.Email,
 		).Scan(&exists)
 		if err != nil {
 			HandleError(w, http.StatusInternalServerError, "Database error")
