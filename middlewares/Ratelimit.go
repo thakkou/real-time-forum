@@ -1,3 +1,4 @@
+// middlewares/rate_limit.go
 package middlewares
 
 import (
@@ -26,13 +27,18 @@ func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.Handler
 		var lastRequest time.Time
 
 		err = database.Database.QueryRow(
-			"SELECT last_request FROM rate_limits WHERE ip = ?", ip,
+			"SELECT last_request FROM rate_limits WHERE ip = ? AND route = ?", ip, r.URL.Path,
 		).Scan(&lastRequest)
 
 		if err == sql.ErrNoRows {
-			database.Database.Exec(
-				"INSERT INTO rate_limits (ip, last_request) VALUES (?, ?)", ip, time.Now(),
+			_, err = database.Database.Exec(
+				"INSERT INTO rate_limits (ip, route, last_request) VALUES (?, ?, ?)",
+				ip, r.URL.Path, time.Now(),
 			)
+			if err != nil {
+				handlers.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+				return
+			}
 			handler(w, r)
 			return
 		} else if err != nil {
@@ -45,9 +51,14 @@ func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.Handler
 			return
 		}
 
-		database.Database.Exec(
-			"UPDATE rate_limits SET last_request = ? WHERE ip = ?", time.Now(), ip,
+		_, err = database.Database.Exec(
+			"UPDATE rate_limits SET last_request = ? WHERE ip = ? AND route = ?",
+			time.Now(), ip, r.URL.Path,
 		)
+		if err != nil {
+			handlers.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+			return
+		}
 
 		handler(w, r)
 	}
