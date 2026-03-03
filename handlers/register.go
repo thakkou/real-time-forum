@@ -13,6 +13,7 @@ type User struct {
 	Name     string
 	Email    string
 	Password string
+	confarmPassword string
 	Message  string
 }
 
@@ -30,6 +31,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			Name:     strings.TrimSpace(r.FormValue("name")),
 			Email:    strings.TrimSpace(r.FormValue("email")),
 			Password: r.FormValue("password"),
+			confarmPassword: r.FormValue("confarmPassword"),
 		}
 
 		// Input validation
@@ -49,7 +51,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			HandleError(w, http.StatusBadRequest, "Password must be between 6 and 21 characters")
 			return
 		}
-
+		if user.Password != user.confarmPassword {
+				user.Message = "password and confarm password do not match"
+			RenderTemplate(w, 400, "register.html", user)
+			return
+		}
 		// Check if email already exists
 		var exists bool
 		err := database.Database.QueryRow(
