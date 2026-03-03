@@ -49,31 +49,102 @@
       <aside class="sidebar">
         <h3>Filter Posts</h3>
 
-        <div class="filter-group">
-          <h4>By Category</h4>
-          <label><input type="checkbox" checked /> General</label>
-          <label><input type="checkbox" /> Lifestyle</label>
-          <label><input type="checkbox" /> Health & Fitness</label>
-          <label><input type="checkbox" /> Travel</label>
-          <label><input type="checkbox" /> Food & Cooking</label>
-          <label><input type="checkbox" /> Education</label>
-          <label><input type="checkbox" /> Business</label>
-          <label><input type="checkbox" /> Finance</label>
-          <label><input type="checkbox" /> Entertainment</label>
-          <label><input type="checkbox" /> Sports</label>
-          <label><input type="checkbox" /> Personal Dev</label>
-          <label><input type="checkbox" /> Culture</label>
-          <label><input type="checkbox" /> News</label>
-        </div>
+        <form method="GET" action="/" id="filter-form">
+          <div class="filter-group">
+            <div>
+              <h4>By Category</h4>
+              <span> filter </span>
+            </div>
+
+            <!-- Add name="category" to each checkbox -->
+            <label
+              ><input type="checkbox" name="category" value="General" checked />
+              General</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Lifestyle" />
+              Lifestyle</label
+            >
+            <label
+              ><input
+                type="checkbox"
+                name="category"
+                value="Health & Fitness"
+              />
+              Health & Fitness</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Travel" />
+              Travel</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Food & Cooking" />
+              Food & Cooking</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Education" />
+              Education</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Business" />
+              Business</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Finance" />
+              Finance</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Entertainment" />
+              Entertainment</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Sports" />
+              Sports</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Personal Dev" />
+              Personal Dev</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="Culture" />
+              Culture</label
+            >
+            <label
+              ><input type="checkbox" name="category" value="News" />
+              News</label
+            >
+
+            <!-- Add filter button -->
+            <button type="submit" class="filter-btn">Apply Filters</button>
+            <a href="/" class="clear-btn">Clear Filters</a>
+          </div>
+        </form>
 
         <!-- Visible only for logged-in users -->
         <div class="filter-group registered-only">
           <h4>My Activity</h4>
-          <button class="filter-btn">My Created Posts</button>
-          <button class="filter-btn">Posts I Liked</button>
+          <form method="GET" action="/" style="display: inline">
+            <button
+              type="submit"
+              name="filter"
+              value="my-posts"
+              class="filter-btn"
+            >
+              My Created Posts
+            </button>
+          </form>
+          <form method="GET" action="/" style="display: inline">
+            <button
+              type="submit"
+              name="filter"
+              value="liked-posts"
+              class="filter-btn"
+            >
+              Posts I Liked
+            </button>
+          </form>
         </div>
       </aside>
-
       <!-- MAIN CONTENT -->
       <main class="content">
         <!-- CREATE POST (REGISTERED USERS ONLY) -->

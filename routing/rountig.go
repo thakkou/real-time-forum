@@ -1,4 +1,3 @@
-// routing/routes.go
 package routing
 
 import (
