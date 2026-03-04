@@ -18,9 +18,25 @@ func RegisterRoutes() {
 	)
 
 	http.HandleFunc(
+		"/api/posts/{id}/{endpoint}",
+		middlewares.RateLimit(
+			middlewares.CheckSessionCookie(handlers.PostResolver, true),
+			2*time.Second,
+		),
+	)
+
+	http.HandleFunc(
 		"/comments/create",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.CreateComment, true),
+			2*time.Second,
+		),
+	)
+
+	http.HandleFunc(
+		"/api/comments/{id}/{endpoint}",
+		middlewares.RateLimit(
+			middlewares.CheckSessionCookie(handlers.CommentResolver, true),
 			2*time.Second,
 		),
 	)

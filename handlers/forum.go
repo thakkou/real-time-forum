@@ -99,6 +99,9 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check each post if liked or disliked bu the current user
+	api.CheckLikedPosts(posts, user.Id)
+
 	data := TemplateData{
 		IsLoggedIn: true,
 		User:       user,
@@ -121,8 +124,8 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 func getUser(sessionId string) (User, error) {
 	var user User
 	err := database.Database.QueryRow(
-		"SELECT u.name, u.email, u.password FROM USERS u INNER JOIN SESSIONS s ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > DATETIME('now')",
+		"SELECT u.id, u.name, u.email, u.password FROM USERS u INNER JOIN SESSIONS s ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > DATETIME('now')",
 		sessionId,
-	).Scan(&user.Name, &user.Email, &user.Password)
+	).Scan(&user.Id, &user.Name, &user.Email, &user.Password)
 	return user, err
 }

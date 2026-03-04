@@ -1,22 +1,25 @@
-<!doctype html>
-<!-- todo add a humberger menu in nav Bar for mobile devices  -->
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>01 Forum</title>
-    <link rel="stylesheet" href="/static/style.css" />
-  </head>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js" defer></script>
+    <!-- Modern best practice: 
+     1. Script downloads in parallel
+     2. Executes after HTML is fully parsed
+     3. Does NOT block rendering -->
+</head>
+<body>
 
-  <body>
     <!-- HEADER -->
-
     <header class="navbar">
-      <div class="logo">01Forum</div>
-      <div class="auth-buttons">
-        {{if .IsLoggedIn}}
-        <!-- Show when logged in -->
-        <!-- <div class="page">
+        <div class="logo">01Forum</div>
+        <div class="auth-buttons">
+            {{if .IsLoggedIn}}
+            <!-- Show when logged in -->
+            <!-- <div class="page">
                 <nav>
                     <span class="logo">Zone</span>
                     <form action="/Logout" method="POST">
@@ -29,277 +32,120 @@
                     <p class="subtitle">You are now logged in.</p>
                 </div>
             </div> -->
-        <span class="welcome">Welcome, {{.User.Name}}</span>
-        <form action="/logout" method="POST">
-          <button type="submit" class="btn logout">Logout</button>
-        </form>
-        {{else}}
-        <!-- Show when NOT logged in -->
-        <!-- <div class="link-row" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+            <span class="welcome">Welcome, {{.User.Name}}</span>
+            <form action="/logout" method="POST">
+                <button type="submit" class="btn logout">Logout</button>
+            </form>
+            {{else}}
+            <!-- Show when NOT logged in -->
+            <!-- <div class="link-row" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
                 <a href="/Login">Login</a>
                 <a href="/Register">Register</a>
             </div> -->
-        <a type="button" href="/login" class="btn login">Login</a>
-        <a type="button" href="/register" class="btn register">Register</a>
-        {{end}}
-      </div>
+            <a type="button" href="/login" class="btn login">Login</a>
+            <a type="button" href="/register" class="btn register">Register</a>
+            {{end}}
+        </div>
     </header>
 
     <div class="container">
-      <!-- FILTER SECTION -->
-     <aside class="sidebar">
-  <h3>Filter Posts</h3>
 
-  <form method="GET" action="/" id="filter-form">
+        <!-- FILTER SECTION -->
+        <aside class="sidebar">
+            <h3>Filter Posts</h3>
 
-
-    <!-- My Posts / Liked Posts Buttons -->
-    <div class="filter-group registered-only">
-      <button type="button" name="my-creat-postes"  class="filter-btn">
-        My Created Posts
-      </button>
-
-      <button type="button" name="my-liked-post" class="filter-btn">
-        Posts I Liked
-      </button>
-    </div>
-    
-     <!-- Categories -->
-    <div class="filter-group">
-      <h4>By Category</h4>
-      <input type="hidden" name="my-creat-postes" id="input-my-creat-postes" />
-<input type="hidden" name="my-liked-post" id="input-my-liked-post" />
-
-      <label><input type="checkbox" name="categories" value="General"  /> General</label>
-      <label><input type="checkbox" name="categories" value="Lifestyle" /> Lifestyle</label>
-      <label><input type="checkbox" name="categories" value="Health & Fitness" /> Health & Fitness</label>
-      <label><input type="checkbox" name="categories" value="Travel" /> Travel</label>
-      <label><input type="checkbox" name="categories" value="Food & Cooking" /> Food & Cooking</label>
-      <label><input type="checkbox" name="categories" value="Education" /> Education</label>
-      <label><input type="checkbox" name="categories" value="Business" /> Business</label>
-      <label><input type="checkbox" name="categories" value="Finance" /> Finance</label>
-      <label><input type="checkbox" name="categories" value="Entertainment" /> Entertainment</label>
-      <label><input type="checkbox" name="categories" value="Sports" /> Sports</label>
-      <label><input type="checkbox" name="categories" value="Personal Dev" /> Personal Dev</label>
-      <label><input type="checkbox" name="categories" value="Culture" /> Culture</label>
-      <label><input type="checkbox" name="categories" value="News" /> News</label>
-
-      <button type="submit" class="filter-btn">Apply Filters</button>
-      <a href="/" class="clear-btn">Clear Filters</a>
-    </div>
-
-  </form>
-</aside>
-      <!-- MAIN CONTENT -->
-      <main class="content">
-        <!-- CREATE POST (REGISTERED USERS ONLY) -->
-        <section class="create-post registered-only">
-          <h2>Create New Post</h2>
-          <form action="/posts/create" method="POST">
-            <input type="text" name="title" placeholder="Post title" required />
-
-            <textarea
-              name="text"
-              placeholder="Write your post..."
-              required
-            ></textarea>
-
-            <div class="categories">
-              <label
-                ><input
-                  type="checkbox"
-                  name="categories"
-                  value="General"
-                  checked
-                />
-                General</label
-              >
-              <label
-                ><input type="checkbox" name="categories" value="Lifestyle" />
-                Lifestyle</label
-              >
-              <label
-                ><input
-                  type="checkbox"
-                  name="categories"
-                  value="Health & Fitness"
-                />
-                Health & Fitness</label
-              >
-              <label
-                ><input type="checkbox" name="categories" value="Travel" />
-                Travel</label
-              >
-              <label
-                ><input
-                  type="checkbox"
-                  name="categories"
-                  value="Food & Cooking"
-                />
-                Food & Cooking</label
-              >
-              <label
-                ><input type="checkbox" name="categories" value="Education" />
-                Education</label
-              >
-              <label
-                ><input type="checkbox" name="categories" value="Business" />
-                Business</label
-              >
-              <label
-                ><input type="checkbox" name="categories" value="Finance" />
-                Finance</label
-              >
-              <label
-                ><input
-                  type="checkbox"
-                  name="categories"
-                  value="Entertainment"
-                />
-                Entertainment</label
-              >
-              <label
-                ><input type="checkbox" name="categories" value="Sports" />
-                Sports</label
-              >
-              <label
-                ><input
-                  type="checkbox"
-                  name="categories"
-                  value="Personal Dev"
-                />
-                Personal Dev</label
-              >
-              <label
-                ><input type="checkbox" name="categories" value="Culture" />
-                Culture</label
-              >
-              <label
-                ><input type="checkbox" name="categories" value="News" />
-                News</label
-              >
+            <div class="filter-group">
+                <h4>By Category</h4>
+                <label><input type="checkbox"> General</label>
+                <label><input type="checkbox"> Programming</label>
+                <label><input type="checkbox"> Gaming</label>
+                <label><input type="checkbox"> Technology</label>
             </div>
 
-            <button type="submit" class="btn primary">Publish</button>
-          </form>
-        </section>
-
-        <!-- POSTS LIST -->
-        <section class="posts">
-          {{range .Posts}}
-          <!-- SINGLE POST -->
-          <article class="post">
-            <div class="post-header">
-              <h3>{{.Title}}</h3>
-              <span class="post-meta">Posted by JohnDoe · 2 hours ago</span>
+            <!-- Visible only for logged-in users -->
+            <div class="filter-group registered-only">
+                <h4>My Activity</h4>
+                <button class="filter-btn">My Created Posts</button>
+                <button class="filter-btn">Posts I Liked</button>
             </div>
+        </aside>
 
-            <div class="post-body">
-              <p>{{.Text}}</p>
-            </div>
+        <!-- MAIN CONTENT -->
+        <main class="content">
 
-            <div class="post-categories">
-              {{range .Categories}}
-              <span class="category">{{.}}</span>
-              {{end}}
-            </div>
+            <!-- CREATE POST (REGISTERED USERS ONLY) -->
+            <section class="create-post registered-only">
+                <h2>Create New Post</h2>
+                <form action="/posts/create" method="POST">
+                    <input type="text" name="title" placeholder="Post title" required>
+                    
+                    <textarea name="text" placeholder="Write your post..." required></textarea>
 
-            <div class="post-actions">
-              <button class="like">👍 12</button>
-              <button class="dislike">👎 2</button>
-            </div>
+                    <!-- <div class="categories">
+                        <label><input type="checkbox"> General</label>
+                        <label><input type="checkbox"> Programming</label>
+                        <label><input type="checkbox"> Gaming</label>
+                        <label><input type="checkbox"> Technology</label>
+                    </div> -->
 
-            <!-- COMMENTS -->
-            <div class="comments">
-              <h4>Comments</h4>
-
-              {{range .Comments}}
-              <div class="comment">
-                <p><strong>Alice:</strong> {{.Text}}</p>
-                <div class="comment-actions">
-                  <button class="like small">👍 4</button>
-                  <button class="dislike small">👎 0</button>
-                </div>
-              </div>
-              {{end}}
-
-              <!-- Add Comment (REGISTERED USERS ONLY) -->
-              <div class="add-comment registered-only">
-                <form action="/comments/create" method="POST">
-                  <input type="hidden" name="postId" value="{{.Id}}" />
-                  <input
-                    name="text"
-                    type="text"
-                    placeholder="Write a comment..."
-                  />
-                  <button type="submit" class="btn small primary">
-                    Comment
-                  </button>
+                    <button type="submit" class="btn primary">Publish</button>
                 </form>
-              </div>
-            </div>
-          </article>
-          {{end}}
-        </section>
-      </main>
+            </section>
+
+            <!-- POSTS LIST -->
+            <section class="posts">
+
+                {{range .Posts}}
+                <!-- SINGLE POST -->
+                <article class="post" data-post-id="{{.Id}}">
+                    <div class="post-header">
+                        <h3>{{.Title}}</h3>
+                        <span class="post-meta">Posted by {{.Username}} · 2 hours ago</span>
+                    </div>
+
+                    <div class="post-body">
+                        <p>{{.Text}}</p>
+                    </div>
+
+                    <div class="post-categories">
+                        <span class="category">Programming</span>
+                        <span class="category">Technology</span>
+                    </div>
+
+                    <div class="post-actions">
+                        <button class="like-btn{{if eq .IsLiked 1}} active{{end}}">👍 {{.LikeCount}}</button>
+                        <button class="dislike-btn{{if eq .IsLiked 0}} active{{end}}">👎 {{.DislikeCount}}</button>
+                    </div>
+
+                    <!-- COMMENTS -->
+                    <div class="comments">
+                        <h4>Comments</h4>
+                        
+                        {{range .Comments}}
+                        <div class="comment" data-comment-id="{{.Id}}">
+                            <p><strong>{{.Username}}:</strong> {{.Text}}</p>
+                            <div class="comment-actions">
+                                <button class="comment-like-btn small{{if eq .IsLiked 1}} active{{end}}">👍 {{.LikeCount}}</button>
+                                <button class="comment-dislike-btn small{{if eq .IsLiked 0}} active{{end}}">👎 {{.DislikeCount}}</button>
+                            </div>
+                        </div>
+                        {{end}}
+
+                        <!-- Add Comment (REGISTERED USERS ONLY) -->
+                        <div class="add-comment registered-only">
+                            <form action="/comments/create" method="POST">
+                                <input type="hidden" name="postId" value="{{.Id}}">
+                                <input name="text" type="text" placeholder="Write a comment...">
+                                <button type="submit" class="btn small primary">Comment</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+                {{end}}
+
+            </section>
+        </main>
     </div>
-  </body>
-  <script>
-    document.querySelectorAll(".filter-btn").forEach(button => {
-  button.addEventListener("click", function () {
-    this.classList.toggle("active");
 
-    // Map button names to hidden inputs
-    const hiddenInputs = {
-      "my-creat-postes": document.getElementById("input-my-creat-postes"),
-      "my-liked-post": document.getElementById("input-my-liked-post"),
-    };
-
-    // Update hidden inputs based on active buttons
-    Object.keys(hiddenInputs).forEach(name => {
-      hiddenInputs[name].value = ""; // reset
-    });
-
-    const activeButtons = Array.from(document.querySelectorAll(".filter-btn.active"));
-    activeButtons.forEach(btn => {
-      if (hiddenInputs[btn.name]) {
-        hiddenInputs[btn.name].value = "true";
-      }
-    });
-  });
-});
-  </script>
-<!-- <script>
-  document.querySelectorAll(".filter-btn").forEach(button => {
-    button.addEventListener("click", function () {
-      // Toggle active class
-      this.classList.toggle("active");
-
-      // Get all active buttons
-      const activeButtons = Array.from(document.querySelectorAll(".filter-btn.active"));
-
-      // Use URL and URLSearchParams to modify query safely
-      const url = new URL(window.location.href);
-      const params = url.searchParams;
-
-      // Clear previous custom filter params first (if any)
-      ['my-creat-postes', 'my-liked-post'].forEach(name => params.delete(name));
-
-      // Add active filters to query
-      activeButtons.forEach(btn => {
-        if (btn.name) {
-          params.set(btn.name, 'true');
-        }
-      });
-
-
-
-      // Update the URL without reloading the page
-      window.history.replaceState({}, '', url);
-
-      console.log("Updated URL:", url.toString());
-    });
-  });
-</script> -->
-  
+</body>
 </html>
