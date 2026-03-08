@@ -9,6 +9,7 @@ import (
 
 	"forum/database"
 	api "forum/forum-api"
+	"forum/helper"
 )
 
 // func HandleStatic(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +48,7 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 		HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
+
 	if r.Method != http.MethodGet {
 		HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -57,22 +59,27 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 		HandleError(w, http.StatusInternalServerError, "Template error")
 		return
 	}
-	fullURL := r.URL.String() // includes path + query
-	fmt.Println("Full URL:", fullURL)
-	// check if a category are se is
 	r.ParseForm() // must call first
 	// get posts
 	categories := r.Form["categories"]
 	isLiked := r.FormValue("my-liked-post")
 	isByMe := r.FormValue("my-creat-postes")
-	fmt.Println("cats", categories)
 	var posts []api.Post
 	if len(categories) == 0 && isLiked != "true" && isByMe != "true" {
 		posts, _ = api.GetPosts()
 	} else {
-		// this for filtring (the 0 no userId,false for postedbyMe,2 for liked byMe)
-		posts, _ = api.GetFiltrtPOst(0, categories, false, false)
-		fmt.Println("start filtring ")
+		//get the user ID
+				cookie, err := r.Cookie("session_id")
+				if(err != nil){
+					fmt.Println("No session cookie found, treating as not logged in")
+							posts, _ = api.GetPosts()
+
+					
+				}
+userId,_:=helper.GetUserIDFromCookie(cookie.Value)	
+	
+
+		posts, _ = api.GetFiltrtPOst(userId, categories, isLiked == "true", isByMe == "true")
 	}
 
 	var buf bytes.Buffer
