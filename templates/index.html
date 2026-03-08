@@ -247,8 +247,8 @@
           <article class="post" data-post-id="{{.Id}}">
             <div class="post-header">
               <h3>{{.Title}}</h3>
+              <form method="post" action="/api/posts/{{.Id}}/delete"><button type="submit">Delete</button></form>
               {{if and $.IsLoggedIn (eq $.User.Id .UserId)}}
-              <button>Delete</button>
               {{end}}
               <span class="post-meta"
                 >Posted by {{.Username}} · 2 hours ago</span
@@ -282,7 +282,7 @@
               <div class="comment" data-comment-id="{{.Id}}">
                 <p><strong>{{.Username}}:</strong> {{.Text}}</p>
                 {{if and $.IsLoggedIn (eq $.User.Id .UserId)}}
-                <button>Delete</button>
+                <form method="post" action="/api/comments/{{.Id}}/delete"><button type="submit">Delete</button></form>
                 {{end}}
                 <div class="comment-actions">
                   <button
@@ -301,7 +301,6 @@
 
               <!-- Add Comment (REGISTERED USERS ONLY) -->
               <div class="add-comment registered-only">
-                <form action="/comments/create" method="POST">
                   <input type="hidden" name="postId" value="{{.Id}}" />
                   <input
                     name="text"

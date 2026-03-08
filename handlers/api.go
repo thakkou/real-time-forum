@@ -178,7 +178,7 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 
 		// + case delete
 	case "delete":
-		if r.Method != http.MethodDelete {
+		if r.Method != http.MethodPost{
 			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
@@ -209,7 +209,7 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 
 		// + case delete
 		case "delete":
-		if r.Method != http.MethodDelete {
+		if r.Method != http.MethodPost {
 			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
