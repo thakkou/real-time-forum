@@ -177,6 +177,12 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 		api.ReactToPost(user.Id, postId, false)
 
 		// + case delete
+	case "delete":
+		if r.Method != http.MethodDelete {
+			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		api.DeletePost(postId, user.Id)
 	}
 }
 
@@ -202,5 +208,11 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 		api.ReactToComment(user.Id, commentId, false)
 
 		// + case delete
+		case "delete":
+		if r.Method != http.MethodDelete {
+			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		api.DeleteComment(commentId, user.Id)
 	}
 }
