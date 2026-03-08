@@ -10,6 +10,7 @@ import (
 
 type Comment struct {
 	Id                      int
+	UserId                  int
 	Username                string
 	Created_at              time.Time
 	Text                    string
@@ -20,13 +21,13 @@ type Comment struct {
 func GetCommentsByPost(postId int) ([]Comment, error) {
 	var comments []Comment
 	rows, err := database.Database.Query(
-		"SELECT id, created_at, text FROM Comments WHERE post_id = ?",
+		"SELECT id, user_id, created_at, text FROM Comments WHERE post_id = ?",
 		postId,
 	)
 	defer rows.Close() // release database resources
 	for rows.Next() {
 		var c Comment
-		if err := rows.Scan(&c.Id, &c.Created_at, &c.Text); err != nil {
+		if err := rows.Scan(&c.Id, &c.UserId, &c.Created_at, &c.Text); err != nil {
 			return nil, fmt.Errorf("getCommentsByPost error: %v", err)
 		}
 
