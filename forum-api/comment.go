@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -47,4 +48,30 @@ func GetCommentsByPost(postId int) ([]Comment, error) {
 		return nil, fmt.Errorf("getCommentsByPost error: %v", err)
 	}
 	return comments, err
+}
+
+func DeleteComment(commentId, userId int) error {
+	tx, err := database.Database.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var dbUserId int
+	err = tx.QueryRow("SELECT user_id FROM comments WHERE id = ?", commentId).Scan(&dbUserId)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("comment not found")
+	}
+	if err != nil {
+		return err
+	}
+	if dbUserId != userId {
+		return fmt.Errorf("not your comment")
+	}
+
+	_, err = tx.Exec("DELETE FROM comments WHERE id = ?", commentId)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }

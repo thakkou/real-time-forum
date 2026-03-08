@@ -84,3 +84,29 @@ func CheckLikedPosts(posts []Post, userId int) {
 		}
 	}
 }
+
+func DeletePost(postId, userId int) error {
+	tx, err := database.Database.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var dbUserId int
+	err = tx.QueryRow("SELECT user_id FROM posts WHERE id = ?", postId).Scan(&dbUserId)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("post not found")
+	}
+	if err != nil {
+		return err
+	}
+	if dbUserId != userId {
+		return fmt.Errorf("not your post")
+	}
+
+	_, err = tx.Exec("DELETE FROM posts WHERE id = ?", postId)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
