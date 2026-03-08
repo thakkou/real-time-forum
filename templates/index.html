@@ -246,13 +246,16 @@
           <!-- SINGLE POST -->
           <article class="post" data-post-id="{{.Id}}">
             <div class="post-header">
-              <h3>{{.Title}}</h3>
+              <div class="delete-block">
+                <h3>{{.Title}}</h3>
 
-              {{if and $.IsLoggedIn (eq $.User.Id .UserId)}}
-              <form method="post" action="/api/posts/{{.Id}}/delete">
-                <button type="submit">Delete</button>
-              </form>
-              {{end}}
+                {{if and $.IsLoggedIn (eq $.User.Id .UserId)}}
+                <form method="post" action="/api/posts/{{.Id}}/delete">
+                  <button class="btn small danger" type="submit">Delete</button>
+                </form>
+                {{end}}
+              </div>
+
               <span class="post-meta"
                 >Posted by {{.Username}} · 2 hours ago</span
               >
@@ -283,11 +286,15 @@
 
               {{range .Comments}}
               <div class="comment" data-comment-id="{{.Id}}">
-                <p><strong>{{.Username}}:</strong> {{.Text}}</p>
-                {{if and $.IsLoggedIn (eq $.User.Id .UserId)}}
-                <form method="post" action="/api/comments/{{.Id}}/delete">
-                  <button type="submit">Delete</button>
-                </form>
+                <div class="delete-block">
+                  <p><strong>{{.Username}}:</strong> {{.Text}}</p>
+                  {{if and $.IsLoggedIn (eq $.User.Id .UserId)}}
+                  <form method="post" action="/api/comments/{{.Id}}/delete">
+                    <button class="btn small danger" type="submit">
+                      Delete
+                    </button>
+                  </form>
+                </div>
                 {{end}}
                 <div class="comment-actions">
                   <button
