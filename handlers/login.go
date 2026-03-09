@@ -22,12 +22,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		RenderTemplate(w, 200, "login.html", nil)
 
 	case http.MethodPost:
-		email := strings.TrimSpace(r.FormValue("email"))
+		identifier := strings.TrimSpace(r.FormValue("email"))
 		password := r.FormValue("password")
 
 		// Basic input validation
-		if email == "" || password == "" {
-			HandleError(w, http.StatusBadRequest, "Email and password are required")
+		if identifier == "" || password == "" {
+			HandleError(w, http.StatusBadRequest, "Email/username and password are required")
 			return
 		}
 
@@ -35,36 +35,36 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		var hashedPassword string
 
 		err := database.Database.QueryRow(
-			"SELECT id, password FROM users WHERE email = ?", email,
+			"SELECT id, password FROM users WHERE email = ? OR name = ?", identifier, identifier,
 		).Scan(&userID, &hashedPassword)
-		if err != nil { // sql.ErrNoRows
-			// Don't reveal whether email exists or not
-			user := User{Message: "Invalid email or password"}
+		if err != nil {
+			user := User{Message: "Invalid email/username or password"}
 			RenderTemplate(w, 400, "login.html", user)
 			return
-			// HandleError(w, http.StatusUnauthorized, "Invalid email or password") // 401
 		}
 
 		if err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)); err != nil {
-			HandleError(w, http.StatusUnauthorized, "Invalid email or password") // 401
+			user := User{Message: "Invalid email/username or password"}
+			RenderTemplate(w, 401, "login.html", user)
 			return
 		}
 
-	//check if user already has a session, if so, delete it and create a new one
-_,err=database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
-if err!=nil {
-	HandleError(w, http.StatusInternalServerError, "Server error")
-	return
-}
-		sessionID := uuid.New().String()             // OR: uuid.NewString() // unique ?
-		expiration := time.Now().Add(24 * time.Hour) // DATETIME('now', '+24 hours')
+		// Delete any existing sessions for this user
+		_, err = database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
+		if err != nil {
+			HandleError(w, http.StatusInternalServerError, "Server error")
+			return
+		}
+
+		sessionID := uuid.New().String()
+		expiration := time.Now().Add(24 * time.Hour)
 
 		_, err = database.Database.Exec(
 			"INSERT INTO SESSIONS (id, expires_at, user_id) VALUES (?, ?, ?)",
 			sessionID, expiration, userID,
 		)
 		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Server error") // message
+			HandleError(w, http.StatusInternalServerError, "Server error")
 			return
 		}
 
