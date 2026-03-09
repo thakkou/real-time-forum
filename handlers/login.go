@@ -50,10 +50,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		/////////////////////////
-		// Need a mechanism to remove expired sessions from database (from time to time ?!)
-		/////////////////////////
-
+	//check if user already has a session, if so, delete it and create a new one
+_,err=database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
+if err!=nil {
+	HandleError(w, http.StatusInternalServerError, "Server error")
+	return
+}
 		sessionID := uuid.New().String()             // OR: uuid.NewString() // unique ?
 		expiration := time.Now().Add(24 * time.Hour) // DATETIME('now', '+24 hours')
 
