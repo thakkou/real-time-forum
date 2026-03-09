@@ -257,7 +257,7 @@
               </div>
 
               <span class="post-meta"
-                >Posted by {{.Username}} · 2 hours ago</span
+                >Posted by {{.Username}} · {{.TimeAgo}}</span
               >
             </div>
 
@@ -287,7 +287,11 @@
               {{range .Comments}}
               <div class="comment" data-comment-id="{{.Id}}">
                 <div class="delete-block">
-                  <p><strong>{{.Username}}:</strong> {{.Text}}</p>
+                  <p>
+                    <strong>{{.Username}} · {{.TimeAgo}}</strong>
+                    <br>
+                    {{.Text}}
+                  </p>
                   {{if and $.IsLoggedIn (eq $.User.Id .UserId)}}
                   <form method="post" action="/api/comments/{{.Id}}/delete">
                     <button class="btn small danger" type="submit">

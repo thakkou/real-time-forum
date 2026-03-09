@@ -14,12 +14,31 @@ type Post struct {
 	UserId                  int
 	Username                string
 	Created_at              time.Time
+	TimeAgo                 string
 	Title                   string
 	Text                    string
 	LikeCount, DislikeCount int
 	IsLiked                 int // 1:liked, 0:none, -1:disliked
 	Comments                []Comment
 	Categories              []string // Add this field to store category names
+}
+
+func timeAgo(t time.Time) string {
+	d := time.Since(t)
+
+	if d < time.Minute {
+		return fmt.Sprintf("%d seconds ago", int(d.Seconds()))
+	}
+	if d < time.Hour {
+		return fmt.Sprintf("%d minutes ago", int(d.Minutes()))
+	}
+	if d < 24*time.Hour {
+		return fmt.Sprintf("%d hours ago", int(d.Hours()))
+	}
+	if d < 30*24*time.Hour {
+		return fmt.Sprintf("%d days ago", int(d.Hours()/24))
+	}
+	return fmt.Sprintf("%d months ago", int(d.Hours()/(24*30)))
 }
 
 func GetPosts() ([]Post, error) {
@@ -46,6 +65,9 @@ func GetPosts() ([]Post, error) {
 			"SELECT u.name FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE p.id = ?",
 			p.Id,
 		).Scan(&p.Username)
+
+		// get timeago
+		p.TimeAgo = timeAgo(p.Created_at)
 
 		// get reactions
 		if p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id); err != nil {

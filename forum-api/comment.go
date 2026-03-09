@@ -13,6 +13,7 @@ type Comment struct {
 	UserId                  int
 	Username                string
 	Created_at              time.Time
+	TimeAgo                 string
 	Text                    string
 	LikeCount, DislikeCount int
 	IsLiked                 int // 1:liked, 0:none, -1:disliked
@@ -36,6 +37,9 @@ func GetCommentsByPost(postId int) ([]Comment, error) {
 			"SELECT u.name FROM users u INNER JOIN comments c ON c.user_id = u.id WHERE c.id = ?",
 			c.Id,
 		).Scan(&c.Username)
+
+		// get timeago
+		c.TimeAgo = timeAgo(c.Created_at)
 
 		// get reactions
 		if c.LikeCount, c.DislikeCount, err = GetReactionsByComment(c.Id); err != nil {
