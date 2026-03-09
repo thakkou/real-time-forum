@@ -58,20 +58,35 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Check if email already exists
-		var exists bool
-		err := database.Database.QueryRow(
-			"SELECT EXISTS(SELECT * FROM users WHERE email = ?)", user.Email,
-		).Scan(&exists)
-		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Database error")
-			return
-		}
-		if exists {
-			user.Message = "Email already registered"
-			RenderTemplate(w, 400, "register.html", user)
-			return
+// Check email
+var emailExists bool
+err := database.Database.QueryRow(
+    "SELECT EXISTS(SELECT * FROM users WHERE email = ?)", user.Email,
+).Scan(&emailExists)
+if err != nil {
+    HandleError(w, http.StatusInternalServerError, "Database error")
+    return
+}
+if emailExists {
+    user.Message = "Email already registered"
+    RenderTemplate(w, 400, "register.html", user)
+    return
+}
 
-		}
+// Check username
+var nameExists bool
+err = database.Database.QueryRow(
+    "SELECT EXISTS(SELECT * FROM users WHERE name = ?)", user.Name,
+).Scan(&nameExists)
+if err != nil {
+    HandleError(w, http.StatusInternalServerError, "Database error")
+    return
+}
+if nameExists {
+    user.Message = "Username already taken"
+    RenderTemplate(w, 400, "register.html", user)
+    return
+}
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 		if err != nil {
