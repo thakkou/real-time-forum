@@ -228,7 +228,7 @@
               <div class="add-comment registered-only">
                 <form action="/comments/create" method="POST">
                   <input type="hidden" name="postId" value="{{.Id}}" />
-                  <input name="text" type="text" placeholder="Write a comment..." />
+                  <input name="text" type="text" placeholder="Write a comment..." required />
                   <button type="submit" class="btn small primary">Comment</button>
                 </form>
               </div>

@@ -21,7 +21,7 @@ func RegisterRoutes() {
 		"/api/posts/{id}/{endpoint}",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.PostResolver, true),
-			2*time.Second,
+			100*time.Millisecond,
 		),
 	)
 

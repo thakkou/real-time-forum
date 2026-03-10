@@ -27,6 +27,10 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
 		return
 	}
+if len(title) > 255||len(text) > 1000 {
+		HandleError(w, http.StatusBadRequest, "Title cannot exceed 255 characters")
+		return
+	}
 
 	if len(categories) == 0 {
 		HandleError(w, http.StatusBadRequest, "At least one category must be selected")
@@ -121,6 +125,16 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 
 	if postId == "" {
 		HandleError(w, http.StatusBadRequest, "Invalid post")
+		return
+	}
+if len(text) > 1000 {
+		HandleError(w, http.StatusBadRequest, "Comment cannot exceed 1000 characters")
+		return
+	}
+
+	_, err := strconv.Atoi(postId)
+	if err != nil {
+		HandleError(w, http.StatusBadRequest, "Invalid post ID")
 		return
 	}
 
