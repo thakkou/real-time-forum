@@ -82,8 +82,9 @@
       </aside>
       <!-- MAIN CONTENT -->
       <main class="content">
+        {{if .IsLoggedIn}}
         <!-- CREATE POST (REGISTERED USERS ONLY) -->
-        <section class="create-post registered-only">
+        <section class="create-post">
           <h2>Create New Post</h2>
           <form action="/posts/create" method="POST">
             <input type="text" name="title" placeholder="Post title" required />
@@ -113,6 +114,7 @@
             <button type="submit" class="btn primary">Publish</button>
           </form>
         </section>
+        {{end}}
 
         <!-- MOBILE FILTER (visible only on small screens, below create-post) -->
         <aside class="sidebar-mobile">
