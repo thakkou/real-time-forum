@@ -48,8 +48,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			HandleError(w, http.StatusBadRequest, "Invalid email address")
 			return
 		}
-		if len(user.Password) < 6 || len(user.Password) > 21 {
-			HandleError(w, http.StatusBadRequest, "Password must be between 6 and 21 characters")
+		if len(user.Password) < 6 || len(user.Password) > 20 {
+			HandleError(w, http.StatusBadRequest, "Password must be between 6 and 20 characters")
+			return
+		}
+		if len(user.Email) < 5 || len(user.Email) > 100 {
+			HandleError(w, http.StatusBadRequest, "Email must be between 5 and 100 characters")
 			return
 		}
 		if user.Password != user.confarmPassword {
