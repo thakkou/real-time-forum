@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -12,39 +11,14 @@ import (
 	"forum/helper"
 )
 
-// func HandleStatic(w http.ResponseWriter, r *http.Request) {
-// 	if r.URL.Path == "/static" || r.URL.Path == "/static/" {
-// 		HandleError(w, http.StatusNotFound, "Not Found")
-// 		return
-// 	}
-
-// 	filePath := filepath.Join("static", r.URL.Path[len("/static/"):])
-
-// 	// Prevent path traversal (e.g. /static/../../secret)
-// 	cleanPath := filepath.Clean(filePath)
-// 	if len(cleanPath) < len("static") || cleanPath[:len("static")] != "static" {
-// 		HandleError(w, http.StatusForbidden, "Forbidden")
-// 		return
-// 	}
-
-// 	if _, err := os.Stat(filePath); err != nil {
-// 		HandleError(w, http.StatusNotFound, "Not Found")
-// 		return
-// 	}
-
-// 	http.ServeFile(w, r, filePath)
-// }
-
-// =======================================================================
-
 type TemplateData struct {
 	IsLoggedIn bool
-	User       User
-	Posts      []api.Post
+	User User
+	Posts []api.Post
 }
 
 func Forum(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" { // root dir or something else
+	if r.URL.Path != "/" {
 		HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
@@ -59,70 +33,87 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 		HandleError(w, http.StatusInternalServerError, "Template error")
 		return
 	}
-	r.ParseForm() // must call first
-	// get posts
+
+	if err := r.ParseForm(); err != nil {
+		HandleError(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+
 	categories := r.Form["categories"]
 	isLiked := r.FormValue("my-liked-post")
 	isByMe := r.FormValue("my-creat-postes")
+
 	var posts []api.Post
+
 	if len(categories) == 0 && isLiked != "true" && isByMe != "true" {
-		posts, _ = api.GetPosts()
+		posts, err = api.GetPosts()
+		if err != nil {
+			HandleError(w, http.StatusInternalServerError, "Could not load posts")
+			return
+		}
 	} else {
-		//get the user ID
-				cookie, err := r.Cookie("session_id")
-				if(err != nil){
-					fmt.Println("No session cookie found, treating as not logged in")
-							posts, _ = api.GetPosts()
-
-					
+		cookie, cookieErr := r.Cookie("session_id")
+		if cookieErr != nil {
+			// no session — just show all posts, filters ignored
+			posts, err = api.GetPosts()
+			if err != nil {
+				HandleError(w, http.StatusInternalServerError, "Could not load posts")
+				return
+			}
+		} else {
+			userId, err := helper.GetUserIDFromCookie(cookie.Value)
+			if err != nil {
+				// invalid session — show all posts
+				posts, err = api.GetPosts()
+				if err != nil {
+					HandleError(w, http.StatusInternalServerError, "Could not load posts")
+					return
 				}
-userId,_:=helper.GetUserIDFromCookie(cookie.Value)	
-	
-
-		posts, _ = api.GetFiltrtPOst(userId, categories, isLiked == "true", isByMe == "true")
+			} else {
+				posts, err = api.GetFiltrtPOst(userId, categories, isLiked == "true", isByMe == "true")
+				if err != nil {
+					HandleError(w, http.StatusInternalServerError, "Could not load posts")
+					return
+				}
+			}
+		}
 	}
 
 	var buf bytes.Buffer
 	cookie, err := r.Cookie("session_id")
-	if err != nil { // http.ErrNoCookie
+	if err != nil {
 		if err := t.Execute(&buf, TemplateData{Posts: posts}); err != nil {
 			log.Printf("home template execute error: %v", err)
-			return // ?
+			return
 		}
-		// nil works fine without using: TemplateData{}
 		buf.WriteTo(w)
 		return
 	}
 
-	// get User
 	user, err := getUser(cookie.Value)
-	if err != nil { // sql.ErrNoRows
-		// what is the default behavior when session cookie not found -> serve as not logged in ?
+	if err != nil {
 		if err := t.Execute(&buf, TemplateData{Posts: posts}); err != nil {
 			log.Printf("home template execute error: %v", err)
-			return // ?
+			return
 		}
 		buf.WriteTo(w)
 		return
 	}
 
-	// check each post if liked or disliked bu the current user
 	api.CheckLikedPosts(posts, user.Id)
 
 	data := TemplateData{
 		IsLoggedIn: true,
-		User:       user,
-		Posts:      posts,
+		User: user,
+		Posts: posts,
 	}
-	err = t.Execute(&buf, data)
-	if err != nil {
+
+	if err = t.Execute(&buf, data); err != nil {
 		log.Println(err)
 		HandleError(w, http.StatusInternalServerError, "Internal server error")
-		// send err.Error() as message !
 		return
 	}
 
-	// send successful response
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	buf.WriteTo(w)

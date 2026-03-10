@@ -9,14 +9,14 @@ import (
 )
 
 type Comment struct {
-	Id                      int
-	UserId                  int
-	Username                string
-	Created_at              time.Time
-	TimeAgo                 string
-	Text                    string
+	Id int
+	UserId int
+	Username string
+	Created_at time.Time
+	TimeAgo string
+	Text string
 	LikeCount, DislikeCount int
-	IsLiked                 int // 1:liked, 0:none, -1:disliked
+	IsLiked int // 1:liked, 0:none, -1:disliked
 }
 
 func GetCommentsByPost(postId int) ([]Comment, error) {
@@ -26,20 +26,23 @@ func GetCommentsByPost(postId int) ([]Comment, error) {
 		postId,
 	)
 	if err != nil {
-    return nil, fmt.Errorf("getCommentsByPost error: %v", err)
-}
-	defer rows.Close() // release database resources
+		return nil, fmt.Errorf("getCommentsByPost error: %v", err)
+	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var c Comment
 		if err := rows.Scan(&c.Id, &c.UserId, &c.Created_at, &c.Text); err != nil {
-			return nil, fmt.Errorf("getCommentsByPost error: %v", err)
+			return nil, fmt.Errorf("getCommentsByPost scan error: %v", err)
 		}
 
 		// get username
-		database.Database.QueryRow(
+		if err := database.Database.QueryRow(
 			"SELECT u.name FROM users u INNER JOIN comments c ON c.user_id = u.id WHERE c.id = ?",
 			c.Id,
-		).Scan(&c.Username)
+		).Scan(&c.Username); err != nil {
+			return nil, fmt.Errorf("getCommentsByPost username error: %v", err)
+		}
 
 		// get timeago
 		c.TimeAgo = timeAgo(c.Created_at)
@@ -51,11 +54,11 @@ func GetCommentsByPost(postId int) ([]Comment, error) {
 
 		comments = append(comments, c)
 	}
-	// Important: Check for any errors that occurred during iteration
+
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("getCommentsByPost error: %v", err)
+		return nil, fmt.Errorf("getCommentsByPost rows error: %v", err)
 	}
-	return comments, err
+	return comments, nil
 }
 
 func DeleteComment(commentId, userId int) error {

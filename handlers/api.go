@@ -13,20 +13,21 @@ import (
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/posts/create" {
-		// handle error with just a status
-		// HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
 	if r.Method != http.MethodPost {
-		// HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	title := strings.TrimSpace(r.FormValue("title"))
-	text := r.FormValue("text")
-	categories := r.Form["categories"] // handle empty categories ?!
+	text := strings.TrimSpace(r.FormValue("text"))
+	categories := r.Form["categories"]
 
-	// Validate that at least one category is selected
+	if title == "" || text == "" {
+		HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
+		return
+	}
+
 	if len(categories) == 0 {
 		HandleError(w, http.StatusBadRequest, "At least one category must be selected")
 		return
@@ -41,24 +42,21 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = database.Database.QueryRow(
+	if err = database.Database.QueryRow(
 		"SELECT user_id FROM sessions WHERE id = ?",
 		cookie.Value,
-	).Scan(&userId)
-	if err != nil {
+	).Scan(&userId); err != nil {
 		HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
 		return
 	}
 
-	// Start a transaction to ensure data consistency
 	tx, err := database.Database.Begin()
 	if err != nil {
 		HandleError(w, http.StatusInternalServerError, "Could not create post")
 		return
 	}
-	defer tx.Rollback() // Rollback if anything fails
+	defer tx.Rollback()
 
-	// Create post
 	result, err := tx.Exec(
 		"INSERT INTO posts (user_id, created_at, title, text) VALUES (?, ?, ?, ?)",
 		userId,
@@ -71,39 +69,32 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the ID of the newly created post
 	postID, err := result.LastInsertId()
 	if err != nil {
 		HandleError(w, http.StatusInternalServerError, "Could not retrieve post ID")
 		return
 	}
 
-	// Validate and insert categories
 	for _, categoryName := range categories {
 		var categoryID int
-		err := tx.QueryRow(
+		if err := tx.QueryRow(
 			"SELECT id FROM category WHERE name = ?",
 			categoryName,
-		).Scan(&categoryID)
-		if err != nil {
-			// Category doesn't exist
+		).Scan(&categoryID); err != nil {
 			HandleError(w, http.StatusBadRequest, "Invalid category: "+categoryName)
 			return
 		}
 
-		// Insert into post_category
-		_, err = tx.Exec(
+		if _, err = tx.Exec(
 			"INSERT INTO post_category (post_id, category_id) VALUES (?, ?)",
 			postID,
 			categoryID,
-		)
-		if err != nil {
+		); err != nil {
 			HandleError(w, http.StatusInternalServerError, "Could not associate categories with post")
 			return
 		}
 	}
 
-	// Commit the transaction
 	if err = tx.Commit(); err != nil {
 		HandleError(w, http.StatusInternalServerError, "Could not save post")
 		return
@@ -114,42 +105,51 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 func CreateComment(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/comments/create" {
-		// handle error with just a status
-		// HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
 	if r.Method != http.MethodPost {
-		// HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	postId := r.FormValue("postId")
-	text := r.FormValue("text") // trim space ?!
+	postId := strings.TrimSpace(r.FormValue("postId"))
+	text := strings.TrimSpace(r.FormValue("text"))
 
-	// handle empty title or text !!!
+	if text == "" {
+		HandleError(w, http.StatusBadRequest, "Comment cannot be empty")
+		return
+	}
 
-	// get user id
+	if postId == "" {
+		HandleError(w, http.StatusBadRequest, "Invalid post")
+		return
+	}
+
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		HandleError(w, http.StatusUnauthorized, "You must be logged in to comment")
+		return
+	}
+
 	var userId int
-	cookie, _ := r.Cookie("session_id")
-	err := database.Database.QueryRow(
+	if err = database.Database.QueryRow(
 		"SELECT user_id FROM sessions WHERE id = ?",
 		cookie.Value,
-	).Scan(&userId)
+	).Scan(&userId); err != nil {
+		HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
+		return
+	}
 
-	// create post
-	_, err = database.Database.Exec(
+	if _, err = database.Database.Exec(
 		"INSERT INTO comments (user_id, post_id, created_at, text) VALUES (?, ?, ?, ?)",
 		userId,
 		postId,
 		time.Now(),
 		text,
-	)
-	// create session if you want to redirect to its page
-	if err != nil {
-		// log.Println(err.Error())
-		// HandleError(w, http.StatusInternalServerError, "Could not create account")
+	); err != nil {
+		HandleError(w, http.StatusInternalServerError, "Could not create comment")
 		return
 	}
+
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -157,9 +157,24 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 
 func PostResolver(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.PathValue("endpoint")
-	cookie, _ := r.Cookie("session_id") // http.ErrNoCookie
-	user, _ := getUser(cookie.Value)
-	postId, _ := strconv.Atoi(r.PathValue("id"))
+
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		HandleError(w, http.StatusUnauthorized, "Not logged in")
+		return
+	}
+
+	user, err := getUser(cookie.Value)
+	if err != nil {
+		HandleError(w, http.StatusUnauthorized, "Invalid session")
+		return
+	}
+
+	postId, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		HandleError(w, http.StatusBadRequest, "Invalid post ID")
+		return
+	}
 
 	switch endpoint {
 	case "like":
@@ -167,35 +182,59 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
-		api.ReactToPost(user.Id, postId, 1)
+		if err := api.ReactToPost(user.Id, postId, 1); err != nil {
+			HandleError(w, http.StatusInternalServerError, "Could not react to post")
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	case "dislike":
 		if r.Method != http.MethodPost {
 			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
-		api.ReactToPost(user.Id, postId, -1)
+		if err := api.ReactToPost(user.Id, postId, -1); err != nil {
+			HandleError(w, http.StatusInternalServerError, "Could not react to post")
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 
-		// + case delete
 	case "delete":
 		if r.Method != http.MethodPost {
 			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
-		err := api.DeletePost(postId, user.Id)
-		if err != nil {
+		if err := api.DeletePost(postId, user.Id); err != nil {
 			HandleError(w, http.StatusForbidden, err.Error())
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
+
+	default:
+		HandleError(w, http.StatusNotFound, "Unknown endpoint")
 	}
 }
 
 func CommentResolver(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.PathValue("endpoint")
-	cookie, _ := r.Cookie("session_id") // http.ErrNoCookie
-	user, _ := getUser(cookie.Value)
-	commentId, _ := strconv.Atoi(r.PathValue("id"))
+
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		HandleError(w, http.StatusUnauthorized, "Not logged in")
+		return
+	}
+
+	user, err := getUser(cookie.Value)
+	if err != nil {
+		HandleError(w, http.StatusUnauthorized, "Invalid session")
+		return
+	}
+
+	commentId, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		HandleError(w, http.StatusBadRequest, "Invalid comment ID")
+		return
+	}
 
 	switch endpoint {
 	case "like":
@@ -203,26 +242,35 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
-		api.ReactToComment(user.Id, commentId, 1)
+		if err := api.ReactToComment(user.Id, commentId, 1); err != nil {
+			HandleError(w, http.StatusInternalServerError, "Could not react to comment")
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	case "dislike":
 		if r.Method != http.MethodPost {
 			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
-		api.ReactToComment(user.Id, commentId, -1)
+		if err := api.ReactToComment(user.Id, commentId, -1); err != nil {
+			HandleError(w, http.StatusInternalServerError, "Could not react to comment")
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 
-	// + case delete
 	case "delete":
 		if r.Method != http.MethodPost {
 			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
-		err := api.DeleteComment(commentId, user.Id)
-		if err != nil {
+		if err := api.DeleteComment(commentId, user.Id); err != nil {
 			HandleError(w, http.StatusForbidden, err.Error())
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
+
+	default:
+		HandleError(w, http.StatusNotFound, "Unknown endpoint")
 	}
 }
