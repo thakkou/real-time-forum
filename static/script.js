@@ -50,6 +50,7 @@ function handlePostReactionsClick(event) {
     reactToPost(postId, endpoint)
         .then(data => {
             // Update the UI with the new count and selection
+            window.location.reload();
         })
         .catch(err => {});
 }
@@ -74,6 +75,7 @@ function handleCommentReactionsClick(event) {
     reactToComment(commentId, endpoint)
         .then(data => {
             // Update the UI with the new count and selection
+            window.location.reload();
         })
         .catch(err => {});
 }

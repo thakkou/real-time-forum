@@ -394,7 +394,7 @@ textarea {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
-  margin-bottom: 1px;
+  margin-bottom: 10px;
   transition: border-color 0.15s;
   overflow: hidden;
 }

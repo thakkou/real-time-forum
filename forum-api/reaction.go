@@ -43,12 +43,12 @@ func ReactToPost(userId, postId int, isLikeInt int) error {
 }
 
 func ReactToComment(userId, commentId int, isLikeInt int) error {
-	var isLiked bool
+	var isLikedInt int
 	err := database.Database.QueryRow(
 		"SELECT is_like FROM comment_reactions WHERE user_id = ? AND comment_id = ?",
 		userId,
 		commentId,
-	).Scan(&isLiked)
+	).Scan(&isLikedInt)
 
 	if err == nil {
 		if _, err := database.Database.Exec(
@@ -61,6 +61,7 @@ func ReactToComment(userId, commentId int, isLikeInt int) error {
 	}
 
 	isLike := isLikeInt == 1
+	isLiked := isLikedInt == 1
 	if isLike && (err != nil || !isLiked) ||
 		!isLike && (err != nil || isLiked) {
 		if _, err := database.Database.Exec(
