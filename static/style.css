@@ -32,6 +32,11 @@
   padding: 0;
 }
 
+.btn.danger svg {
+  fill: white; /* or currentColor if you change btn.danger color to white */
+  width: 14px;
+  height: 14px;
+}
 html {
   scroll-behavior: smooth;
 }
