@@ -9,59 +9,67 @@ import (
 )
 
 func RegisterRoutes() {
-	http.HandleFunc(
-		"/posts/create",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.CreatePost, true),
-			2*time.Second,
-		),
-	)
+    http.HandleFunc(
+        "/",
+        middlewares.RateLimit(
+            handlers.Forum,
+            200*time.Millisecond, // fast enough for normal browsing
+        ),
+    )
 
-	http.HandleFunc(
-		"/api/posts/{id}/{endpoint}",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.PostResolver, true),
-			100*time.Millisecond,
-		),
-	)
+    http.HandleFunc(
+        "/posts/create",
+        middlewares.RateLimit(
+            middlewares.CheckSessionCookie(handlers.CreatePost, true),
+            2*time.Second, // writing a post takes time
+        ),
+    )
 
-	http.HandleFunc(
-		"/comments/create",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.CreateComment, true),
-			2*time.Second,
-		),
-	)
+    http.HandleFunc(
+        "/api/posts/{id}/{endpoint}",
+        middlewares.RateLimit(
+            middlewares.CheckSessionCookie(handlers.PostResolver, true),
+            500*time.Millisecond, // like/dislike — 1s is fair
+        ),
+    )
 
-	http.HandleFunc(
-		"/api/comments/{id}/{endpoint}",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.CommentResolver, true),
-			2*time.Second,
-		),
-	)
+    http.HandleFunc(
+        "/comments/create",
+        middlewares.RateLimit(
+            middlewares.CheckSessionCookie(handlers.CreateComment, true),
+            2*time.Second, // same as post
+        ),
+    )
 
-	http.HandleFunc(
-		"/login",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.Login, false),
-			2*time.Second,
-		),
-	)
+    http.HandleFunc(
+        "/api/comments/{id}/{endpoint}",
+        middlewares.RateLimit(
+            middlewares.CheckSessionCookie(handlers.CommentResolver, true),
+            1*time.Second, // same as post reactions
+        ),
+    )
 
-	http.HandleFunc(
-		"/register",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.Register, false),
-			2*time.Second,
-		),
-	)
+    http.HandleFunc(
+        "/login",
+        middlewares.RateLimit(
+            middlewares.CheckSessionCookie(handlers.Login, false),
+            2*time.Second, // brute force protection
+        ),
+    )
 
-	http.HandleFunc(
-		"/logout",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.Logout, true),
-			2*time.Second,
-		),
-	)
+    http.HandleFunc(
+        "/register",
+        middlewares.RateLimit(
+            middlewares.CheckSessionCookie(handlers.Register, false),
+            2*time.Second, // spam protection
+        ),
+    )
+
+    http.HandleFunc(
+        "/logout",
+        middlewares.RateLimit(
+            middlewares.CheckSessionCookie(handlers.Logout, true),
+            2*time.Second,
+        ),
+    )
 }

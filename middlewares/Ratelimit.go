@@ -13,10 +13,6 @@ import (
 
 func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-			handler(w, r)
-			return
-		}
 
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
