@@ -12,13 +12,13 @@ func DeleteSession(sessionId string) error {
 	return err
 }
 
-func GetUserIDFromCookie(cookie string) (int, error) {
+func GetUserIDFromCookie(sessionID string) (int, error) {
 	var userID int
 	err := database.Database.QueryRow(`
 		SELECT user_id
 		FROM SESSIONS
 		WHERE id = ?
-	`, cookie).Scan(&userID)
+	`, sessionID).Scan(&userID)
 	if err != nil {
 		return 0, err
 	}
