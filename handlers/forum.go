@@ -125,5 +125,6 @@ func getUser(sessionId string) (User, error) {
 		sessionId,
 	).Scan(&user.Id, &user.Name, &user.Email) //, &user.Password)
 	// + reading password problem! -> fortunately not needed
+	// use sql.NullString or *string if needed
 	return user, err
 }

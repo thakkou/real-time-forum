@@ -56,4 +56,14 @@ func RegisterRoutes() {
 		"/logout",
 		middlewares.CheckSessionCookie(handlers.Logout, true),
 	)
+
+	http.HandleFunc(
+		"/auth/{provider}",
+		middlewares.CheckSessionCookie(handlers.OAuthLogin, false),
+	)
+
+	http.HandleFunc(
+		"/auth/{provider}/callback",
+		middlewares.CheckSessionCookie(handlers.OAuthCallback, false),
+	)
 }

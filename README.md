@@ -192,3 +192,4 @@ Seed categories loaded automatically on startup: General, Lifestyle, Health & Fi
   2. text length ranges
   3. favicon.ico
   4. link to home in website logo
+  5. api path for posts and comments creation

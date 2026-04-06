@@ -24,9 +24,6 @@ func main() {
 	http.HandleFunc("/static/", handlers.Static)
 	http.HandleFunc("/", handlers.Forum)
 
-	http.HandleFunc("/auth/{provider}", handlers.OAuthLogin)
-	http.HandleFunc("/auth/{provider}/callback", handlers.OAuthCallback)
-
 	routes.RegisterRoutes()
 
 	fmt.Println("Server running on http://localhost:8080")
