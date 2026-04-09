@@ -35,8 +35,11 @@
       <aside class="sidebar">
         <h3>Filter Posts</h3>
 
+
         <form method="GET" action="/" id="filter-form">
           <!-- My Posts / Liked Posts Buttons -->
+                      {{if .IsLoggedIn}}
+
           <div class="filter-group registered-only">
             <button type="button" name="my-creat-postes" class="filter-btn">
               My Created Posts
@@ -46,6 +49,7 @@
               Posts I Liked
             </button>
           </div>
+{{end}}
 
           <!-- Categories -->
           <div class="filter-group">

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"net/http"
 	"strings"
 	"time"
@@ -32,7 +33,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var userID int
-		var hashedPassword string
+		var hashedPassword sql.NullString
 
 		err := database.Database.QueryRow(
 			"SELECT id, password FROM users WHERE email = ? OR name = ?", identifier, identifier,
@@ -43,7 +44,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)); err != nil {
+		if !hashedPassword.Valid {
+			user := User{Message: "Account registred by provider"}
+			RenderTemplate(w, 401, "login.html", user)
+			return
+		}
+
+		if err = bcrypt.CompareHashAndPassword([]byte(hashedPassword.String), []byte(password)); err != nil {
 			user := User{Message: "Invalid email/username or password"}
 			RenderTemplate(w, 401, "login.html", user)
 			return

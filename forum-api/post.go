@@ -100,6 +100,11 @@ func GetPosts() ([]Post, error) {
 // this function is for filtrt posts
 
 func GetFiltrtPOst(userID int, categories []string, likedByMe, postedByMe bool) ([]Post, error) {
+	if len(categories) == 0 && userID == 0 {
+		postes, err := GetPosts()
+		return postes, err
+	}
+
 	db := database.Database
 
 	query := `

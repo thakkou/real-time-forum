@@ -17,6 +17,7 @@ type TemplateData struct {
 }
 
 func Forum(w http.ResponseWriter, r *http.Request) {
+	// Validate route
 	if r.URL.Path != "/" {
 		HandleError(w, http.StatusNotFound, "Page not found")
 		return
@@ -27,88 +28,63 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Parse template
 	t, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		HandleError(w, http.StatusInternalServerError, "Template error")
 		return
 	}
 
+	// Parse form
 	if err := r.ParseForm(); err != nil {
 		HandleError(w, http.StatusBadRequest, "Bad request")
 		return
 	}
 
 	categories := r.Form["categories"]
-	isLiked := r.FormValue("my-liked-post")
-	isByMe := r.FormValue("my-creat-postes")
+	isLiked := r.FormValue("my-liked-post") == "true"
+	isByMe := r.FormValue("my-creat-postes") == "true"
 
-	var posts []api.Post
+	var (
+		user   User
+		userId int
+	)
 
-	if len(categories) == 0 && isLiked != "true" && isByMe != "true" {
-		posts, err = api.GetPosts()
-		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Could not load posts")
-			return
-		}
-	} else {
-		cookie, cookieErr := r.Cookie("session_id")
-		if cookieErr != nil {
-			// no session — just show all posts, filters ignored
-			posts, err = api.GetPosts()
-			if err != nil {
-				HandleError(w, http.StatusInternalServerError, "Could not load posts")
-				return
-			}
-		} else {
-			userId, err := api.GetUserIDFromCookie(cookie.Value)
-			if err != nil {
-				// invalid session — show all posts
-				posts, err = api.GetPosts()
-				if err != nil {
-					HandleError(w, http.StatusInternalServerError, "Could not load posts")
-					return
-				}
-			} else {
-				posts, err = api.GetFiltrtPOst(userId, categories, isLiked == "true", isByMe == "true")
-				if err != nil {
-					HandleError(w, http.StatusInternalServerError, "Could not load posts")
-					return
-				}
-			}
-		}
-	}
-
-	var buf bytes.Buffer
+	// Try to get user from cookie
 	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		if err := t.Execute(&buf, TemplateData{Posts: posts}); err != nil {
-			log.Printf("home template execute error: %v", err)
-			return
+	if err == nil {
+		userId, _ = api.GetUserIDFromCookie(cookie.Value)
+
+		user, err = getUser(cookie.Value)
+		if err != nil {
+			log.Println("error getting user:", err)
+			user = User{}
 		}
-		buf.WriteTo(w)
-		return
 	}
 
-	user, err := getUser(cookie.Value)
+	// Fetch posts
+	posts, err := api.GetFiltrtPOst(userId, categories, isLiked, isByMe)
 	if err != nil {
-		if err := t.Execute(&buf, TemplateData{Posts: posts}); err != nil {
-			log.Printf("home template execute error: %v", err)
-			return
-		}
-		buf.WriteTo(w)
-		return
+		log.Println("error getting posts:", err)
+		posts = []api.Post{} // fallback
 	}
 
-	api.CheckLikedPosts(posts, user.Id)
+	// Mark liked posts
+	if user.Id != 0 {
+		api.CheckLikedPosts(posts, user.Id)
+	}
 
+	// Prepare template data
 	data := TemplateData{
-		IsLoggedIn: true,
+		IsLoggedIn: user.Id != 0,
 		User:       user,
 		Posts:      posts,
 	}
 
-	if err = t.Execute(&buf, data); err != nil {
-		log.Println(err)
+	// Render template
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, data); err != nil {
+		log.Println("template execute error:", err)
 		HandleError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
