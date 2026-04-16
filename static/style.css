@@ -1003,6 +1003,7 @@ textarea {
 .image-upload {
   display: flex;
   flex-direction: column;
+  align-items: center; /* center everything */
   gap: 0.5rem;
 }
 
@@ -1013,18 +1014,25 @@ textarea {
 
 /* Custom button */
 .upload-label {
-  display: inline-block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 300px;              /* same as preview */
+  height: 30px;             /* optional: match preview height */
+
   font-family: var(--mono);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+
   color: var(--text-muted);
   border: 1px dashed var(--border-loud);
-  padding: 0.6rem 0.9rem;
   cursor: pointer;
   transition: all 0.15s ease;
   border-radius: var(--radius);
-  width: fit-content;
+
+  text-align: center;
 }
 
 .upload-label:hover {
@@ -1074,6 +1082,12 @@ textarea {
 .image-preview.active .placeholder {
   display: none;
 }
+.post-image-container {
+  display: flex;
+  justify-content: center;
+}
+
+
 
 /* Optional: center preview on small screens */
 @media (max-width: 480px) {
