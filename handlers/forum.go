@@ -58,7 +58,7 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 
 		user, err = getUser(cookie.Value)
 		if err != nil {
-			log.Println("error getting user:", err)
+			// log.Println("error getting user:", err)
 			user = User{}
 		}
 	}

@@ -125,6 +125,7 @@ document.querySelectorAll('.filter-btn').forEach((button) => {
     });
 });
 
+// Checks file size & and previews image
 function previewImage(event) {
   const file = event.target.files[0];
   const preview = document.getElementById("imagePreview");
@@ -132,14 +133,14 @@ function previewImage(event) {
 
   if (!file) return;
 
-  // ✅ Size check (20MB)
+  // Size check (20MB)
   if (file.size > 20 * 1024 * 1024) {
     alert("Image must be under 20MB");
     event.target.value = "";
     return;
   }
-FileReader
-  // ✅ Preview
+  
+  // Preview
   const reader = new FileReader();
   reader.onload = function(e) {
     img.src = e.target.result;

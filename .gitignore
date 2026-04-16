@@ -1,2 +1,4 @@
 database/forum.db
 .env
+uploads/*
+todo

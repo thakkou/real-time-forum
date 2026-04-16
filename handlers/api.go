@@ -17,39 +17,26 @@ import (
 )
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("creat a postes", r.URL.Path)
 	if r.URL.Path != "/api/posts/create" {
-		fmt.Println("not path")
-
-		HandleError(w, http.StatusNotFound, "Not found")
+		HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
+
 	if r.Method != http.MethodPost {
-		HandleError(w, http.StatusMethodNotAllowed, "Not Allowed")
-
+		HandleError(w, http.StatusMethodNotAllowed, "Method not Allowed")
 		return
 	}
 
-	cookie, _ := r.Cookie("session_id")
-	userId, err := api.GetUserIDFromCookie(cookie.Value)
+	// check the size of dat entry
+	err := r.ParseMultipartForm(20 << 20) // 20 MB
 	if err != nil {
-		HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
-		return
-	}
-	// check the size of dat entery
-
-	err = r.ParseMultipartForm(25 << 20) // 25 MB
-	if err != nil {
-		fmt.Println("err", err)
-		HandleError(w, http.StatusBadRequest, "error data")
-
+		HandleError(w, http.StatusBadRequest, "Image max size is 20Mb")
 		return
 	}
 
 	title := strings.TrimSpace(r.FormValue("title"))
 	text := strings.TrimSpace(r.FormValue("text"))
 	categories := r.Form["categories"]
-	// file
 
 	if title == "" || text == "" {
 		HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
@@ -64,9 +51,17 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		HandleError(w, http.StatusBadRequest, "At least one category must be selected")
 		return
 	}
+
+	// get userId
+	cookie, _ := r.Cookie("session_id")
+	userId, err := api.GetUserIDFromCookie(cookie.Value)
+	if err != nil {
+		HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
+		return
+	}
+
 	// add image
 	var imageUri string // default empty
-
 	file, fileHeader, err := r.FormFile("image")
 	if err != nil {
 		fmt.Println("No image uploaded, continuing without it")

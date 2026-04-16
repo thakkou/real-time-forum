@@ -38,8 +38,7 @@
 
         <form method="GET" action="/" id="filter-form">
           <!-- My Posts / Liked Posts Buttons -->
-                      {{if .IsLoggedIn}}
-
+          {{if .IsLoggedIn}}
           <div class="filter-group registered-only">
             <button type="button" name="my-creat-postes" class="filter-btn">
               My Created Posts
@@ -49,7 +48,7 @@
               Posts I Liked
             </button>
           </div>
-{{end}}
+          {{end}}
 
           <!-- Categories -->
           <div class="filter-group">
@@ -90,31 +89,35 @@
         <!-- CREATE POST (REGISTERED USERS ONLY) -->
         <section class="create-post">
           <h2>Create New Post</h2>
-<form action="/api/posts/create" method="POST" enctype="multipart/form-data">            <input type="text" name="title" placeholder="Post title" maxlength="255" required />
-
+          <form action="/api/posts/create" method="POST" enctype="multipart/form-data">
+            <input type="text" name="title" placeholder="Post title" maxlength="255" required />
             <textarea
               name="text"
               placeholder="Write your post..."
               maxlength="1000"
               required
             ></textarea>
+
+            <!-- Image upload -->
             <div class="image-upload">
-  <label class="upload-label">
-    <input 
-      type="file" 
-      name="image" 
-      accept="image/*"
-      onchange="previewImage(event)"
-    />
-    <span class="upload-span" >+ Add Image (max 20MB)</span>
-  </label>
+              <label class="upload-label">
+                <input 
+                  type="file" 
+                  name="image" 
+                  accept="image/*"
+                  onchange="previewImage(event)"
+                />
+                <!-- accept="image/*" only allows image files, but doesnt guarantee it is an image -->
+                <span class="upload-span" >+ Add Image (max 20MB)</span>
+              </label>
 
-  <div class="image-preview" id="imagePreview">
-    <span class="placeholder">No image selected</span>
-    <img id="previewImg" />
-  </div>
-</div>
+              <div class="image-preview" id="imagePreview">
+                <span class="placeholder">No image selected</span>
+                <img id="previewImg" />
+              </div>
+            </div>
 
+            <!-- choice of categories -->
             <div class="categories">
               <label><input type="checkbox" name="categories" value="General" checked /> General</label>
               <label><input type="checkbox" name="categories" value="Lifestyle" /> Lifestyle</label>
@@ -200,15 +203,15 @@
 
               <span class="post-meta">Posted by {{.Username}} · {{.TimeAgo}}</span>
             </div>
-                    {{if .Image}}
-<div class="post-image-container" style="margin: 1rem 0;">
-    <div class="image-preview active">
-        <img src="{{.Image}}" alt="Post image"
-             onerror="this.onerror=null;this.src='/static/No_Image_Available.jpg';">
-        
-    </div>
-</div>
-{{end}}
+
+            {{if .Image}}
+            <div class="post-image-container" style="margin: 1rem 0;">
+                <div class="image-preview active">
+                    <img src="{{.Image}}" alt="Post image"
+                        onerror="this.onerror=null;this.src='/static/No_Image_Available.jpg';">
+                </div>
+            </div>
+            {{end}}
 
             <div class="post-body">
               <p>{{.Text}}</p>
