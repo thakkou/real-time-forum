@@ -20,7 +20,7 @@ func main() {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
 
-	http.HandleFunc("/static/", handlers.Static)
+	http.HandleFunc("/assets/", handlers.Static)
 	http.HandleFunc("/uploads/", handlers.Static)
 
 	http.HandleFunc("/", handlers.Forum)

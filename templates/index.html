@@ -4,9 +4,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <title>01 Forum</title>
-    <link rel="stylesheet" href="/static/style.css" />
-    <script src="/static/script.js" defer></script>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script src="/assets/script.js" defer></script>
     <!-- Modern best practice: 
      1. Script downloads in parallel
      2. Executes after HTML is fully parsed
@@ -16,7 +17,9 @@
     <!-- HEADER -->
 
     <header class="navbar">
-      <div class="logo">01Forum</div>
+      <div class="logo">
+        <a href="/" style="text-decoration: none; color: inherit;">01Forum</a>
+      </div>
       <div class="auth-buttons">
         {{if .IsLoggedIn}}
         <span class="welcome">Welcome, {{.User.Name}}</span>
@@ -208,7 +211,7 @@
             <div class="post-image-container" style="margin: 1rem 0;">
                 <div class="image-preview active">
                     <img src="{{.Image}}" alt="Post image"
-                        onerror="this.onerror=null;this.src='/static/No_Image_Available.jpg';">
+                        onerror="this.onerror=null;this.src='/assets/default.jpg';">
                 </div>
             </div>
             {{end}}
