@@ -23,12 +23,20 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPost {
-		HandleError(w, http.StatusMethodNotAllowed, "Method not Allowed")
+		HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	// check the size of dat entry
-	err := r.ParseMultipartForm(20 << 20) // 20 MB
+	// check the size of data entry
+	const maxImageSize int64 = 20 << 20 // 20 MB
+
+	// Layer 1: MaxBytesReader — cuts the connection early at network level
+	// slightly padded to account for multipart boundaries and form fields overhead
+	r.Body = http.MaxBytesReader(w, r.Body, 21<<20) // 21 MB
+
+	err := r.ParseMultipartForm(maxImageSize)
+	// ParseMultipartForm sets the in-memory buffer limit.
+	// If the file exceeds that limit, Go silently spills the overflow to a temp file on disk.
 	if err != nil {
 		HandleError(w, http.StatusBadRequest, "Image max size is 20Mb")
 		return
@@ -62,12 +70,33 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	// add image
 	var imageUri string // default empty
-	file, fileHeader, err := r.FormFile("image")
+	file, header, err := r.FormFile("image")
 	if err != nil {
 		fmt.Println("No image uploaded, continuing without it")
 	} else {
 		defer file.Close()
-		imageUri, err = SaveImage(file, fileHeader)
+
+		// Layer 2: header.Size — fast pre-check, avoids reading the file at all (depends on content-length)
+		// not 100% trustworthy (client-declared) but useful to reject obviously large files early
+		if header.Size > maxImageSize {
+			HandleError(w, http.StatusBadRequest, "Image max size is 20MB")
+			return
+		}
+
+		// Layer 3: io.LimitReader — trustworthy precise enforcement on actual bytes
+		// reads up to maxFileSize+1 to detect if file exceeds the limit
+		limitedReader := io.LimitReader(file, maxImageSize+1)
+		fileBytes, err := io.ReadAll(limitedReader)
+		if err != nil {
+			HandleError(w, http.StatusInternalServerError, "Internal server error")
+			return
+		}
+		if int64(len(fileBytes)) > maxImageSize {
+			HandleError(w, http.StatusRequestEntityTooLarge, "Image max size is 20MB")
+			return
+		}
+
+		imageUri, err = SaveImage(file, header)
 		if err != nil {
 			HandleError(w, http.StatusInternalServerError, "Could not save image")
 			return

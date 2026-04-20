@@ -135,9 +135,12 @@ function previewImage(event) {
 
   // Size check (20MB)
   if (file.size > 20 * 1024 * 1024) {
-    alert("Image must be under 20MB");
     event.target.value = "";
+    document.getElementById("image-error").style.display = "block";
+    document.getElementById("image-error").textContent = "Max file size: 20Mb";
     return;
+  } else {
+    document.getElementById("image-error").style.display = "none";
   }
   
   // Preview

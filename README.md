@@ -130,6 +130,20 @@ go run .
 | Filter by category                      | Everyone              |
 | Filter by "my posts" or "posts I liked" | Registered users only |
 
+### OAuth
+
+Create a .env file and set provider's client id and secret:
+
+* Google:
+  1. create project & app (Google developer console)
+  2. create client (id & secret)
+  3. set google provider's variables: GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET
+
+* Github:
+  1. Create an OAuth app (Settings > developer settings > oauth apps)
+  2. Generate a new client secret
+  3. set github provider's variables: GITHUB_CLIENT_ID & GITHUB_CLIENT_SECRET
+
 ---
 
 ## Database
