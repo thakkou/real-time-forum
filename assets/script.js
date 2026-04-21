@@ -142,6 +142,18 @@ function previewImage(event) {
   } else {
     document.getElementById("image-error").style.display = "none";
   }
+
+  // check Mime type (images only)
+  // All standard image MIME types are under the image/ umbrella.
+  // Caveats: some browsers (or drag & drop cases) may give empty file.type
+  if (!file.type || !file.type.startsWith("image/")) {
+    event.target.value = "";
+    document.getElementById("image-error").style.display = "block";
+    document.getElementById("image-error").textContent = "Image file types only";
+    return;
+  } else {
+    document.getElementById("image-error").style.display = "none";
+  }
   
   // Preview
   const reader = new FileReader();

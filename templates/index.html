@@ -110,7 +110,7 @@
                   accept="image/*"
                   onchange="previewImage(event)"
                 />
-                <!-- accept="image/*" only allows image files, but doesnt guarantee it is an image -->
+                <!-- accept="image/*" only filter the file picker UI, but doesnt guarantee it is an image -->
                 <span class="upload-span" >+ Add Image (max 20MB)</span>
               </label>
 
@@ -219,7 +219,7 @@
             {{end}}
 
             <div class="post-body">
-              <p>{{.Text}}</p>
+              <pre>{{.Text}}</pre>
             </div>
 
             <div class="post-actions">

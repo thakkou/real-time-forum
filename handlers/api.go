@@ -50,6 +50,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
 		return
 	}
+	text = strings.ReplaceAll(text, "\r\n", "\n")
 	if len(title) > 255 || len(text) > 1000 {
 		HandleError(w, http.StatusBadRequest, "Title cannot exceed 255 characters")
 		return
@@ -72,6 +73,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	var imageUri string // default empty
 	file, header, err := r.FormFile("image")
 	if err != nil {
+		// post without image is handled!
 		fmt.Println("No image uploaded, continuing without it")
 	} else {
 		defer file.Close()
@@ -93,6 +95,25 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		}
 		if int64(len(fileBytes)) > maxImageSize {
 			HandleError(w, http.StatusRequestEntityTooLarge, "Image max size is 20MB")
+			return
+		}
+
+		// Check if file is valid image
+		buffer := make([]byte, 512)
+		file.Seek(0, 0) // without it, Read may give EOF error
+		_, err = file.Read(buffer)
+		if err != nil && err != io.EOF {
+			HandleError(w, http.StatusInternalServerError, "Could not save image")
+			return
+		}
+		// Reset file pointer so it can be read again later
+		if _, err := file.Seek(0, 0); err != nil {
+			HandleError(w, http.StatusInternalServerError, "Could not save image")
+			return
+		}
+		contentType := http.DetectContentType(buffer)
+		if !strings.HasPrefix(contentType, "image/") { // svg not handled: complicated + unsafe xml
+			HandleError(w, http.StatusBadRequest, "Invalid image type")
 			return
 		}
 
@@ -332,14 +353,13 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func SaveImage(file io.Reader, fileHeader *multipart.FileHeader) (string, error) {
+func SaveImage(file multipart.File, fileHeader *multipart.FileHeader) (string, error) {
 	// Ensure uploads directory exists
 	err := os.MkdirAll("./uploads", os.ModePerm)
 	if err != nil {
 		return "", fmt.Errorf("unable to create uploads directory: %w", err)
 	}
 
-	// rand.Seed(time.Now().UnixNano())
 	ext := filepath.Ext(fileHeader.Filename) // keep original extension
 	newName := fmt.Sprintf("%d_%d%s", time.Now().UnixNano(), rand.Intn(10000), ext)
 	filePath := filepath.Join("./uploads", newName)
