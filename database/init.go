@@ -14,6 +14,7 @@ func Init() error {
 	var err error
 
 	Database, err = sql.Open("sqlite3", "./database/forum.db?_foreign_keys=on")
+	// _foreign_keys: allows delete on cascade + prevent unrelated fields
 	if err != nil {
 		return fmt.Errorf("can't open/create forum.db: %v", err)
 	}
