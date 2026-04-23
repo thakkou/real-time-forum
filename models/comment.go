@@ -19,6 +19,26 @@ type Comment struct {
 	IsLiked                 int // 1:liked, 0:none, -1:disliked
 }
 
+// TimeAgo
+func TimeAgo(t time.Time) string {
+	d := time.Since(t)
+
+	if d < time.Minute {
+		return fmt.Sprintf("%d seconds ago", int(d.Seconds()))
+	}
+	if d < time.Hour {
+		return fmt.Sprintf("%d minutes ago", int(d.Minutes()))
+	}
+	if d < 24*time.Hour {
+		return fmt.Sprintf("%d hours ago", int(d.Hours()))
+	}
+	if d < 30*24*time.Hour {
+		return fmt.Sprintf("%d days ago", int(d.Hours()/24))
+	}
+	return fmt.Sprintf("%d months ago", int(d.Hours()/(24*30)))
+}
+
+// GetCommentsByPost
 func GetCommentsByPost(postId int) ([]Comment, error) {
 	var comments []Comment
 	rows, err := database.Database.Query(
@@ -45,7 +65,7 @@ func GetCommentsByPost(postId int) ([]Comment, error) {
 		}
 
 		// get timeago
-		c.TimeAgo = timeAgo(c.Created_at)
+		c.TimeAgo = TimeAgo(c.Created_at)
 
 		// get reactions
 		if c.LikeCount, c.DislikeCount, err = GetReactionsByComment(c.Id); err != nil {
@@ -61,6 +81,7 @@ func GetCommentsByPost(postId int) ([]Comment, error) {
 	return comments, nil
 }
 
+// DeleteComment
 func DeleteComment(commentId, userId int) error {
 	tx, err := database.Database.Begin()
 	if err != nil {

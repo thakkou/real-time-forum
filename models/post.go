@@ -24,24 +24,7 @@ type Post struct {
 	Image                   string
 }
 
-func timeAgo(t time.Time) string {
-	d := time.Since(t)
-
-	if d < time.Minute {
-		return fmt.Sprintf("%d seconds ago", int(d.Seconds()))
-	}
-	if d < time.Hour {
-		return fmt.Sprintf("%d minutes ago", int(d.Minutes()))
-	}
-	if d < 24*time.Hour {
-		return fmt.Sprintf("%d hours ago", int(d.Hours()))
-	}
-	if d < 30*24*time.Hour {
-		return fmt.Sprintf("%d days ago", int(d.Hours()/24))
-	}
-	return fmt.Sprintf("%d months ago", int(d.Hours()/(24*30)))
-}
-
+// GetPosts
 func GetPosts() ([]Post, error) {
 	var posts []Post
 	// here i will check the categories and filters
@@ -71,7 +54,7 @@ func GetPosts() ([]Post, error) {
 		}
 
 		// get timeago
-		p.TimeAgo = timeAgo(p.Created_at)
+		p.TimeAgo = TimeAgo(p.Created_at)
 
 		// get reactions
 		if p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id); err != nil {
@@ -171,7 +154,7 @@ func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe boo
 		}
 
 		// get timeago
-		p.TimeAgo = timeAgo(p.Created_at)
+		p.TimeAgo = TimeAgo(p.Created_at)
 
 		// get reactions
 		if p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id); err != nil {
@@ -198,37 +181,7 @@ func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe boo
 	return posts, nil
 }
 
-// Helper function to get categories for a specific post
-func GetCategoriesByPost(postId int) ([]string, error) {
-	var categories []string
-
-	rows, err := database.Database.Query(`
-		SELECT c.name
-		FROM category c
-		JOIN post_category pc ON c.id = pc.category_id
-		WHERE pc.post_id = ?
-		ORDER BY c.name
-	`, postId)
-	if err != nil {
-		return nil, fmt.Errorf("GetCategoriesByPost error: %v", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var category string
-		if err := rows.Scan(&category); err != nil {
-			return nil, fmt.Errorf("GetCategoriesByPost scan error: %v", err)
-		}
-		categories = append(categories, category)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("GetCategoriesByPost rows error: %v", err)
-	}
-
-	return categories, nil
-}
-
+// GetPostsOptimized
 func GetPostsOptimized() ([]Post, error) {
 	var posts []Post
 
@@ -270,7 +223,7 @@ func GetPostsOptimized() ([]Post, error) {
 		}
 
 		// get timeago
-		p.TimeAgo = timeAgo(p.Created_at)
+		p.TimeAgo = TimeAgo(p.Created_at)
 
 		// get reactions
 		if p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id); err != nil {
@@ -299,6 +252,7 @@ func GetPostsOptimized() ([]Post, error) {
 	return posts, nil
 }
 
+// CheckLikedPosts
 func CheckLikedPosts(posts []Post, userId int) {
 	for i, post := range posts {
 		_ = database.Database.QueryRow(
@@ -317,6 +271,7 @@ func CheckLikedPosts(posts []Post, userId int) {
 	}
 }
 
+// DeletePost
 func DeletePost(postId, userId int) error {
 	tx, err := database.Database.Begin()
 	if err != nil {

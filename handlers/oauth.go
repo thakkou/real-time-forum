@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"forum/database"
+	"forum/utilities"
 
 	"github.com/google/uuid"
 )
@@ -22,6 +23,7 @@ var (
 	GITHUB_CLIENT_SECRET string
 )
 
+// OAuthLogin
 func OAuthLogin(w http.ResponseWriter, r *http.Request) {
 	var baseURL, client_id, scope string
 
@@ -38,7 +40,7 @@ func OAuthLogin(w http.ResponseWriter, r *http.Request) {
 		scope = "read:user user:email"
 
 	default:
-		HandleError(w, http.StatusNotFound, "Unknown endpoint")
+		utilities.HandleError(w, http.StatusNotFound, "Unknown endpoint")
 	}
 
 	// Generate a random state token to prevent CSRF
@@ -70,6 +72,7 @@ func OAuthLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
+// OAuthCallback
 func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	var tokenURL, client_id, client_secret, userInfoURL string
 
@@ -88,7 +91,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		userInfoURL = "https://api.github.com/user"
 
 	default:
-		HandleError(w, http.StatusNotFound, "Unknown endpoint")
+		utilities.HandleError(w, http.StatusNotFound, "Unknown endpoint")
 	}
 
 	// 1. Validate state to prevent CSRF
@@ -107,7 +110,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	// 3. Exchange authorization code for tokens
 	code := r.URL.Query().Get("code")
-	tokenData, err := exchangeCode(provider, tokenURL, client_id, client_secret, code)
+	tokenData, err := utilities.ExchangeCode(provider, tokenURL, client_id, client_secret, code)
 	if err != nil {
 		http.Error(w, "token exchange failed: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -115,9 +118,9 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	accessToken := tokenData.AccessToken
 
 	// 4. Fetch user info
-	user, err := fetchUserInfo(userInfoURL, accessToken)
+	user, err := utilities.FetchUserInfo(userInfoURL, accessToken)
 	if provider == "github" {
-		user.Email, _ = fetchUserEmail(accessToken)
+		user.Email, _ = utilities.FetchUserEmail(accessToken)
 	}
 	if err != nil {
 		http.Error(w, "failed to fetch user: "+err.Error(), http.StatusInternalServerError)
@@ -132,7 +135,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		"SELECT EXISTS(SELECT * FROM users WHERE email = ?)", user.Email,
 	).Scan(&emailExists)
 	if err != nil {
-		HandleError(w, http.StatusInternalServerError, "Database error")
+		utilities.HandleError(w, http.StatusInternalServerError, "Database error")
 		return
 	}
 	var newUsername string
@@ -151,7 +154,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 				"SELECT EXISTS(SELECT * FROM users WHERE name = ?)", newUsername,
 			).Scan(&nameExists)
 			if err != nil {
-				HandleError(w, http.StatusInternalServerError, "Database error")
+				utilities.HandleError(w, http.StatusInternalServerError, "Database error")
 				return
 			}
 		}
@@ -182,7 +185,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	// Delete any existing sessions for this user
 	_, err = database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
 	if err != nil {
-		HandleError(w, http.StatusInternalServerError, "Server error")
+		utilities.HandleError(w, http.StatusInternalServerError, "Server error")
 		return
 	}
 
@@ -194,7 +197,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		sessionID, expiration, userID,
 	)
 	if err != nil {
-		HandleError(w, http.StatusInternalServerError, "Server error")
+		utilities.HandleError(w, http.StatusInternalServerError, "Server error")
 		return
 	}
 

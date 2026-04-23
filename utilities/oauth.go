@@ -1,4 +1,4 @@
-package handlers
+package utilities
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	"forum/models"
 )
 
 // func generateState() string {
@@ -36,7 +38,9 @@ type TokenResponse struct {
 // 	Avatar  string `json:"avatar_url"` // github avatar
 // }
 
-func exchangeCode(provider, tokenURL, client_id, client_secret, code string) (*TokenResponse, error) {
+var redirectURI = "http://localhost:8080/auth/google/callback"
+
+func ExchangeCode(provider, tokenURL, client_id, client_secret, code string) (*TokenResponse, error) {
 	var resp *http.Response
 	var err error
 
@@ -111,7 +115,7 @@ func exchangeCode(provider, tokenURL, client_id, client_secret, code string) (*T
 	// return &t, nil
 }
 
-func fetchUserInfo(userInfoURL, accessToken string) (*User, error) { // UserInfo
+func FetchUserInfo(userInfoURL, accessToken string) (*models.User, error) { // UserInfo
 	// req, _ := http.NewRequest("GET", userURL, nil)
 	// req.Header.Set("Authorization", "Bearer "+accessToken)
 
@@ -145,12 +149,12 @@ func fetchUserInfo(userInfoURL, accessToken string) (*User, error) { // UserInfo
 
 	userBody, _ := io.ReadAll(userResp.Body)
 
-	var user User // UserInfo
+	var user models.User // UserInfo
 	json.Unmarshal(userBody, &user)
 	return &user, nil
 }
 
-func fetchUserEmail(accessToken string) (string, error) {
+func FetchUserEmail(accessToken string) (string, error) {
 	req, _ := http.NewRequest("GET", "https://api.github.com/user/emails", nil)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Accept", "application/vnd.github+json") // use it everywhere, why ?!

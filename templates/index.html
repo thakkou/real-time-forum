@@ -86,83 +86,32 @@
           </div>
         </form>
       </aside>
+
       <!-- MAIN CONTENT -->
       <main class="content">
+
         {{if .IsLoggedIn}}
         <!-- CREATE POST (REGISTERED USERS ONLY) -->
         <section class="create-post">
-          <h2>Create New Post</h2>
-          <form action="/api/posts/create" method="POST" enctype="multipart/form-data">
-            <!-- Title -->
-            <input type="text" name="title" placeholder="Post title" maxlength="255" required />
+          <details>
+            <summary>
+              <h2>Create New Post</h2>
+            </summary>
+            <form action="/api/posts/create" method="POST" enctype="multipart/form-data">
+              <!-- Title -->
+              <input type="text" name="title" placeholder="Post title" maxlength="255" required />
 
-            <!-- Text -->
-            <textarea
-              name="text"
-              placeholder="Write your post..."
-              maxlength="1000"
-              required
-            ></textarea>
+              <!-- Text -->
+              <textarea
+                name="text"
+                placeholder="Write your post..."
+                maxlength="1000"
+                required
+              ></textarea>
 
-            <!-- Categories -->
-            <div class="categories">
-              <label><input type="checkbox" name="categories" value="General" checked /> General</label>
-              <label><input type="checkbox" name="categories" value="Lifestyle" /> Lifestyle</label>
-              <label><input type="checkbox" name="categories" value="Health & Fitness" /> Health & Fitness</label>
-              <label><input type="checkbox" name="categories" value="Travel" /> Travel</label>
-              <label><input type="checkbox" name="categories" value="Food & Cooking" /> Food & Cooking</label>
-              <label><input type="checkbox" name="categories" value="Education" /> Education</label>
-              <label><input type="checkbox" name="categories" value="Business" /> Business</label>
-              <label><input type="checkbox" name="categories" value="Finance" /> Finance</label>
-              <label><input type="checkbox" name="categories" value="Entertainment" /> Entertainment</label>
-              <label><input type="checkbox" name="categories" value="Sports" /> Sports</label>
-              <label><input type="checkbox" name="categories" value="Personal Dev" /> Personal Dev</label>
-              <label><input type="checkbox" name="categories" value="Culture" /> Culture</label>
-              <label><input type="checkbox" name="categories" value="News" /> News</label>
-            </div>
-
-            <!-- Image upload -->
-            <div class="image-upload">
-              <label class="upload-label">
-                <input 
-                  type="file" 
-                  name="image" 
-                  accept="image/*"
-                  onchange="previewImage(event)"
-                />
-                <!-- accept="image/*" only filter the file picker UI, but doesnt guarantee it is an image -->
-                <span class="upload-span" >+ Add Image (max 20MB)</span>
-              </label>
-
-              <div id="image-error" class="form-error" style="display: none; width: 100%; text-align: center;"></div>
-
-              <div class="post-image-container">
-                <div class="image-preview" id="imagePreview">
-                  <span class="placeholder">No image selected</span>
-                  <img id="previewImg" />
-                </div>
-              </div>
-            </div>
-
-            <button type="submit" class="btn primary">Publish</button>
-          </form>
-        </section>
-        {{end}}
-
-        <!-- MOBILE FILTER (visible only on small screens, below create-post) -->
-        <aside class="sidebar-mobile">
-          <h3>Filter Posts</h3>
-          <form method="GET" action="/">
-            <div class="filter-group registered-only">
-              <button type="button" name="my-creat-postes" class="filter-btn">My Created Posts</button>
-              <button type="button" name="my-liked-post" class="filter-btn">Posts I Liked</button>
-            </div>
-            <div class="filter-group">
-              <h4>By Category</h4>
-              <input type="hidden" name="my-creat-postes" id="input-my-creat-postes-mobile" />
-              <input type="hidden" name="my-liked-post" id="input-my-liked-post-mobile" />
-              <div class="mobile-categories-grid">
-                <label><input type="checkbox" name="categories" value="General" /> General</label>
+              <!-- Categories -->
+              <div class="categories">
+                <label><input type="checkbox" name="categories" value="General" checked /> General</label>
                 <label><input type="checkbox" name="categories" value="Lifestyle" /> Lifestyle</label>
                 <label><input type="checkbox" name="categories" value="Health & Fitness" /> Health & Fitness</label>
                 <label><input type="checkbox" name="categories" value="Travel" /> Travel</label>
@@ -176,10 +125,71 @@
                 <label><input type="checkbox" name="categories" value="Culture" /> Culture</label>
                 <label><input type="checkbox" name="categories" value="News" /> News</label>
               </div>
-              <button type="submit" class="filter-btn">Apply Filters</button>
-              <a href="/" class="clear-btn">Clear Filters</a>
-            </div>
-          </form>
+
+              <!-- Image upload -->
+              <div class="image-upload">
+                <label class="upload-label">
+                  <input 
+                    type="file" 
+                    name="image" 
+                    accept="image/*"
+                    onchange="previewImage(event)"
+                  />
+                  <!-- accept="image/*" only filter the file picker UI, but doesnt guarantee it is an image -->
+                  <span class="upload-span" >+ Add Image (max 20MB)</span>
+                </label>
+
+                <div id="image-error" class="form-error" style="display: none; width: 100%; text-align: center;"></div>
+
+                <div class="post-image-container">
+                  <div class="image-preview" id="imagePreview">
+                    <span class="placeholder">No image selected</span>
+                    <img id="previewImg" />
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn primary">Publish</button>
+            </form>
+          </details>
+        </section>
+        {{end}}
+
+        <!-- MOBILE FILTER (visible only on small screens, below create-post) -->
+        <aside class="sidebar-mobile">
+          <details>
+            <summary>
+              <h3>Filter Posts</h3>
+            </summary>
+            <form method="GET" action="/">
+              <div class="filter-group registered-only">
+                <button type="button" name="my-creat-postes" class="filter-btn">My Created Posts</button>
+                <button type="button" name="my-liked-post" class="filter-btn">Posts I Liked</button>
+              </div>
+              <div class="filter-group">
+                <h4>By Category</h4>
+                <input type="hidden" name="my-creat-postes" id="input-my-creat-postes-mobile" />
+                <input type="hidden" name="my-liked-post" id="input-my-liked-post-mobile" />
+                <div class="mobile-categories-grid">
+                  <label><input type="checkbox" name="categories" value="General" /> General</label>
+                  <label><input type="checkbox" name="categories" value="Lifestyle" /> Lifestyle</label>
+                  <label><input type="checkbox" name="categories" value="Health & Fitness" /> Health & Fitness</label>
+                  <label><input type="checkbox" name="categories" value="Travel" /> Travel</label>
+                  <label><input type="checkbox" name="categories" value="Food & Cooking" /> Food & Cooking</label>
+                  <label><input type="checkbox" name="categories" value="Education" /> Education</label>
+                  <label><input type="checkbox" name="categories" value="Business" /> Business</label>
+                  <label><input type="checkbox" name="categories" value="Finance" /> Finance</label>
+                  <label><input type="checkbox" name="categories" value="Entertainment" /> Entertainment</label>
+                  <label><input type="checkbox" name="categories" value="Sports" /> Sports</label>
+                  <label><input type="checkbox" name="categories" value="Personal Dev" /> Personal Dev</label>
+                  <label><input type="checkbox" name="categories" value="Culture" /> Culture</label>
+                  <label><input type="checkbox" name="categories" value="News" /> News</label>
+                </div>
+                <button type="submit" class="filter-btn">Apply Filters</button>
+                <a href="/" class="clear-btn">Clear Filters</a>
+              </div>
+            </form>
+          </details>
         </aside>
 
         <!-- POSTS LIST -->

@@ -6,6 +6,7 @@ import (
 	"forum/database"
 )
 
+// ReactToPost
 func ReactToPost(userId, postId int, isLikeInt int) error {
 	var isLikedInt int
 	err := database.Database.QueryRow(
@@ -42,6 +43,7 @@ func ReactToPost(userId, postId int, isLikeInt int) error {
 	return nil
 }
 
+// ReactToComment
 func ReactToComment(userId, commentId int, isLikeInt int) error {
 	var isLikedInt int
 	err := database.Database.QueryRow(
@@ -77,6 +79,7 @@ func ReactToComment(userId, commentId int, isLikeInt int) error {
 	return nil
 }
 
+// GetReactionsByPost
 func GetReactionsByPost(postId int) (int, int, error) {
 	var like_count, dislike_count int
 	getNumOfReactions := func(is_like int, n *int) error {
@@ -95,6 +98,7 @@ func GetReactionsByPost(postId int) (int, int, error) {
 	return like_count, dislike_count, nil
 }
 
+// GetReactionsByComment
 func GetReactionsByComment(commentId int) (int, int, error) {
 	var like_count, dislike_count int
 	getNumOfReactions := func(is_like int, n *int) error {

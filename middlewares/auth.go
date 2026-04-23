@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"forum/database"
-	"forum/handlers"
 	"forum/models"
+	"forum/utilities"
 )
 
 // CheckSessionCookie validates session cookie and redirects depending on requiresAuth
@@ -37,14 +37,14 @@ func CheckSessionCookie(handler http.HandlerFunc, requiresAuth bool) http.Handle
 
 				// expired
 				models.DeleteSession(cookie.Value)
-				clearSessionCookie(w)
+				utilities.ClearSessionCookie(w)
 
 			case sql.ErrNoRows:
 				// session not found
-				clearSessionCookie(w)
+				utilities.ClearSessionCookie(w)
 
 			default:
-				handlers.HandleError(w, http.StatusInternalServerError, "Database error")
+				utilities.HandleError(w, http.StatusInternalServerError, "Database error")
 				return
 			}
 		}
@@ -54,15 +54,4 @@ func CheckSessionCookie(handler http.HandlerFunc, requiresAuth bool) http.Handle
 			handler(w, r)
 		}
 	}
-}
-
-func clearSessionCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1,
-		Expires:  time.Unix(0, 0),
-		HttpOnly: true,
-	})
 }

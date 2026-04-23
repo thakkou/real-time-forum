@@ -6,39 +6,41 @@ import (
 	"log"
 	"net/http"
 
-	"forum/database"
 	"forum/models"
+	"forum/utilities"
 )
 
+// TODO: moving to utilities caused cyclic import
 type TemplateData struct {
 	IsLoggedIn bool
-	User       User
+	User       models.User
 	Posts      []models.Post
 }
 
+// Forum
 func Forum(w http.ResponseWriter, r *http.Request) {
 	// Validate route
 	if r.URL.Path != "/" {
-		HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
 
 	if r.Method != http.MethodGet {
-		HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	// Parse template
 	t, err := template.ParseFiles("templates/index.html")
 	if err != nil {
-		HandleError(w, http.StatusInternalServerError, "Template error")
+		utilities.HandleError(w, http.StatusInternalServerError, "Template error")
 		return
 	}
 
 	// Parse form
 	if err := r.ParseForm(); err != nil {
 		// ParseForm parses the raw query from the URL and updates r.Form
-		HandleError(w, http.StatusBadRequest, "Bad request")
+		utilities.HandleError(w, http.StatusBadRequest, "Bad request")
 		return
 	}
 
@@ -47,7 +49,7 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 	isByMe := r.FormValue("my-creat-postes") == "true" // 2. needs format
 
 	var (
-		user   User
+		user   models.User
 		userId int
 	)
 
@@ -56,10 +58,10 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		userId, _ = models.GetUserIDFromCookie(cookie.Value)
 
-		user, err = getUser(cookie.Value)
+		user, err = models.GetUser(cookie.Value)
 		if err != nil {
 			// log.Println("error getting user:", err)
-			user = User{}
+			user = models.User{}
 		}
 	}
 
@@ -86,22 +88,11 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, data); err != nil {
 		log.Println("template execute error:", err)
-		HandleError(w, http.StatusInternalServerError, "Internal server error")
+		utilities.HandleError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	buf.WriteTo(w)
-}
-
-func getUser(sessionId string) (User, error) {
-	var user User
-	err := database.Database.QueryRow(
-		"SELECT u.id, u.name, u.email FROM USERS u INNER JOIN SESSIONS s ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > DATETIME('now')",
-		sessionId,
-	).Scan(&user.Id, &user.Name, &user.Email) //, &user.Password)
-	// + reading password problem! -> fortunately not needed
-	// use sql.NullString or *string if needed
-	return user, err
 }

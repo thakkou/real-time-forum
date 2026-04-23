@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"forum/database"
-	"forum/handlers"
+	"forum/utilities"
 )
 
 func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.HandlerFunc {
@@ -19,7 +19,7 @@ func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.Handler
 
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			handlers.HandleError(w, http.StatusInternalServerError, "Invalid IP address")
+			utilities.HandleError(w, http.StatusInternalServerError, "Invalid IP address")
 			return
 		}
 
@@ -35,18 +35,18 @@ func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.Handler
 				ip, r.URL.Path, time.Now(),
 			)
 			if err != nil {
-				handlers.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+				utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 				return
 			}
 			handler(w, r)
 			return
 		} else if err != nil {
-			handlers.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
 		if time.Since(lastRequest) < minInterval {
-			handlers.HandleError(w, http.StatusTooManyRequests, "Please wait before sending another request.")
+			utilities.HandleError(w, http.StatusTooManyRequests, "Please wait before sending another request.")
 			return
 		}
 
@@ -55,7 +55,7 @@ func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.Handler
 			time.Now(), ip, r.URL.Path,
 		)
 		if err != nil {
-			handlers.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 

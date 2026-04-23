@@ -3,27 +3,25 @@ package handlers
 import (
 	"fmt"
 	"io"
-	"math/rand"
-	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"forum/database"
 	"forum/models"
+	"forum/utilities"
 )
 
+// CreatePost
 func CreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/api/posts/create" {
-		HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
 
 	if r.Method != http.MethodPost {
-		HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -38,7 +36,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// ParseMultipartForm sets the in-memory buffer limit.
 	// If the file exceeds that limit, Go silently spills the overflow to a temp file on disk.
 	if err != nil {
-		HandleError(w, http.StatusBadRequest, "Image max size is 20Mb")
+		utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20Mb")
 		return
 	}
 
@@ -47,17 +45,17 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	categories := r.Form["categories"]
 
 	if title == "" || text == "" {
-		HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
+		utilities.HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
 		return
 	}
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	if len(title) > 255 || len(text) > 1000 {
-		HandleError(w, http.StatusBadRequest, "Title cannot exceed 255 characters")
+		utilities.HandleError(w, http.StatusBadRequest, "Title cannot exceed 255 characters")
 		return
 	}
 
 	if len(categories) == 0 {
-		HandleError(w, http.StatusBadRequest, "At least one category must be selected")
+		utilities.HandleError(w, http.StatusBadRequest, "At least one category must be selected")
 		return
 	}
 
@@ -65,7 +63,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("session_id")
 	userId, err := models.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
+		utilities.HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
 		return
 	}
 
@@ -81,7 +79,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		// Layer 2: header.Size — fast pre-check, avoids reading the file at all (depends on content-length)
 		// not 100% trustworthy (client-declared) but useful to reject obviously large files early
 		if header.Size > maxImageSize {
-			HandleError(w, http.StatusBadRequest, "Image max size is 20MB")
+			utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20MB")
 			return
 		}
 
@@ -90,11 +88,11 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		limitedReader := io.LimitReader(file, maxImageSize+1)
 		fileBytes, err := io.ReadAll(limitedReader)
 		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Internal server error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Internal server error")
 			return
 		}
 		if int64(len(fileBytes)) > maxImageSize {
-			HandleError(w, http.StatusRequestEntityTooLarge, "Image max size is 20MB")
+			utilities.HandleError(w, http.StatusRequestEntityTooLarge, "Image max size is 20MB")
 			return
 		}
 
@@ -103,30 +101,30 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		file.Seek(0, 0) // without it, Read may give EOF error
 		_, err = file.Read(buffer)
 		if err != nil && err != io.EOF {
-			HandleError(w, http.StatusInternalServerError, "Could not save image")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
 			return
 		}
 		// Reset file pointer so it can be read again later
 		if _, err := file.Seek(0, 0); err != nil {
-			HandleError(w, http.StatusInternalServerError, "Could not save image")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
 			return
 		}
 		contentType := http.DetectContentType(buffer)
 		if !strings.HasPrefix(contentType, "image/") { // svg not handled: complicated + unsafe xml
-			HandleError(w, http.StatusBadRequest, "Invalid image type")
+			utilities.HandleError(w, http.StatusBadRequest, "Invalid image type")
 			return
 		}
 
-		imageUri, err = SaveImage(file, header)
+		imageUri, err = utilities.SaveImage(file, header)
 		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Could not save image")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
 			return
 		}
 	}
 
 	tx, err := database.Database.Begin()
 	if err != nil {
-		HandleError(w, http.StatusInternalServerError, "Could not create post")
+		utilities.HandleError(w, http.StatusInternalServerError, "Could not create post")
 		return
 	}
 	defer tx.Rollback()
@@ -140,13 +138,13 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		imageUri,
 	)
 	if err != nil {
-		HandleError(w, http.StatusInternalServerError, "Could not create post")
+		utilities.HandleError(w, http.StatusInternalServerError, "Could not create post")
 		return
 	}
 
 	postID, err := result.LastInsertId()
 	if err != nil {
-		HandleError(w, http.StatusInternalServerError, "Could not retrieve post ID")
+		utilities.HandleError(w, http.StatusInternalServerError, "Could not retrieve post ID")
 		return
 	}
 
@@ -156,7 +154,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 			"SELECT id FROM category WHERE name = ?",
 			categoryName,
 		).Scan(&categoryID); err != nil {
-			HandleError(w, http.StatusBadRequest, "Invalid category: "+categoryName)
+			utilities.HandleError(w, http.StatusBadRequest, "Invalid category: "+categoryName)
 			return
 		}
 
@@ -165,26 +163,27 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 			postID,
 			categoryID,
 		); err != nil {
-			HandleError(w, http.StatusInternalServerError, "Could not associate categories with post")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not associate categories with post")
 			return
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		HandleError(w, http.StatusInternalServerError, "Could not save post")
+		utilities.HandleError(w, http.StatusInternalServerError, "Could not save post")
 		return
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// CreateComment
 func CreateComment(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/api/comments/create" {
-		HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
 	if r.Method != http.MethodPost {
-		HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -192,29 +191,29 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	text := strings.TrimSpace(r.FormValue("text"))
 
 	if text == "" {
-		HandleError(w, http.StatusBadRequest, "Comment cannot be empty")
+		utilities.HandleError(w, http.StatusBadRequest, "Comment cannot be empty")
 		return
 	}
 
 	if postId == "" {
-		HandleError(w, http.StatusBadRequest, "Invalid post")
+		utilities.HandleError(w, http.StatusBadRequest, "Invalid post")
 		return
 	}
 	if len(text) > 1000 {
-		HandleError(w, http.StatusBadRequest, "Comment cannot exceed 1000 characters")
+		utilities.HandleError(w, http.StatusBadRequest, "Comment cannot exceed 1000 characters")
 		return
 	}
 
 	_, err := strconv.Atoi(postId)
 	if err != nil {
-		HandleError(w, http.StatusBadRequest, "Invalid post ID")
+		utilities.HandleError(w, http.StatusBadRequest, "Invalid post ID")
 		return
 	}
 
 	cookie, _ := r.Cookie("session_id")
 	userId, err := models.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
+		utilities.HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
 		return
 	}
 	if _, err = database.Database.Exec(
@@ -224,159 +223,131 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		time.Now(),
 		text,
 	); err != nil {
-		HandleError(w, http.StatusInternalServerError, "Could not create comment")
+		utilities.HandleError(w, http.StatusInternalServerError, "Could not create comment")
 		return
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-///////////////////////////////////////////////////////////
-
+// PostResolver
 func PostResolver(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.PathValue("endpoint")
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		HandleError(w, http.StatusUnauthorized, "Not logged in")
+		utilities.HandleError(w, http.StatusUnauthorized, "Not logged in")
 		return
 	}
 
 	userId, err := models.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		HandleError(w, http.StatusUnauthorized, "Invalid session")
+		utilities.HandleError(w, http.StatusUnauthorized, "Invalid session")
 		return
 	}
 
 	postId, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		HandleError(w, http.StatusBadRequest, "Invalid post ID")
+		utilities.HandleError(w, http.StatusBadRequest, "Invalid post ID")
 		return
 	}
 
 	switch endpoint {
 	case "like":
 		if r.Method != http.MethodPost {
-			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 		if err := models.ReactToPost(userId, postId, 1); err != nil {
-			HandleError(w, http.StatusInternalServerError, "Could not react to post")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not react to post")
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	case "dislike":
 		if r.Method != http.MethodPost {
-			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 		if err := models.ReactToPost(userId, postId, -1); err != nil {
-			HandleError(w, http.StatusInternalServerError, "Could not react to post")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not react to post")
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	case "delete":
 		if r.Method != http.MethodPost {
-			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 		if err := models.DeletePost(postId, userId); err != nil {
-			HandleError(w, http.StatusForbidden, err.Error())
+			utilities.HandleError(w, http.StatusForbidden, err.Error())
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	default:
-		HandleError(w, http.StatusNotFound, "Unknown endpoint")
+		utilities.HandleError(w, http.StatusNotFound, "Unknown endpoint")
 	}
 }
 
+// CommentResolver
 func CommentResolver(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.PathValue("endpoint")
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		HandleError(w, http.StatusUnauthorized, "Not logged in")
+		utilities.HandleError(w, http.StatusUnauthorized, "Not logged in")
 		return
 	}
 
 	userId, err := models.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		HandleError(w, http.StatusUnauthorized, "Invalid session")
+		utilities.HandleError(w, http.StatusUnauthorized, "Invalid session")
 		return
 	}
 
 	commentId, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		HandleError(w, http.StatusBadRequest, "Invalid comment ID")
+		utilities.HandleError(w, http.StatusBadRequest, "Invalid comment ID")
 		return
 	}
 
 	switch endpoint {
 	case "like":
 		if r.Method != http.MethodPost {
-			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 		if err := models.ReactToComment(userId, commentId, 1); err != nil {
-			HandleError(w, http.StatusInternalServerError, "Could not react to comment")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not react to comment")
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	case "dislike":
 		if r.Method != http.MethodPost {
-			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 		if err := models.ReactToComment(userId, commentId, -1); err != nil {
-			HandleError(w, http.StatusInternalServerError, "Could not react to comment")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not react to comment")
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	case "delete":
 		if r.Method != http.MethodPost {
-			HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 		if err := models.DeleteComment(commentId, userId); err != nil {
-			HandleError(w, http.StatusForbidden, err.Error())
+			utilities.HandleError(w, http.StatusForbidden, err.Error())
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	default:
-		HandleError(w, http.StatusNotFound, "Unknown endpoint")
+		utilities.HandleError(w, http.StatusNotFound, "Unknown endpoint")
 	}
-}
-
-func SaveImage(file multipart.File, fileHeader *multipart.FileHeader) (string, error) {
-	// Ensure uploads directory exists
-	err := os.MkdirAll("./uploads", os.ModePerm)
-	if err != nil {
-		return "", fmt.Errorf("unable to create uploads directory: %w", err)
-	}
-
-	ext := filepath.Ext(fileHeader.Filename) // keep original extension
-	newName := fmt.Sprintf("%d_%d%s", time.Now().UnixNano(), rand.Intn(10000), ext)
-	filePath := filepath.Join("./uploads", newName)
-
-	// Create destination file
-
-	dst, err := os.Create(filePath)
-	if err != nil {
-		return "", fmt.Errorf("unable to create file: %w", err)
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, file)
-	if err != nil {
-		return "", fmt.Errorf("unable to save file: %w", err)
-	}
-
-	// Return the relative URL/path for DB insertion
-	return "/uploads/" + newName, nil
 }

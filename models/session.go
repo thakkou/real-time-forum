@@ -2,6 +2,7 @@ package models
 
 import "forum/database"
 
+// DeleteSession
 func DeleteSession(sessionId string) error {
 	// return database.Database.QueryRow(query).Err()
 	// db.exec vs db.queryrow in golang sqlite
@@ -12,6 +13,7 @@ func DeleteSession(sessionId string) error {
 	return err
 }
 
+// GetUserIDFromCookie
 func GetUserIDFromCookie(sessionID string) (int, error) {
 	var userID int
 	err := database.Database.QueryRow(`

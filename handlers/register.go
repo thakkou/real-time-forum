@@ -6,46 +6,29 @@ import (
 	"strings"
 
 	"forum/database"
+	"forum/models"
 	"forum/utilities"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
-	Id       int    `json:"id"`   // check for google
-	Name     string `json:"name"` // name or username: problem for providers!
-	Email    string `json:"email"`
-	Password string
-
-	// Not Used:
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	Age       int    `json:"age"`
-	Gender    string `json:"gender"`
-
-	// Not Stored:
-	confirmPassword string
-	Message         string
-	// Picture string `json:"picture"`    // gmail picture: sometimes cannot be loaded!
-	// Avatar  string `json:"avatar_url"` // github avatar
-}
-
+// Register
 func Register(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/register" {
-		HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
 
 	switch r.Method {
 	case http.MethodGet:
-		RenderTemplate(w, 200, "register.html", nil)
+		utilities.RenderTemplate(w, 200, "register.html", nil)
 
 	case http.MethodPost:
-		user := User{
+		user := models.User{
 			Name:            strings.TrimSpace(r.FormValue("name")), // nickname
 			Email:           strings.ToLower(strings.TrimSpace(r.FormValue("email"))),
 			Password:        r.FormValue("password"),
-			confirmPassword: r.FormValue("confirm_password"),
+			ConfirmPassword: r.FormValue("confirm_password"),
 
 			// Not used:
 			FirstName: strings.TrimSpace(r.FormValue("firstname")),
@@ -56,7 +39,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		user.Age, err = strconv.Atoi(r.FormValue("age"))
 		if err != nil {
 			user.Message = "Age: Not a number"
-			RenderTemplate(w, 400, "register.html", user)
+			utilities.RenderTemplate(w, 400, "register.html", user)
 			return
 		}
 
@@ -66,10 +49,10 @@ func Register(w http.ResponseWriter, r *http.Request) {
 . password         : 6 ~ 20  chars` // is there a newline at first of rules ?!
 
 		// 1. check emptiness
-		for _, f := range []string{user.Name, user.FirstName, user.LastName, user.Gender, user.Email, user.Password, user.confirmPassword} {
+		for _, f := range []string{user.Name, user.FirstName, user.LastName, user.Gender, user.Email, user.Password, user.ConfirmPassword} {
 			if f == "" {
 				user.Message = "All fields are required"
-				RenderTemplate(w, 400, "register.html", user)
+				utilities.RenderTemplate(w, 400, "register.html", user)
 				return
 			}
 		}
@@ -82,13 +65,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			!utilities.IsValidEmail(user.Email) ||
 			!utilities.IsValidPassword(user.Password) {
 			user.Message = rules
-			RenderTemplate(w, 400, "register.html", user)
+			utilities.RenderTemplate(w, 400, "register.html", user)
 			return
 		}
 		// 3. check password match
-		if user.Password != user.confirmPassword {
+		if user.Password != user.ConfirmPassword {
 			user.Message = "Password not confirmed"
-			RenderTemplate(w, 400, "register.html", user)
+			utilities.RenderTemplate(w, 400, "register.html", user)
 			return
 		}
 
@@ -101,12 +84,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)", user.Email,
 		).Scan(&emailExists)
 		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Database error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
 		if emailExists {
 			user.Message = "Email already registered" // not good practice
-			RenderTemplate(w, 400, "register.html", user)
+			utilities.RenderTemplate(w, 400, "register.html", user)
 			return
 		}
 
@@ -122,18 +105,18 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			"SELECT EXISTS(SELECT 1 FROM users WHERE name = ? COLLATE NOCASE)", user.Name,
 		).Scan(&nameExists)
 		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Database error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
 		if nameExists {
 			user.Message = "Username already taken"
-			RenderTemplate(w, 400, "register.html", user)
+			utilities.RenderTemplate(w, 400, "register.html", user)
 			return
 		}
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Password hashing error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Password hashing error")
 			return
 		}
 
@@ -154,13 +137,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		// create session if you want to redirect to its page
 		if err != nil {
 			// log.Println(err.Error())
-			HandleError(w, http.StatusInternalServerError, "Could not create account")
+			utilities.HandleError(w, http.StatusInternalServerError, "Could not create account")
 			return
 		}
 
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 
 	default:
-		HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }

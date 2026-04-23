@@ -5,15 +5,17 @@ import (
 	"net/http"
 
 	"forum/models"
+	"forum/utilities"
 )
 
+// Logout
 func Logout(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/logout" {
-		HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
 	if r.Method != http.MethodPost {
-		HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -28,7 +30,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	http.SetCookie(w, &http.Cookie{ // delete cookie
+	http.SetCookie(w, &http.Cookie{ // delete cookie ------------------- TODO: function already exists
 		Name:     "session_id",
 		Value:    "",
 		Path:     "/",

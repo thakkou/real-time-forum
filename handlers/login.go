@@ -7,20 +7,23 @@ import (
 	"time"
 
 	"forum/database"
+	"forum/models"
+	"forum/utilities"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Login
 func Login(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/login" {
-		HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page not found")
 		return
 	}
 
 	switch r.Method {
 	case http.MethodGet:
-		RenderTemplate(w, 200, "login.html", nil)
+		utilities.RenderTemplate(w, 200, "login.html", nil)
 
 	case http.MethodPost:
 		identifier := strings.TrimSpace(r.FormValue("email"))
@@ -28,7 +31,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 		// Basic input validation
 		if identifier == "" || password == "" {
-			HandleError(w, http.StatusBadRequest, "Email/username and password are required")
+			utilities.HandleError(w, http.StatusBadRequest, "Email/username and password are required")
 			return
 		}
 
@@ -39,27 +42,27 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			"SELECT id, password FROM users WHERE email = ? OR name = ?", identifier, identifier,
 		).Scan(&userID, &hashedPassword)
 		if err != nil {
-			user := User{Message: "Invalid email/username or password"}
-			RenderTemplate(w, 400, "login.html", user)
+			user := models.User{Message: "Invalid email/username or password"}
+			utilities.RenderTemplate(w, 400, "login.html", user)
 			return
 		}
 
 		if !hashedPassword.Valid {
-			user := User{Message: "Account registred by provider"}
-			RenderTemplate(w, 401, "login.html", user)
+			user := models.User{Message: "Account registred by provider"}
+			utilities.RenderTemplate(w, 401, "login.html", user)
 			return
 		}
 
 		if err = bcrypt.CompareHashAndPassword([]byte(hashedPassword.String), []byte(password)); err != nil {
-			user := User{Message: "Invalid email/username or password"}
-			RenderTemplate(w, 401, "login.html", user)
+			user := models.User{Message: "Invalid email/username or password"}
+			utilities.RenderTemplate(w, 401, "login.html", user)
 			return
 		}
 
 		// Delete any existing sessions for this user
 		_, err = database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
 		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Server error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Server error")
 			return
 		}
 
@@ -71,7 +74,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			sessionID, expiration, userID,
 		)
 		if err != nil {
-			HandleError(w, http.StatusInternalServerError, "Server error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Server error")
 			return
 		}
 
@@ -85,6 +88,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	default:
-		HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }

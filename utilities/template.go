@@ -1,10 +1,28 @@
-package handlers
+package utilities
 
 import (
 	"bytes"
 	"html/template"
 	"net/http"
 )
+
+// RenderTemplate
+func RenderTemplate(w http.ResponseWriter, status int, tmpl string, data any) {
+	t, err := template.ParseFiles("templates/" + tmpl)
+	if err != nil {
+		HandleError(w, http.StatusInternalServerError, "Template error")
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, data); err != nil {
+		HandleError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	w.WriteHeader(status)
+	buf.WriteTo(w)
+}
 
 // HandleError renders an error page with the given status and message
 func HandleError(w http.ResponseWriter, code int, message string) {

@@ -348,6 +348,14 @@ button {
   margin-bottom: 1rem;
 }
 
+summary {
+  list-style: none; /* removes marker in some browsers */
+}
+
+summary::-webkit-details-marker {
+  display: none; /* removes arrow in Chrome, Safari, Edge */
+}
+
 /* ── Empty State ─────────────────────────────────────────────── */
 .no-post {
   background: var(--surface);
