@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	api "forum/forum-api"
+	"forum/models"
 )
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +22,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.DeleteSession(cookie.Value)
+	err = models.DeleteSession(cookie.Value)
 	// + need to remove cookie from storage
 	if err != nil {
 		log.Println(err)

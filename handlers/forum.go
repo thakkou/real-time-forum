@@ -7,13 +7,13 @@ import (
 	"net/http"
 
 	"forum/database"
-	api "forum/forum-api"
+	"forum/models"
 )
 
 type TemplateData struct {
 	IsLoggedIn bool
 	User       User
-	Posts      []api.Post
+	Posts      []models.Post
 }
 
 func Forum(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +54,7 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 	// Try to get user from cookie
 	cookie, err := r.Cookie("session_id")
 	if err == nil {
-		userId, _ = api.GetUserIDFromCookie(cookie.Value)
+		userId, _ = models.GetUserIDFromCookie(cookie.Value)
 
 		user, err = getUser(cookie.Value)
 		if err != nil {
@@ -64,15 +64,15 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch posts
-	posts, err := api.GetFilteredPosts(userId, categories, isLiked, isByMe)
+	posts, err := models.GetFilteredPosts(userId, categories, isLiked, isByMe)
 	if err != nil {
 		log.Println("error getting posts:", err)
-		posts = []api.Post{} // fallback
+		posts = []models.Post{} // fallback
 	}
 
 	// Mark liked posts
 	if user.Id != 0 {
-		api.CheckLikedPosts(posts, user.Id)
+		models.CheckLikedPosts(posts, user.Id)
 	}
 
 	// Prepare template data

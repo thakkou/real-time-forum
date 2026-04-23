@@ -2,39 +2,32 @@ package handlers
 
 import (
 	"net/http"
-	"net/mail"
-	"regexp"
+	"strconv"
 	"strings"
 
 	"forum/database"
+	"forum/utilities"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	Id              int    `json:"id"`   // check for google
-	Name            string `json:"name"` // name or username: problem for providers!
-	Email           string `json:"email"`
-	Password        string
+	Id       int    `json:"id"`   // check for google
+	Name     string `json:"name"` // name or username: problem for providers!
+	Email    string `json:"email"`
+	Password string
+
+	// Not Used:
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+	Age       int    `json:"age"`
+	Gender    string `json:"gender"`
+
+	// Not Stored:
 	confirmPassword string
 	Message         string
 	// Picture string `json:"picture"`    // gmail picture: sometimes cannot be loaded!
 	// Avatar  string `json:"avatar_url"` // github avatar
-}
-
-func isValidUsername(username string) bool {
-	re := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_ ]{1,49}$`)
-	// disallowing multiple spaces
-	return re.MatchString(username) && !strings.Contains(username, "  ")
-}
-
-func isValidEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return len(email) >= 5 && len(email) <= 100 && (err == nil)
-}
-
-func isValidPassword(password string) bool {
-	return len(password) >= 6 && len(password) <= 20
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -49,40 +42,63 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		user := User{
-			Name:            strings.TrimSpace(r.FormValue("name")),
-			Email:           strings.TrimSpace(r.FormValue("email")),
+			Name:            strings.TrimSpace(r.FormValue("name")), // nickname
+			Email:           strings.ToLower(strings.TrimSpace(r.FormValue("email"))),
 			Password:        r.FormValue("password"),
 			confirmPassword: r.FormValue("confirm_password"),
+
+			// Not used:
+			FirstName: strings.TrimSpace(r.FormValue("firstname")),
+			LastName:  strings.TrimSpace(r.FormValue("lastname")),
+			Gender:    strings.TrimSpace(r.FormValue("gender")),
+		}
+		var err error
+		user.Age, err = strconv.Atoi(r.FormValue("age"))
+		if err != nil {
+			user.Message = "Age: Not a number"
+			RenderTemplate(w, 400, "register.html", user)
+			return
 		}
 
 		var rules string = `
 . username (valid) : 2 ~ 50  chars 
 . email (valid)    : 5 ~ 100 chars
-. password         : 6 ~ 20  chars`
+. password         : 6 ~ 20  chars` // is there a newline at first of rules ?!
 
 		// 1. check emptiness
-		if user.Name == "" || user.Email == "" || user.Password == "" || user.confirmPassword == "" {
-			user.Message = "All fields are required"
-			RenderTemplate(w, 400, "register.html", user)
-			return
+		for _, f := range []string{user.Name, user.FirstName, user.LastName, user.Gender, user.Email, user.Password, user.confirmPassword} {
+			if f == "" {
+				user.Message = "All fields are required"
+				RenderTemplate(w, 400, "register.html", user)
+				return
+			}
 		}
 		// 2. check validity
-		if !isValidUsername(user.Name) || !isValidEmail(user.Email) || !isValidPassword(user.Password) {
+		if !utilities.IsValidName(user.Name) ||
+			!utilities.IsValidName(user.FirstName) ||
+			!utilities.IsValidName(user.LastName) ||
+			!utilities.IsValidAge(user.Age) ||
+			!utilities.IsValidGender(user.Gender) ||
+			!utilities.IsValidEmail(user.Email) ||
+			!utilities.IsValidPassword(user.Password) {
 			user.Message = rules
 			RenderTemplate(w, 400, "register.html", user)
 			return
 		}
 		// 3. check password match
 		if user.Password != user.confirmPassword {
-			user.Message = "password and confirm password do not match"
+			user.Message = "Password not confirmed"
 			RenderTemplate(w, 400, "register.html", user)
 			return
 		}
 
+		// username and email fields are case-insensitive
+		// emails are lowered then stored, while usernames preserve original casing
+
 		// Check email availability
 		var emailExists bool
-		err := database.Database.QueryRow(
-			"SELECT EXISTS(SELECT * FROM users WHERE email = ?)", user.Email,
+		err = database.Database.QueryRow(
+			"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)", user.Email,
 		).Scan(&emailExists)
 		if err != nil {
 			HandleError(w, http.StatusInternalServerError, "Database error")
@@ -95,9 +111,15 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Check username availability
+		// case insensitivity:
+		// - LIKE does treat some special characters as wildcards
+		// - LOWER() does affect performance on large databases
+		// => used 'COLLATE NOCASE' with a DB INDEX
+		// - COLLATE means "how to compare and sort text".
+		// - LIMITATION: no unicode support (only ascii)
 		var nameExists bool
 		err = database.Database.QueryRow(
-			"SELECT EXISTS(SELECT * FROM users WHERE name = ?)", user.Name,
+			"SELECT EXISTS(SELECT 1 FROM users WHERE name = ? COLLATE NOCASE)", user.Name,
 		).Scan(&nameExists)
 		if err != nil {
 			HandleError(w, http.StatusInternalServerError, "Database error")
@@ -115,9 +137,17 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var gender_id int
+		if user.Gender == "male" {
+			gender_id = 1
+		}
 		_, err = database.Database.Exec(
-			"INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+			"INSERT INTO users (name, firstname, lastname, age, gender, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)",
 			user.Name,
+			user.FirstName,
+			user.LastName,
+			user.Age,
+			gender_id,
 			user.Email,
 			string(hashedPassword),
 		)

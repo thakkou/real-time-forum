@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"forum/database"
-	api "forum/forum-api"
 	"forum/handlers"
+	"forum/models"
 )
 
 // CheckSessionCookie validates session cookie and redirects depending on requiresAuth
@@ -36,7 +36,7 @@ func CheckSessionCookie(handler http.HandlerFunc, requiresAuth bool) http.Handle
 				}
 
 				// expired
-				api.DeleteSession(cookie.Value)
+				models.DeleteSession(cookie.Value)
 				clearSessionCookie(w)
 
 			case sql.ErrNoRows:
