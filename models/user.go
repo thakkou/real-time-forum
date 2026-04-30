@@ -3,20 +3,22 @@ package models
 import "forum/database"
 
 type User struct {
-	Id       int    `json:"id"`   // check for google
-	Name     string `json:"name"` // name or username: problem for providers!
+	Id int // (NOT USED) 'id' github + 'sub' for google
+
+	Login     string `json:"login"`
+	Name      string `json:"name"`        // github + (google requires other apis => 'name')
+	FirstName string `json:"given_name"`  // google
+	LastName  string `json:"family_name"` // google
+
+	Age    int    // requires other apis: default 18 (+ age changes every year)
+	Gender string // requires other apis: default male
+
 	Email    string `json:"email"`
 	Password string
 
-	// Not Used:
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	Age       int    `json:"age"`
-	Gender    string `json:"gender"`
+	ConfirmPassword string // (NOT STORED)
+	Message         string // (NOT STORED)
 
-	// Not Stored:
-	ConfirmPassword string
-	Message         string
 	// Picture string `json:"picture"`    // gmail picture: sometimes cannot be loaded!
 	// Avatar  string `json:"avatar_url"` // github avatar
 }

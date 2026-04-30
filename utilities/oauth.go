@@ -115,23 +115,7 @@ func ExchangeCode(provider, tokenURL, client_id, client_secret, code string) (*T
 	// return &t, nil
 }
 
-func FetchUserInfo(userInfoURL, accessToken string) (*models.User, error) { // UserInfo
-	// req, _ := http.NewRequest("GET", userURL, nil)
-	// req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	// resp, err := http.DefaultClient.Do(req)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer resp.Body.Close()
-
-	// var u UserInfo
-	// if err := json.NewDecoder(resp.Body).Decode(&u); err != nil {
-	// 	return nil, err
-	// }
-	// return &u, nil
-
-	// Get user info
+func FetchUserInfo(userInfoURL, accessToken string) (*models.User, error) {
 	req, _ := http.NewRequest("GET", userInfoURL, nil)
 	// for github: The /user endpoint returns email ONLY IF it is public
 	req.Header.Set("Authorization", "Bearer "+accessToken)
@@ -140,7 +124,7 @@ func FetchUserInfo(userInfoURL, accessToken string) (*models.User, error) { // U
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{} // or: http.DefaultClient
 	userResp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -149,12 +133,12 @@ func FetchUserInfo(userInfoURL, accessToken string) (*models.User, error) { // U
 
 	userBody, _ := io.ReadAll(userResp.Body)
 
-	var user models.User // UserInfo
+	var user models.User
 	json.Unmarshal(userBody, &user)
 	return &user, nil
 }
 
-func FetchUserEmail(accessToken string) (string, error) {
+func FetchGithubUserEmail(accessToken string) (string, error) {
 	req, _ := http.NewRequest("GET", "https://api.github.com/user/emails", nil)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Accept", "application/vnd.github+json") // use it everywhere, why ?!

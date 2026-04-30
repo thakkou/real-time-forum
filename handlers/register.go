@@ -44,9 +44,10 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var rules string = `
-. username (valid) : 2 ~ 50  chars 
-. email (valid)    : 5 ~ 100 chars
-. password         : 6 ~ 20  chars` // is there a newline at first of rules ?!
+. name (valid)  : 2 ~ 50  chars
+. age           : 1 <= x <= 99
+. email (valid) : 5 ~ 100 chars
+. password      : 6 ~ 20  chars`
 
 		// 1. check emptiness
 		for _, f := range []string{user.Name, user.FirstName, user.LastName, user.Gender, user.Email, user.Password, user.ConfirmPassword} {

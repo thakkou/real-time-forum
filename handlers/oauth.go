@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"forum/database"
@@ -120,19 +121,28 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	// 4. Fetch user info
 	user, err := utilities.FetchUserInfo(userInfoURL, accessToken)
 	if provider == "github" {
-		user.Email, _ = utilities.FetchUserEmail(accessToken)
+		user.Email, _ = utilities.FetchGithubUserEmail(accessToken)
 	}
 	if err != nil {
 		http.Error(w, "failed to fetch user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// 5. check email and username availability
-	// Check email: code from register.go
+	// 5. Processing claimed user info
+	if provider == "github" {
+		user.FirstName, user.LastName, _ = strings.Cut(user.Name, " ")
+		user.Name = user.Login
+	}
+	user.Age = 18                            // default
+	user.Gender = "male"                     // default
+	user.Email = strings.ToLower(user.Email) // case insensitivity
+
+	// 6. check email and username availability
+	// Similar to register.go
 	var emailExists bool
 	var nameExists bool = true
 	err = database.Database.QueryRow(
-		"SELECT EXISTS(SELECT * FROM users WHERE email = ?)", user.Email,
+		"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)", user.Email,
 	).Scan(&emailExists)
 	if err != nil {
 		utilities.HandleError(w, http.StatusInternalServerError, "Database error")
@@ -151,7 +161,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 				i++
 			}
 			err = database.Database.QueryRow(
-				"SELECT EXISTS(SELECT * FROM users WHERE name = ?)", newUsername,
+				"SELECT EXISTS(SELECT 1 FROM users WHERE name = ? COLLATE NOCASE)", newUsername,
 			).Scan(&nameExists)
 			if err != nil {
 				utilities.HandleError(w, http.StatusInternalServerError, "Database error")
@@ -161,15 +171,27 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 		// create user
 		user.Name = newUsername
+		var gender_id int
+		if user.Gender == "male" {
+			gender_id = 1
+		}
 		_, err = database.Database.Exec(
-			"INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+			"INSERT INTO users (name, firstname, lastname, age, gender, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)",
 			user.Name,
+			user.FirstName,
+			user.LastName,
+			user.Age,
+			gender_id,
 			user.Email,
 			nil,
 		)
+		if err != nil {
+			utilities.HandleError(w, http.StatusInternalServerError, "Server error")
+			return
+		}
 	}
 
-	// 6. generate toke based on email not username (username is the one in db)
+	// 7. generate toke based on email not username (username is the one in db)
 	// ************* code from login.go ****************
 	var userID int
 
