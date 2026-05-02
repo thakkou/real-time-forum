@@ -15,11 +15,11 @@ type TemplateData struct {
 	IsLoggedIn bool
 	User       models.User
 	Posts      []models.Post
+	// Message    string
 }
 
 // Forum
 func Forum(w http.ResponseWriter, r *http.Request) {
-	// Validate route
 	if r.URL.Path != "/" {
 		utilities.HandleError(w, http.StatusNotFound, "Page not found")
 		return

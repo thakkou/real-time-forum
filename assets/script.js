@@ -1,8 +1,9 @@
 async function reactToPost(postId, endpoint) {
     const url = `/api/posts/${postId}/${endpoint}`;
+    let method = endpoint === 'delete' ? 'DELETE' : 'POST';
     try {
         const response = await fetch(url, {
-            method: 'POST'
+            method: method
         });
 
         if (!response.ok) {
@@ -16,9 +17,11 @@ async function reactToPost(postId, endpoint) {
 
 async function reactToComment(commentId, endpoint) {
     const url = `/api/comments/${commentId}/${endpoint}`;
+    let method = endpoint === 'delete' ? 'DELETE' : 'POST';
+    console.log(url, method)
     try {
         const response = await fetch(url, {
-            method: 'POST'
+            method: method
         });
 
         if (!response.ok) {
@@ -43,6 +46,8 @@ function handlePostReactionsClick(event) {
         endpoint = 'like';
     } else if (button.classList.contains('dislike-btn')) {
         endpoint = 'dislike';
+    } else if (button.classList.contains('delete-btn')) {
+        endpoint = 'delete';
     } else {
         return;
     }
@@ -68,6 +73,8 @@ function handleCommentReactionsClick(event) {
         endpoint = 'like';
     } else if (button.classList.contains('comment-dislike-btn')) {
         endpoint = 'dislike';
+    } else if (button.classList.contains('comment-delete-btn')) {
+        endpoint = 'delete';
     } else {
         return;
     }
@@ -89,12 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.dislike-btn').forEach(button => {
         button.addEventListener('click', handlePostReactionsClick);
     });
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', handlePostReactionsClick);
+    });
 
-    // comment reaction buttons
+    // comment reaction buttons + delete
     document.querySelectorAll('.comment-like-btn').forEach(button => {
         button.addEventListener('click', handleCommentReactionsClick);
     });
     document.querySelectorAll('.comment-dislike-btn').forEach(button => {
+        button.addEventListener('click', handleCommentReactionsClick);
+    });
+    document.querySelectorAll('.comment-delete-btn').forEach(button => {
         button.addEventListener('click', handleCommentReactionsClick);
     });
 });

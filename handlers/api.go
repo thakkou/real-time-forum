@@ -16,34 +16,36 @@ import (
 // CreatePost
 func CreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/api/posts/create" {
-		utilities.HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page Not Found")
 		return
 	}
 
 	if r.Method != http.MethodPost {
-		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method Not Allowed")
 		return
 	}
 
-	// check the size of data entry
-	const maxImageSize int64 = 20 << 20 // 20 MB
-
 	// Layer 1: MaxBytesReader — cuts the connection early at network level
 	// slightly padded to account for multipart boundaries and form fields overhead
-	r.Body = http.MaxBytesReader(w, r.Body, 21<<20) // 21 MB
+	r.Body = http.MaxBytesReader(w, r.Body, 21<<20) // 21 MB hardcoded
+
+	// 1. Get post creation form data
+	title := strings.TrimSpace(r.FormValue("title"))
+	text := strings.TrimSpace(r.FormValue("text"))
+	categories := r.Form["categories"]
+
+	// check the size of data entry
+	const maxImageSize int64 = 20 << 20 // 20 MB
 
 	err := r.ParseMultipartForm(maxImageSize)
 	// ParseMultipartForm sets the in-memory buffer limit.
 	// If the file exceeds that limit, Go silently spills the overflow to a temp file on disk.
 	if err != nil {
-		utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20Mb")
+		utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20Mb.") // 400
 		return
 	}
 
-	title := strings.TrimSpace(r.FormValue("title"))
-	text := strings.TrimSpace(r.FormValue("text"))
-	categories := r.Form["categories"]
-
+	// 2. Sanitize form data
 	if title == "" || text == "" {
 		utilities.HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
 		return
@@ -53,17 +55,8 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		utilities.HandleError(w, http.StatusBadRequest, "Title cannot exceed 255 characters")
 		return
 	}
-
 	if len(categories) == 0 {
 		utilities.HandleError(w, http.StatusBadRequest, "At least one category must be selected")
-		return
-	}
-
-	// get userId
-	cookie, _ := r.Cookie("session_id")
-	userId, err := models.GetUserIDFromCookie(cookie.Value)
-	if err != nil {
-		utilities.HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
 		return
 	}
 
@@ -120,6 +113,14 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 			utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
 			return
 		}
+	}
+
+	// 3. Get userId
+	cookie, _ := r.Cookie("session_id")
+	userId, err := models.GetUserIDFromCookie(cookie.Value)
+	if err != nil {
+		utilities.HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
+		return
 	}
 
 	tx, err := database.Database.Begin()
@@ -276,7 +277,7 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	case "delete":
-		if r.Method != http.MethodPost {
+		if r.Method != http.MethodDelete {
 			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
@@ -337,7 +338,7 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	case "delete":
-		if r.Method != http.MethodPost {
+		if r.Method != http.MethodDelete {
 			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}

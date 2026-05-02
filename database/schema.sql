@@ -2,6 +2,9 @@
 CREATE TABLE IF NOT EXISTS USERS (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
+    -- username and email fields are case-insensitive
+	-- emails are lowered then stored,
+	-- while usernames preserve original casing
 
     firstname TEXT NOT NULL,
     lastname TEXT NOT NULL,

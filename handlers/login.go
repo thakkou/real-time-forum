@@ -17,7 +17,7 @@ import (
 // Login
 func Login(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/login" {
-		utilities.HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page Not Found")
 		return
 	}
 
@@ -26,12 +26,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		utilities.RenderTemplate(w, 200, "login.html", nil)
 
 	case http.MethodPost:
-		identifier := strings.TrimSpace(r.FormValue("email"))
+		// 1. Get form data
+		user := models.User{}
+		identifier := strings.TrimSpace(r.FormValue("email")) // email or username
 		password := r.FormValue("password")
 
 		// Basic input validation
 		if identifier == "" || password == "" {
-			utilities.HandleError(w, http.StatusBadRequest, "Email/username and password are required")
+			user.Message = "All fields are required."
+			utilities.RenderTemplate(w, http.StatusBadRequest, "login.html", user) // 400
 			return
 		}
 
@@ -42,27 +45,27 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			"SELECT id, password FROM users WHERE email = ? OR name = ?", identifier, identifier,
 		).Scan(&userID, &hashedPassword)
 		if err != nil {
-			user := models.User{Message: "Invalid email/username or password"}
-			utilities.RenderTemplate(w, 400, "login.html", user)
+			user.Message = "Invalid email/username or password."
+			utilities.RenderTemplate(w, http.StatusBadRequest, "login.html", user) // 400
 			return
 		}
 
 		if !hashedPassword.Valid {
-			user := models.User{Message: "Account registred by provider"}
-			utilities.RenderTemplate(w, 401, "login.html", user)
+			user.Message = "Account registred by provider."                          // not good practice
+			utilities.RenderTemplate(w, http.StatusUnauthorized, "login.html", user) // 401
 			return
 		}
 
 		if err = bcrypt.CompareHashAndPassword([]byte(hashedPassword.String), []byte(password)); err != nil {
-			user := models.User{Message: "Invalid email/username or password"}
-			utilities.RenderTemplate(w, 401, "login.html", user)
+			user.Message = "Invalid email/username or password."
+			utilities.RenderTemplate(w, http.StatusUnauthorized, "login.html", user) // 401
 			return
 		}
 
 		// Delete any existing sessions for this user
 		_, err = database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
 		if err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Server error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
@@ -74,7 +77,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			sessionID, expiration, userID,
 		)
 		if err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Server error")
+			utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
@@ -88,6 +91,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	default:
-		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method Not Allowed")
 	}
 }
