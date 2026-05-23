@@ -98,11 +98,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/logout" {
-		utilities.HandleError(w, http.StatusNotFound, "Page hh not found")
+		utilities.WriteJSON(w, 404, `path not found`, nil)
 		return
 	}
 	if r.Method != http.MethodPost {
-		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.WriteJSON(w, http.StatusMethodNotAllowed, `Method not allowed`, nil)
+
 		return
 	}
 
@@ -124,10 +125,10 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 	})
-	http.Redirect(w, r, "/", http.StatusSeeOther) // or to login
+	utilities.WriteJSON(w, 201, `log out succes`, nil)
+
 }
 
-// Register
 func Register(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/register" {
 		utilities.WriteJSON(w, 404, `path not found`, nil)
