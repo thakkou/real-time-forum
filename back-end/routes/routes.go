@@ -25,7 +25,6 @@ func RegisterRoutes() {
 	// 	),
 	// )
 
-	// brute force targets
 	http.HandleFunc(
 		"/login",
 		middlewares.RateLimit(
@@ -46,6 +45,7 @@ func RegisterRoutes() {
 		),
 	)
 
+	
 	// http.HandleFunc(
 	// 	"/api/posts/{id}/{endpoint}",
 	// 	middlewares.CheckSessionCookie(handlers.PostResolver, true),

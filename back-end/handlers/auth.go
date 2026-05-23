@@ -17,23 +17,30 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const RULES string = `
+. name (valid)  : 2 ~ 50  chars
+. age           : 1 <= x <= 99
+. email (valid) : 5 ~ 100 chars
+. password      : 6 ~ 20  chars`
+
 // Login
 func Login(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("login")
 	if r.URL.Path != "/login" {
 		utilities.WriteJSON(w, 404, `path not found`, nil)
 		return
 	}
+
 	if r.Method != "POST" {
 		utilities.WriteJSON(w, 405, `method not allowed`, nil)
 		return
 	}
-	user := models.User{}
-	identifier := strings.TrimSpace(r.FormValue("email")) // email or username
+	identifier := strings.TrimSpace(r.FormValue("identifier"))
 	password := r.FormValue("password")
 
 	if identifier == "" || password == "" {
-		user.Message = "All fields are required."
-		utilities.RenderTemplate(w, http.StatusBadRequest, "login.html", user) // 400
+		utilities.WriteJSON(w, http.StatusBadRequest, `bad credentials`, nil)
+
 		return
 	}
 
@@ -41,31 +48,29 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	var hashedPassword sql.NullString
 
 	err := database.Database.QueryRow(
-		"SELECT id, password FROM users WHERE email = ? OR name = ?", identifier, identifier,
+		"SELECT id, password FROM users WHERE email = ? OR nickname = ?", identifier, identifier,
 	).Scan(&userID, &hashedPassword)
 	if err != nil {
-		user.Message = "Invalid email/username or password."
-		utilities.RenderTemplate(w, http.StatusBadRequest, "login.html", user) // 400
+		utilities.WriteJSON(w, http.StatusBadRequest, `Invalid email/username or password.`, nil)
 		return
 	}
 
 	if !hashedPassword.Valid {
-		user.Message = "Account registred by provider."                          // not good practice
-		utilities.RenderTemplate(w, http.StatusUnauthorized, "login.html", user) // 401
+		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid email/username or password.", nil)
 		return
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(hashedPassword.String), []byte(password)); err != nil {
-		user.Message = "Invalid email/username or password."
-		utilities.RenderTemplate(w, http.StatusUnauthorized, "login.html", user) // 401
+		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid email/username or password.", nil)
 		return
 	}
 
 	// Delete any existing sessions for this user
 	_, err = database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
 	if err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", nil)
 		return
+
 	}
 
 	sessionID := uuid.New().String()
@@ -76,7 +81,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		sessionID, expiration, userID,
 	)
 	if err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", nil)
 		return
 	}
 
@@ -87,13 +92,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Expires:  expiration,
 	})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	utilities.WriteJSON(w, 201, "Ilogin Sucess", nil)
 
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/logout" {
-		utilities.HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.HandleError(w, http.StatusNotFound, "Page hh not found")
 		return
 	}
 	if r.Method != http.MethodPost {
@@ -121,12 +126,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	})
 	http.Redirect(w, r, "/", http.StatusSeeOther) // or to login
 }
-
-const RULES string = `
-. name (valid)  : 2 ~ 50  chars
-. age           : 1 <= x <= 99
-. email (valid) : 5 ~ 100 chars
-. password      : 6 ~ 20  chars`
 
 // Register
 func Register(w http.ResponseWriter, r *http.Request) {
