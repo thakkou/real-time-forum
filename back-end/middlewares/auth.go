@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"forum/database"
-	"forum/models"
 	"forum/utilities"
 )
 
@@ -36,7 +35,7 @@ func CheckSessionCookie(handler http.HandlerFunc, requiresAuth bool) http.Handle
 				}
 
 				// expired
-				models.DeleteSession(cookie.Value)
+				utilities.DeleteSession(cookie.Value)
 				utilities.ClearSessionCookie(w)
 
 			case sql.ErrNoRows:

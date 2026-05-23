@@ -7,18 +7,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"forum/database"
 	"forum/models"
 )
-
-// func generateState() string {
-// 	b := make([]byte, 16)
-// 	rand.Read(b)
-// 	return base64.URLEncoding.EncodeToString(b)
-// }
-
-// In production, store states in Redis/DB with expiry.
-// This in-memory map is fine for a single instance.
-// var stateStore = map[string]bool{}
 
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
@@ -29,14 +20,6 @@ type TokenResponse struct {
 	// Scope       string `json:"scope"`
 	Error string `json:"error"`
 }
-
-// type UserInfo struct {
-// 	ID      int    `json:"id"` // check for google
-// 	Name    string `json:"name"`
-// 	Email   string `json:"email"`
-// 	Picture string `json:"picture"`    // gmail picture: sometimes cannot be loaded!
-// 	Avatar  string `json:"avatar_url"` // github avatar
-// }
 
 var redirectURI = "http://localhost:8080/auth/google/callback"
 
@@ -164,4 +147,27 @@ func FetchGithubUserEmail(accessToken string) (string, error) {
 	}
 
 	return primary, nil
+}
+
+// DeleteSession
+func DeleteSession(sessionId string) error {
+	_, err := database.Database.Exec(
+		"DELETE FROM sessions WHERE id = ?",
+		sessionId) // returns result
+	return err
+}
+
+// GetUserIDFromCookie
+func GetUserIDFromCookie(sessionID string) (int, error) {
+	var userID int
+	err := database.Database.QueryRow(`
+		SELECT user_id
+		FROM SESSIONS
+		WHERE id = ?
+	`, sessionID).Scan(&userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return userID, nil
 }

@@ -1,11 +1,7 @@
 package models
 
 import (
-	"database/sql"
-	"fmt"
 	"time"
-
-	"forum/database"
 )
 
 type Comment struct {
@@ -17,93 +13,4 @@ type Comment struct {
 	Text                    string
 	LikeCount, DislikeCount int
 	IsLiked                 int // 1:liked, 0:none, -1:disliked
-}
-
-// TimeAgo
-func TimeAgo(t time.Time) string {
-	d := time.Since(t)
-
-	if d < time.Minute {
-		return fmt.Sprintf("%d seconds ago", int(d.Seconds()))
-	}
-	if d < time.Hour {
-		return fmt.Sprintf("%d minutes ago", int(d.Minutes()))
-	}
-	if d < 24*time.Hour {
-		return fmt.Sprintf("%d hours ago", int(d.Hours()))
-	}
-	if d < 30*24*time.Hour {
-		return fmt.Sprintf("%d days ago", int(d.Hours()/24))
-	}
-	return fmt.Sprintf("%d months ago", int(d.Hours()/(24*30)))
-}
-
-// GetCommentsByPost
-func GetCommentsByPost(postId int) ([]Comment, error) {
-	var comments []Comment
-	rows, err := database.Database.Query(
-		"SELECT id, user_id, created_at, text FROM Comments WHERE post_id = ?",
-		postId,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("getCommentsByPost error: %v", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var c Comment
-		if err := rows.Scan(&c.Id, &c.UserId, &c.Created_at, &c.Text); err != nil {
-			return nil, fmt.Errorf("getCommentsByPost scan error: %v", err)
-		}
-
-		// get username
-		if err := database.Database.QueryRow(
-			"SELECT u.name FROM users u INNER JOIN comments c ON c.user_id = u.id WHERE c.id = ?",
-			c.Id,
-		).Scan(&c.Username); err != nil {
-			return nil, fmt.Errorf("getCommentsByPost username error: %v", err)
-		}
-
-		// get timeago
-		c.TimeAgo = TimeAgo(c.Created_at)
-
-		// get reactions
-		if c.LikeCount, c.DislikeCount, err = GetReactionsByComment(c.Id); err != nil {
-			return nil, err
-		}
-
-		comments = append(comments, c)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("getCommentsByPost rows error: %v", err)
-	}
-	return comments, nil
-}
-
-// DeleteComment
-func DeleteComment(commentId, userId int) error {
-	tx, err := database.Database.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	var dbUserId int
-	err = tx.QueryRow("SELECT user_id FROM comments WHERE id = ?", commentId).Scan(&dbUserId)
-	if err == sql.ErrNoRows {
-		return fmt.Errorf("comment not found")
-	}
-	if err != nil {
-		return err
-	}
-	if dbUserId != userId {
-		return fmt.Errorf("not your comment")
-	}
-
-	_, err = tx.Exec("DELETE FROM comments WHERE id = ?", commentId)
-	if err != nil {
-		return err
-	}
-	return tx.Commit()
 }

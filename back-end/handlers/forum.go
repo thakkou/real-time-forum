@@ -10,7 +10,6 @@ import (
 	"forum/utilities"
 )
 
-// TODO: moving to utilities caused cyclic import
 type TemplateData struct {
 	IsLoggedIn bool
 	User       models.User
@@ -56,7 +55,7 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 	// Try to get user from cookie
 	cookie, err := r.Cookie("session_id")
 	if err == nil {
-		userId, _ = models.GetUserIDFromCookie(cookie.Value)
+		userId, _ = utilities.GetUserIDFromCookie(cookie.Value)
 
 		user, err = models.GetUser(cookie.Value)
 		if err != nil {
@@ -66,7 +65,7 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch posts
-	posts, err := models.GetFilteredPosts(userId, categories, isLiked, isByMe)
+	posts, err := GetFilteredPosts(userId, categories, isLiked, isByMe)
 	if err != nil {
 		log.Println("error getting posts:", err)
 		posts = []models.Post{} // fallback
@@ -74,7 +73,7 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 
 	// Mark liked posts
 	if user.Id != 0 {
-		models.CheckLikedPosts(posts, user.Id)
+		CheckLikedPosts(posts, user.Id)
 	}
 
 	// Prepare template data
