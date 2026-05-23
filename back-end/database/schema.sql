@@ -1,21 +1,19 @@
 -- USERS
 CREATE TABLE IF NOT EXISTS USERS (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
+    nickname TEXT NOT NULL UNIQUE,
  
 
     firstname TEXT NOT NULL,
     lastname TEXT NOT NULL,
     age INTEGER NOT NULL,
-    gender INTEGER NOT NULL CHECK (gender IN (0, 1)), -- gender_id -> 1:male, 0:female
-    -- 'not null' because check with null value will return UNKNOWN
+    gender TEXT NOT NULL,
 
     email TEXT NOT NULL UNIQUE,
-    password TEXT -- nullable for auth providers
+    password TEXT 
 );
 
-CREATE INDEX IF NOT EXISTS idx_username ON users(name COLLATE NOCASE);
-
+CREATE INDEX IF NOT EXISTS idx_username  ON users(nickname COLLATE NOCASE);
 -- SESSIONS
 CREATE TABLE IF NOT EXISTS SESSIONS (
     id TEXT PRIMARY KEY UNIQUE, -- uuid

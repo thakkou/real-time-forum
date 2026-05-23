@@ -23,7 +23,7 @@ func main() {
 	http.HandleFunc("/assets/", handlers.Static)
 	http.HandleFunc("/uploads/", handlers.Static)
 
-	http.HandleFunc("/", handlers.Forum)
+	// http.HandleFunc("/", handlers.Forum)
 
 	routes.RegisterRoutes()
 

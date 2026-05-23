@@ -9,7 +9,6 @@ import (
 // IsValidName
 func IsValidName(name string) bool {
 	re := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_ ]{1,49}$`)
-	// disallowing multiple spaces
 	return re.MatchString(name) && !strings.Contains(name, "  ")
 }
 
