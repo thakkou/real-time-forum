@@ -1,12 +1,14 @@
+
 // ========================
-// APP STATE & ROUTER
-// ========================
+
+
+
 const app = document.getElementById("app");
 
 // Store loaded scripts to avoid duplicates
 const loadedScripts = new Map();
 
-// Page templates (HTML only, no scripts)
+
 const templates = {
   home: () => `
 <header class="navbar">
@@ -515,3 +517,10 @@ window.addEventListener('hashchange', handleRouteChange);
 // Initialize the app based on current hash
 const initialRoute = getRouteFromHash();
 navigate(initialRoute, { updateHash: false });
+
+
+//parse the env file and store it in window.API_uri
+
+console.log(API_uri)
+
+// Run function
