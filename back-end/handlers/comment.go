@@ -60,7 +60,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postId, err = utilities.ToInt(postId)
+	postIntId, err := utilities.ToInt(postId)
 	if err != nil {
 		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid post ID", nil)
 		return
@@ -73,14 +73,14 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Printf("userId=%v (%T)\n", userId, userId)
-	fmt.Printf("postId=%v (%T)\n", postId, postId)
+	fmt.Printf("postId=%v (%T)\n", postIntId, postIntId)
 	fmt.Printf("postId=%v (%T)\n", time.Now(), time.Now())
 	fmt.Printf("postId=%v (%T)\n", text, text)
 
 	if _, err = database.Database.Exec(
 		"INSERT INTO comments (user_id, post_id, created_at, text) VALUES (?, ?, ?, ?)",
 		userId,
-		postId,
+		postIntId,
 		time.Now(),
 		text,
 	); err != nil {
@@ -97,7 +97,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 	res := Res{
 		Text:      text,
-		PostID:    postId,
+		PostID:    postIntId,
 		UserID:    userId,
 		CreatedAt: time.Now(),
 	}
@@ -186,9 +186,9 @@ func GetCommentsByPost(postId int) ([]models.Comment, error) {
 
 		// get username
 		if err := database.Database.QueryRow(
-			"SELECT u.name FROM users u INNER JOIN comments c ON c.user_id = u.id WHERE c.id = ?",
+			"SELECT u.nickname FROM users u INNER JOIN comments c ON c.user_id = u.id WHERE c.id = ?",
 			c.Id,
-		).Scan(&c.Username); err != nil {
+		).Scan(&c.Nickname); err != nil {
 			return nil, fmt.Errorf("getCommentsByPost username error: %v", err)
 		}
 

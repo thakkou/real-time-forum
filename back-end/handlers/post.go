@@ -393,6 +393,7 @@ func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe boo
 
 		// get comments
 		if p.Comments, err = GetCommentsByPost(p.Id); err != nil {
+			
 			return nil, fmt.Errorf("GetFiltrtPOst comments error: %v", err)
 		}
 
