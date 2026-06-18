@@ -1,6 +1,7 @@
 package utilities
 
 import (
+	"fmt"
 	"net/mail"
 	"regexp"
 	"strconv"
@@ -55,4 +56,19 @@ func IsValidAge(age any) bool {
 // IsValidGender
 func IsValidGender(gender string) bool {
 	return gender == "male" || gender == "female"
+}
+
+func ToInt(v any) (int, error) {
+	switch val := v.(type) {
+	case int:
+		return val, nil
+	case int64:
+		return int(val), nil
+	case float64:
+		return int(val), nil
+	case string:
+		return strconv.Atoi(val)
+	default:
+		return 0, fmt.Errorf("cannot convert %T to int", v)
+	}
 }

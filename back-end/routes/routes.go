@@ -12,7 +12,7 @@ func RegisterRoutes() {
 	// authentification
 
 	http.HandleFunc(
-		"/login",
+		"/api/login",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.Login, false),
 			2*time.Second,
@@ -20,12 +20,12 @@ func RegisterRoutes() {
 	)
 
 	http.HandleFunc(
-		"/logout",
+		"/api/logout",
 		middlewares.CheckSessionCookie(handlers.Logout, true),
 	)
 
 	http.HandleFunc(
-		"/register",
+		"/api/register",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.Register, false),
 			2*time.Second,
@@ -35,12 +35,12 @@ func RegisterRoutes() {
 	// auth providers
 
 	// http.HandleFunc(
-	// 	"/auth/{provider}",
+	// 	"/api/auth/{provider}",
 	// 	middlewares.CheckSessionCookie(handlers.OAuthLogin, false),
 	// )
 
 	// http.HandleFunc(
-	// 	"/auth/{provider}/callback",
+	// 	"/api/auth/{provider}/callback",
 	// 	middlewares.CheckSessionCookie(handlers.OAuthCallback, false),
 	// )
 
@@ -69,13 +69,13 @@ func RegisterRoutes() {
 
 	// comments
 
-	// http.HandleFunc(
-	// 	"/api/comments/create",
-	// 	middlewares.RateLimit(
-	// 		middlewares.CheckSessionCookie(handlers.CreateComment, true),
-	// 		3*time.Second,
-	// 	),
-	// )
+	http.HandleFunc(
+		"/api/comments/create",
+		middlewares.RateLimit(
+			middlewares.CheckSessionCookie(handlers.CreateComment, true),
+			3*time.Second,
+		),
+	)
 
 	// http.HandleFunc(
 	// 	"/api/comments/{id}/{endpoint}",

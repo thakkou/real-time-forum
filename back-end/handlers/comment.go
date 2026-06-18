@@ -16,43 +16,67 @@ import (
 // CreateComment
 func CreateComment(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/api/comments/create" {
-		utilities.HandleError(w, http.StatusNotFound, "Page not found")
+		utilities.WriteJSON(w, http.StatusNotFound, "Page not found", nil)
 		return
 	}
+	fmt.Println("start creating comment")
+
 	if r.Method != http.MethodPost {
-		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
+		return
+	}
+	type CommentReq struct {
+		PostId any    `json:"postId"`
+		Text   string `json:"text"`
+	}
+
+	// Content type (optional but fine to keep)
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		utilities.WriteJSON(w, http.StatusBadRequest, "Content-Type must be application/json", nil)
 		return
 	}
 
-	postId := strings.TrimSpace(r.FormValue("postId"))
-	text := strings.TrimSpace(r.FormValue("text"))
+	// ✅ REPLACED PART (clean)
+	comment, err := utilities.ReadJSONRequest[CommentReq](r)
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid request body", nil)
+		return
+	}
+	postId := comment.PostId
+	text := comment.Text
+	fmt.Println("postId", postId, "texts", text)
 
 	if text == "" {
-		utilities.HandleError(w, http.StatusBadRequest, "Comment cannot be empty")
+		utilities.WriteJSON(w, http.StatusBadRequest, "Comment cannot be empty", nil)
 		return
 	}
 
 	if postId == "" {
-		utilities.HandleError(w, http.StatusBadRequest, "Invalid post")
+		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid post", nil)
 		return
 	}
 	if len(text) > 1000 {
-		utilities.HandleError(w, http.StatusBadRequest, "Comment cannot exceed 1000 characters")
+		utilities.WriteJSON(w, http.StatusBadRequest, "Comment cannot exceed 1000 characters", nil)
 		return
 	}
 
-	_, err := strconv.Atoi(postId)
+	postId, err = utilities.ToInt(postId)
 	if err != nil {
-		utilities.HandleError(w, http.StatusBadRequest, "Invalid post ID")
+		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid post ID", nil)
 		return
 	}
 
 	cookie, _ := r.Cookie("session_id")
 	userId, err := utilities.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		utilities.HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
+		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid or expired session", nil)
 		return
 	}
+	fmt.Printf("userId=%v (%T)\n", userId, userId)
+	fmt.Printf("postId=%v (%T)\n", postId, postId)
+	fmt.Printf("postId=%v (%T)\n", time.Now(), time.Now())
+	fmt.Printf("postId=%v (%T)\n", text, text)
+
 	if _, err = database.Database.Exec(
 		"INSERT INTO comments (user_id, post_id, created_at, text) VALUES (?, ?, ?, ?)",
 		userId,
@@ -60,11 +84,25 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		time.Now(),
 		text,
 	); err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Could not create comment")
+		fmt.Println("errors", err)
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not create comment", nil)
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	type Res struct {
+		Text      string    `json:"text"`
+		PostID    int       `json:"postId"`
+		UserID    int       `json:"userId"`
+		CreatedAt time.Time `json:"createdAt"`
+	}
+	res := Res{
+		Text:      text,
+		PostID:    postId,
+		UserID:    userId,
+		CreatedAt: time.Now(),
+	}
+
+	utilities.WriteJSON(w, http.StatusCreated, "message created successfully", res)
 }
 
 // CommentResolver

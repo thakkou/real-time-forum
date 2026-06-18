@@ -25,7 +25,7 @@ const RULES string = `
 // Login
 func Login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("loginss")
-	if r.URL.Path != "/login" {
+	if r.URL.Path != "/api/login" {
 		utilities.WriteJSON(w, 404, `path not found`, nil)
 		return
 	}
@@ -114,7 +114,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/logout" {
+	if r.URL.Path != "/api/logout" {
 		utilities.WriteJSON(w, 404, `path not found`, nil)
 		return
 	}
@@ -147,7 +147,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 func Register(w http.ResponseWriter, r *http.Request) {
 	// Check route
-	if r.URL.Path != "/register" {
+	if r.URL.Path != "/api/register" {
 		utilities.WriteJSON(w, http.StatusNotFound, "path not found", nil)
 		return
 	}
