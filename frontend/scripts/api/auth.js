@@ -53,10 +53,11 @@ if (isNaN(parsedAge) || parsedAge < 18 || parsedAge > 99) {
 
    try{
     const res= await fetch(`${API_uri}/register`,{
-  method: "POST",
-    },credentials)
-console.log(res)
-   }catch(err){
+        method: "POST",
+            },
+        credentials)
+        console.log(res)
+    } catch(err) {
       throw new Error(
             err
         );

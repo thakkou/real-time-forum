@@ -9,10 +9,10 @@
 * using JS, private messages, real time actions.
 
 * focus on few points:
-Registration and Login
-Creation of posts
-    Commenting posts
-Private Messages
+    - Registration and Login
+    - Creation of posts
+        - Commenting posts
+    - Private Messages
 
 * golang handle Websockets (Backend)
 

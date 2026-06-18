@@ -1,3 +1,5 @@
+// old: for /public/script.js 
+
 async function reactToPost(postId, endpoint) {
     const url = `/api/posts/${postId}/${endpoint}`;
     let method = endpoint === 'delete' ? 'DELETE' : 'POST';
