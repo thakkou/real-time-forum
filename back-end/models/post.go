@@ -7,7 +7,7 @@ import (
 type Post struct {
 	Id                      int
 	UserId                  int
-	Username                string
+	Nickname                string
 	Created_at              time.Time
 	TimeAgo                 string
 	Title                   string
@@ -18,4 +18,3 @@ type Post struct {
 	Categories              []string
 	Image                   string
 }
-

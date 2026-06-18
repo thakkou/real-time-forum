@@ -49,7 +49,7 @@ func RegisterRoutes() {
 	http.HandleFunc(
 		"/api/posts/getPosts",
 		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.GetPosts, false),
+			handlers.GetPosts,
 			3*time.Second,
 		),
 	)

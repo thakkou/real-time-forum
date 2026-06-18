@@ -301,6 +301,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 
 	posts, err := GetFilteredPosts(userID, categories, isLiked, isByMe)
 	if err != nil {
+		fmt.Println("errors", err)
 		utilities.WriteJSON(w, http.StatusInternalServerError, "failed to get posts", nil)
 		return
 	}
@@ -314,14 +315,13 @@ func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe boo
 
 	if len(categories) == 0 && userID == 0 {
 		postes, err := GetAllPosts()
-		fmt.Println("posts", postes)
 		return postes, err
 	}
 
 	db := database.Database
 
 	query := `
-		SELECT DISTINCT p.id, p.user_id, p.created_at, p.title, p.text, p.image
+		SELECT DISTINCT p.id, p.user_id, p.created_at, p.title, p.text
 		FROM POSTS p
 		LEFT JOIN POST_CATEGORY pc ON p.id = pc.post_id
 		LEFT JOIN CATEGORY c ON pc.category_id = c.id
@@ -371,16 +371,16 @@ func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe boo
 	for rows.Next() {
 		var p models.Post
 
-		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text, &p.Image); err != nil {
+		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text); err != nil {
 			return nil, fmt.Errorf("GetFiltrtPOst scan error: %v", err)
 		}
 
-		// get username
+		// get nickname
 		if err := db.QueryRow(
-			"SELECT name FROM users WHERE id = ?",
+			"SELECT nickname FROM users WHERE id = ?",
 			p.UserId,
-		).Scan(&p.Username); err != nil {
-			return nil, fmt.Errorf("GetFiltrtPOst username error: %v", err)
+		).Scan(&p.Nickname); err != nil {
+			return nil, fmt.Errorf("GetFiltrtPOst nickname  error: %v", err)
 		}
 
 		// get timeago
@@ -424,7 +424,6 @@ func GetPostsOptimized() ([]models.Post, error) {
 			p.created_at,
 			p.title,
 			p.text,
-			p.image,
 			COALESCE(GROUP_CONCAT(c.name, ','), '') as categories
 		FROM posts p
 		LEFT JOIN post_category pc ON p.id = pc.post_id
@@ -441,14 +440,14 @@ func GetPostsOptimized() ([]models.Post, error) {
 		var p models.Post
 		var categoriesStr string
 
-		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text, &categoriesStr, &p.Image); err != nil {
+		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text, &categoriesStr); err != nil {
 			return nil, fmt.Errorf("GetPostsOptimized scan error: %v", err)
 		}
 
 		// get username
 		if err := database.Database.QueryRow(
 			"SELECT name FROM users WHERE id = ?", p.UserId,
-		).Scan(&p.Username); err != nil {
+		).Scan(&p.Nickname); err != nil {
 			return nil, fmt.Errorf("GetPostsOptimized username error: %v", err)
 		}
 
@@ -535,7 +534,7 @@ func GetAllPosts() ([]models.Post, error) {
 	// Modified query to include user_id since we need it for categories
 
 	rows, err := database.Database.Query(
-		"SELECT id, user_id, created_at, title, text, image FROM posts ORDER BY created_at DESC",
+		"SELECT id, user_id, created_at, title, text  FROM posts ORDER BY created_at DESC",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("getPosts error: %v", err)
@@ -544,7 +543,7 @@ func GetAllPosts() ([]models.Post, error) {
 
 	for rows.Next() {
 		var p models.Post
-		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text, &p.Image); err != nil {
+		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text); err != nil {
 			return nil, fmt.Errorf("getPosts scan error: %v", err)
 		}
 
@@ -552,7 +551,7 @@ func GetAllPosts() ([]models.Post, error) {
 		if err := database.Database.QueryRow(
 			"SELECT u.name FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE p.id = ?",
 			p.Id,
-		).Scan(&p.Username); err != nil {
+		).Scan(&p.Nickname); err != nil {
 			return nil, fmt.Errorf("getPosts username error: %v", err)
 		}
 
