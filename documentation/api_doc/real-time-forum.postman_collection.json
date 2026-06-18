@@ -1,0 +1,79 @@
+{
+	"info": {
+		"_postman_id": "73fdb7a5-dae9-499c-8f37-b74a0f0d2c2b",
+		"name": "real-time-forum",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "28827225"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "login",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:8080/"
+					},
+					"response": []
+				},
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nickname\": \"john_doe\",\r\n  \"first_name\": \"John\",\r\n  \"last_name\": \"Doe\",\r\n  \"gender\": \"male\",\r\n  \"age\": \"25\",\r\n  \"email\": \"john.doe@example.com\",\r\n  \"password\": \"SecurePass123!\",\r\n  \"confirm_password\": \"SecurePass123!\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/register"
+					},
+					"response": []
+				},
+				{
+					"name": "logout",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "profile",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "postes",
+			"item": []
+		},
+		{
+			"name": "comments",
+			"item": []
+		},
+		{
+			"name": "likes",
+			"item": []
+		},
+		{
+			"name": "test",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8080/test"
+			},
+			"response": []
+		}
+	]
+}

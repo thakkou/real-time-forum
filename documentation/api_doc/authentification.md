@@ -73,14 +73,14 @@ POST /register
 
 ```json
 {
-  "nickname": "johndoe",
+  "nickname": "john_doe",
   "first_name": "John",
   "last_name": "Doe",
-  "age": 24,
   "gender": "male",
-  "email": "john@example.com",
-  "password": "secret123",
-  "confirm_password": "secret123"
+  "age": "25",
+  "email": "john.doe@example.com",
+  "password": "SecurePass123!",
+  "confirm_password": "SecurePass123!"
 }
 ```
 
@@ -182,8 +182,8 @@ POST /login
 
 ```json
 {
-  "identifier": "john@example.com",
-  "password": "secret123"
+  "identifier": "john.doe@example.com",
+  "password": "SecurePass123!"
 }
 ```
 
@@ -191,8 +191,8 @@ or
 
 ```json
 {
-  "identifier": "johndoe",
-  "password": "secret123"
+  "identifier": "john_doe",
+  "password": "SecurePass123!"
 }
 ```
 

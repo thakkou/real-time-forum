@@ -3,6 +3,7 @@ package utilities
 import (
 	"net/mail"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -23,9 +24,32 @@ func IsValidPassword(password string) bool {
 	return len(password) >= 6 && len(password) <= 20
 }
 
-// IsValidAge
-func IsValidAge(age int) bool {
-	return age >= 1 && age <= 99
+func IsValidAge(age any) bool {
+	var a int
+
+	switch v := age.(type) {
+	case int:
+		a = v
+
+	case int64:
+		a = int(v)
+
+	case float64:
+		a = int(v)
+
+	case string:
+		// try convert string → int
+		parsed, err := strconv.Atoi(strings.TrimSpace(v))
+		if err != nil {
+			return false
+		}
+		a = parsed
+
+	default:
+		return false
+	}
+
+	return a >= 1 && a <= 99
 }
 
 // IsValidGender

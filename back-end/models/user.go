@@ -1,24 +1,26 @@
 package models
 
-import "forum/database"
+import (
+	"forum/database"
+)
 
 type User struct {
 	Id int
-	//register
+	// register
 	Password        string `json:"password"`
 	Login           string `json:"login"`
 	Name            string `json:"name"`
-	ConfirmPassword string // (NOT STORED)
+	ConfirmPassword string `json:"confirm_password"`
 	Nickname        string `json:"nickname"`
 	// github + (google requires other apis => 'name')
 	FirstName string `json:"first_name"` // google
 	LastName  string `json:"last_name"`  // google
-	Age       int    `json:"age"`
+	Age       any    `json:"age"`
 	Gender    string `json:"gender"`
 	Email     string `json:"email"`
 
 	Message string // (NOT STORED)
-	//google oauth
+	// google oauth
 
 	// Picture string `json:"picture"`    // gmail picture: sometimes cannot be loaded!
 	// Avatar  string `json:"avatar_url"` // github avatar

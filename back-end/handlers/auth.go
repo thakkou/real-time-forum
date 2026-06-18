@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -35,8 +34,26 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		utilities.WriteJSON(w, 405, `method not allowed`, nil)
 		return
 	}
-	identifier := strings.TrimSpace(r.FormValue("identifier"))
-	password := r.FormValue("password")
+	// Content type (optional but fine to keep)
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		utilities.WriteJSON(w, http.StatusBadRequest, "Content-Type must be application/json", nil)
+		return
+	}
+
+	type loginMOdel struct {
+		Identifier string `json:"identifier"`
+		Password   string `json:"password"`
+	}
+	userLog, err := utilities.ReadJSONRequest[loginMOdel](r)
+	if err != nil {
+		fmt.Println("errors", err)
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid request body", nil)
+		return
+	}
+	fmt.Println("userLog", userLog)
+
+	identifier := userLog.Identifier
+	password := userLog.Password
 
 	if identifier == "" || password == "" {
 		utilities.WriteJSON(w, http.StatusBadRequest, `bad credentials`, nil)
@@ -44,10 +61,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("ident", identifier, password)
 	var userID int
 	var hashedPassword sql.NullString
 
-	err := database.Database.QueryRow(
+	err = database.Database.QueryRow(
 		"SELECT id, password FROM users WHERE email = ? OR nickname = ?", identifier, identifier,
 	).Scan(&userID, &hashedPassword)
 	if err != nil {
@@ -93,7 +111,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  expiration,
 	})
 	utilities.WriteJSON(w, 201, "Ilogin Sucess", nil)
-
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -126,38 +143,41 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 	utilities.WriteJSON(w, 201, `log out succes`, nil)
-
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
+	// Check route
 	if r.URL.Path != "/register" {
-		utilities.WriteJSON(w, 404, `path not found`, nil)
+		utilities.WriteJSON(w, http.StatusNotFound, "path not found", nil)
 		return
 	}
 
-	if r.Method != "POST" {
-		utilities.WriteJSON(w, 405, `method not allowed`, nil)
-		return
-	}
-	age, errAge := strconv.Atoi(strings.TrimSpace(r.FormValue("age")))
-	if errAge != nil {
-		utilities.WriteJSON(w, 400, "invalid age", nil)
+	// Check method
+	if r.Method != http.MethodPost {
+		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "method not allowed", nil)
 		return
 	}
 
-	user := models.User{
-		Nickname:        strings.TrimSpace(r.FormValue("nickname")),
-		FirstName:       strings.TrimSpace(r.FormValue("first_name")),
-		LastName:        strings.TrimSpace(r.FormValue("last_name")),
-		Gender:          strings.TrimSpace(r.FormValue("gender")),
-		Age:             age,
-		Email:           strings.ToLower(strings.TrimSpace(r.FormValue("email"))),
-		Password:        r.FormValue("password"),
-		ConfirmPassword: r.FormValue("confirm_password"),
+	// Content type (optional but fine to keep)
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		utilities.WriteJSON(w, http.StatusBadRequest, "Content-Type must be application/json", nil)
+		return
+	}
+	// ✅ REPLACED PART (clean)
+	user, err := utilities.ReadJSONRequest[models.User](r)
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid request body", nil)
+		return
 	}
 
-	fmt.Println("validat empty")
-	// ** check emptiness
+	// Normalize input
+	user.Nickname = strings.TrimSpace(user.Nickname)
+	user.FirstName = strings.TrimSpace(user.FirstName)
+	user.LastName = strings.TrimSpace(user.LastName)
+	user.Gender = strings.TrimSpace(user.Gender)
+	user.Email = strings.ToLower(strings.TrimSpace(user.Email))
+
+	// Check required fields
 	fields := []struct {
 		Name  string
 		Value string
@@ -173,17 +193,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	for _, field := range fields {
 		if field.Value == "" {
-			utilities.WriteJSON(
-				w,
-				http.StatusBadRequest,
-				field.Name+" is required",
-				nil,
-			)
+			utilities.WriteJSON(w, http.StatusBadRequest, field.Name+" is required", nil)
 			return
 		}
 	}
-	fmt.Println("start validate")
 
+	// Validate fields
 	if !utilities.IsValidName(user.Nickname) ||
 		!utilities.IsValidName(user.FirstName) ||
 		!utilities.IsValidName(user.LastName) ||
@@ -191,52 +206,60 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		!utilities.IsValidGender(user.Gender) ||
 		!utilities.IsValidEmail(user.Email) ||
 		!utilities.IsValidPassword(user.Password) {
-		utilities.WriteJSON(w, http.StatusBadRequest, "invalid age", RULES)
+
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid input", RULES)
 		return
 	}
 
+	// Confirm password
 	if user.Password != user.ConfirmPassword {
-		utilities.WriteJSON(w, http.StatusBadRequest, "Password not confirmed", RULES)
+		utilities.WriteJSON(w, http.StatusBadRequest, "password not confirmed", nil)
 		return
 	}
 
-	// 3. Check email availability
+	// Check email exists
 	var emailExists bool
-	err := database.Database.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)", user.Email,
+	err = database.Database.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)",
+		user.Email,
 	).Scan(&emailExists)
-
 	if err != nil {
-		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", nil)
-		return
-	}
-	if emailExists {
-		utilities.WriteJSON(w, http.StatusBadRequest, "Email already exist", nil)
+		utilities.WriteJSON(w, http.StatusInternalServerError, "internal server error", nil)
 		return
 	}
 
+	if emailExists {
+		utilities.WriteJSON(w, http.StatusBadRequest, "email already exists", nil)
+		return
+	}
+
+	// Check nickname exists
 	var nicknameExists bool
 	err = database.Database.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM users WHERE nickname = ? COLLATE NOCASE)", user.Nickname,
+		"SELECT EXISTS(SELECT 1 FROM users WHERE nickname = ? COLLATE NOCASE)",
+		user.Nickname,
 	).Scan(&nicknameExists)
 	if err != nil {
-		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error,nickname", nil)
-		return
-	}
-	if nicknameExists {
-		utilities.WriteJSON(w, http.StatusBadRequest, "Username already taken", nil)
+		utilities.WriteJSON(w, http.StatusInternalServerError, "internal server error", nil)
 		return
 	}
 
+	if nicknameExists {
+		utilities.WriteJSON(w, http.StatusBadRequest, "username already taken", nil)
+		return
+	}
+
+	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error,hashing", nil)
+		utilities.WriteJSON(w, http.StatusInternalServerError, "internal server error", nil)
 		return
 	}
 
-	// 7. Create user
+	// Insert user
 	_, err = database.Database.Exec(
-		"INSERT INTO users (nickname, firstname, lastname, age, gender, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		`INSERT INTO users (nickname, firstname, lastname, age, gender, email, password)
+		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		user.Nickname,
 		user.FirstName,
 		user.LastName,
@@ -246,9 +269,17 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		string(hashedPassword),
 	)
 	if err != nil {
-		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error,insertion", err)
+		utilities.WriteJSON(w, http.StatusInternalServerError, "internal server error", nil)
 		return
 	}
+	type RegisterResponse struct {
+		Nickname string `json:"nickname"`
+		Email    string `json:"email"`
+	}
+	response := RegisterResponse{
+		Nickname: user.Nickname,
+		Email:    user.Email,
+	}
 
-	utilities.WriteJSON(w, 200, "registration sucess", user)
+	utilities.WriteJSON(w, http.StatusOK, "registration success", response)
 }
