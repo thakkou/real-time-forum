@@ -3,47 +3,68 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
-	"forum/database"
-	"forum/models"
-	"forum/utilities"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"forum/database"
+	"forum/models"
+	"forum/utilities"
 )
 
 // CreatePost
 func CreatePost(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("posts")
 	if r.URL.Path != "/api/posts/create" {
 		utilities.HandleError(w, http.StatusNotFound, "Page Not Found")
 		return
 	}
 
 	if r.Method != http.MethodPost {
+		fmt.Println(r.Method)
 		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method Not Allowed")
 		return
 	}
+	// this for code is for image upload i will update it later
 
-	// Layer 1: MaxBytesReader — cuts the connection early at network level
-	// slightly padded to account for multipart boundaries and form fields overhead
-	r.Body = http.MaxBytesReader(w, r.Body, 21<<20) // 21 MB hardcoded
+	// r.Body = http.MaxBytesReader(w, r.Body, 21<<20) // 21 MB hardcoded
 
 	// 1. Get post creation form data
-	title := strings.TrimSpace(r.FormValue("title"))
-	text := strings.TrimSpace(r.FormValue("text"))
-	categories := r.Form["categories"]
 
-	// check the size of data entry
-	const maxImageSize int64 = 20 << 20 // 20 MB
+	type Post struct {
+		Title      string   `json:"title"`
+		Text       string   `json:"text"`
+		Categories []string `json:"categories"`
+	}
 
-	err := r.ParseMultipartForm(maxImageSize)
-	// ParseMultipartForm sets the in-memory buffer limit.
-	// If the file exceeds that limit, Go silently spills the overflow to a temp file on disk.
-	if err != nil {
-		utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20Mb.") // 400
+	// Content type (optional but fine to keep)
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		utilities.WriteJSON(w, http.StatusBadRequest, "Content-Type must be application/json", nil)
 		return
 	}
+
+	// ✅ REPLACED PART (clean)
+	post, err := utilities.ReadJSONRequest[Post](r)
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid request body", nil)
+		return
+	}
+
+	title := post.Title
+	text := post.Text
+	categories := post.Categories
+
+	// check the size of data entry
+	// const maxImageSize int64 = 20 << 20 // 20 MB
+
+	// err := r.ParseMultipartForm(maxImageSize)
+	// ParseMultipartForm sets the in-memory buffer limit.
+	// If the file exceeds that limit, Go silently spills the overflow to a temp file on disk.
+	// if err != nil {
+	// 	utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20Mb.") // 400
+	// 	return
+	// }
 
 	// 2. Sanitize form data
 	if title == "" || text == "" {
@@ -61,59 +82,59 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add image
-	var imageUri string // default empty
-	file, header, err := r.FormFile("image")
-	if err != nil {
-		// post without image is handled!
-		fmt.Println("No image uploaded, continuing without it")
-	} else {
-		defer file.Close()
+	// var imageUri string // default empty
+	// file, header, err := r.FormFile("image")
+	// if err != nil {
+	// 	// post without image is handled!
+	// 	fmt.Println("No image uploaded, continuing without it")
+	// } else {
+	// 	defer file.Close()
 
-		// Layer 2: header.Size — fast pre-check, avoids reading the file at all (depends on content-length)
-		// not 100% trustworthy (client-declared) but useful to reject obviously large files early
-		if header.Size > maxImageSize {
-			utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20MB")
-			return
-		}
+	// 	// Layer 2: header.Size — fast pre-check, avoids reading the file at all (depends on content-length)
+	// 	// not 100% trustworthy (client-declared) but useful to reject obviously large files early
+	// 	if header.Size > maxImageSize {
+	// 		utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20MB")
+	// 		return
+	// 	}
 
-		// Layer 3: io.LimitReader — trustworthy precise enforcement on actual bytes
-		// reads up to maxFileSize+1 to detect if file exceeds the limit
-		limitedReader := io.LimitReader(file, maxImageSize+1)
-		fileBytes, err := io.ReadAll(limitedReader)
-		if err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Internal server error")
-			return
-		}
-		if int64(len(fileBytes)) > maxImageSize {
-			utilities.HandleError(w, http.StatusRequestEntityTooLarge, "Image max size is 20MB")
-			return
-		}
+	// 	// Layer 3: io.LimitReader — trustworthy precise enforcement on actual bytes
+	// 	// reads up to maxFileSize+1 to detect if file exceeds the limit
+	// 	limitedReader := io.LimitReader(file, maxImageSize+1)
+	// 	fileBytes, err := io.ReadAll(limitedReader)
+	// 	if err != nil {
+	// 		utilities.HandleError(w, http.StatusInternalServerError, "Internal server error")
+	// 		return
+	// 	}
+	// 	if int64(len(fileBytes)) > maxImageSize {
+	// 		utilities.HandleError(w, http.StatusRequestEntityTooLarge, "Image max size is 20MB")
+	// 		return
+	// 	}
 
-		// Check if file is valid image
-		buffer := make([]byte, 512)
-		file.Seek(0, 0) // without it, Read may give EOF error
-		_, err = file.Read(buffer)
-		if err != nil && err != io.EOF {
-			utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
-			return
-		}
-		// Reset file pointer so it can be read again later
-		if _, err := file.Seek(0, 0); err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
-			return
-		}
-		contentType := http.DetectContentType(buffer)
-		if !strings.HasPrefix(contentType, "image/") { // svg not handled: complicated + unsafe xml
-			utilities.HandleError(w, http.StatusBadRequest, "Invalid image type")
-			return
-		}
+	// 	// Check if file is valid image
+	// 	buffer := make([]byte, 512)
+	// 	file.Seek(0, 0) // without it, Read may give EOF error
+	// 	_, err = file.Read(buffer)
+	// 	if err != nil && err != io.EOF {
+	// 		utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
+	// 		return
+	// 	}
+	// 	// Reset file pointer so it can be read again later
+	// 	if _, err := file.Seek(0, 0); err != nil {
+	// 		utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
+	// 		return
+	// 	}
+	// 	contentType := http.DetectContentType(buffer)
+	// 	if !strings.HasPrefix(contentType, "image/") { // svg not handled: complicated + unsafe xml
+	// 		utilities.HandleError(w, http.StatusBadRequest, "Invalid image type")
+	// 		return
+	// 	}
 
-		imageUri, err = utilities.SaveImage(file, header)
-		if err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
-			return
-		}
-	}
+	// 	imageUri, err = utilities.SaveImage(file, header)
+	// 	if err != nil {
+	// 		utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
+	// 		return
+	// 	}
+	// }
 
 	// 3. Get userId
 	cookie, _ := r.Cookie("session_id")
@@ -131,12 +152,12 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	result, err := tx.Exec(
-		"INSERT INTO posts (user_id, created_at, title, text, image) VALUES (?, ?, ?, ?, ?)",
+		"INSERT INTO posts (user_id, created_at, title, text) VALUES (?, ?, ?, ?)",
 		userId,
 		time.Now(),
 		title,
 		text,
-		imageUri,
+		// imageUri,
 	)
 	if err != nil {
 		utilities.HandleError(w, http.StatusInternalServerError, "Could not create post")
@@ -174,10 +195,17 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	utilities.WriteJSON(w, 200, "post created successfully", map[string]any{
+		"post_id":    postID,
+		"title":      title,
+		"text":       text,
+		"categories": categories,
+		"user_id":    userId,
+	})
 }
 
 func PostResolver(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("post resolver")
 	endpoint := r.PathValue("endpoint")
 
 	cookie, err := r.Cookie("session_id")
@@ -226,77 +254,67 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
+
 		if err := DeletePost(postId, userId); err != nil {
 			utilities.HandleError(w, http.StatusForbidden, err.Error())
 			return
 		}
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-
+		utilities.WriteJSON(w, 200, "post deleted successfully", map[string]any{
+			"post_id": postId,
+			"deleted": true,
+		})
 	default:
 		utilities.HandleError(w, http.StatusNotFound, "Unknown endpoint")
 	}
 }
 
-func GetPosts() ([]models.Post, error) {
-	var posts []models.Post
-	// here i will check the categories and filters
+func GetPosts(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/api/posts/getPosts" {
+		utilities.WriteJSON(w, http.StatusNotFound, "url not found", nil)
+		return
+	}
+	fmt.Println("posts get ")
 
-	// Modified query to include user_id since we need it for categories
+	if r.Method != http.MethodGet {
+		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
+		return
+	}
 
-	rows, err := database.Database.Query(
-		"SELECT id, user_id, created_at, title, text, image FROM posts ORDER BY created_at DESC",
-	)
+	if err := r.ParseForm(); err != nil {
+		utilities.WriteJSON(w, http.StatusBadRequest, "Bad request", nil)
+		return
+	}
+
+	categories := r.Form["categories"]
+	isLiked := r.FormValue("my-liked-posts") == "true"
+	isByMe := r.FormValue("my-creat-posts") == "true"
+	fmt.Println("isliked", isLiked)
+	fmt.Println("isByMe", isByMe)
+	fmt.Println("categories", categories, len(categories))
+
+	var userID int
+
+	cookie, err := r.Cookie("session_id")
+	if err == nil {
+		userID, _ = utilities.GetUserIDFromCookie(cookie.Value)
+	}
+
+	posts, err := GetFilteredPosts(userID, categories, isLiked, isByMe)
 	if err != nil {
-		return nil, fmt.Errorf("getPosts error: %v", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var p models.Post
-		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text, &p.Image); err != nil {
-			return nil, fmt.Errorf("getPosts scan error: %v", err)
-		}
-
-		// get username
-		if err := database.Database.QueryRow(
-			"SELECT u.name FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE p.id = ?",
-			p.Id,
-		).Scan(&p.Username); err != nil {
-			return nil, fmt.Errorf("getPosts username error: %v", err)
-		}
-
-		// get timeago
-		p.TimeAgo = utilities.TimeAgo(p.Created_at)
-
-		// get reactions
-		if p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id); err != nil {
-			return nil, fmt.Errorf("getPosts reactions error: %v", err)
-		}
-
-		// Get comments for the post
-		if p.Comments, err = GetCommentsByPost(p.Id); err != nil {
-			return nil, fmt.Errorf("getPosts comments error: %v", err)
-		}
-
-		// Get categories for the post
-		if p.Categories, err = GetCategoriesByPost(p.Id); err != nil {
-			return nil, fmt.Errorf("getPosts categories error: %v", err)
-		}
-		posts = append(posts, p)
-	}
-	// Check for any errors that occurred during iteration
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("getPosts rows error: %v", err)
+		utilities.WriteJSON(w, http.StatusInternalServerError, "failed to get posts", nil)
+		return
 	}
 
-	return posts, nil
+	utilities.WriteJSON(w, http.StatusOK, "posts fetched successfully", posts)
 }
 
 // Returns filtered posts
 func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe bool) ([]models.Post, error) {
+	fmt.Println("start filtriing posts", userID, categories, likedByMe, postedByMe)
+
 	if len(categories) == 0 && userID == 0 {
-		postes, err := GetPosts()
+		postes, err := GetAllPosts()
+		fmt.Println("posts", postes)
 		return postes, err
 	}
 
@@ -508,4 +526,60 @@ func DeletePost(postId, userId int) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+func GetAllPosts() ([]models.Post, error) {
+	var posts []models.Post
+	// here i will check the categories and filters
+
+	// Modified query to include user_id since we need it for categories
+
+	rows, err := database.Database.Query(
+		"SELECT id, user_id, created_at, title, text, image FROM posts ORDER BY created_at DESC",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("getPosts error: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p models.Post
+		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text, &p.Image); err != nil {
+			return nil, fmt.Errorf("getPosts scan error: %v", err)
+		}
+
+		// get username
+		if err := database.Database.QueryRow(
+			"SELECT u.name FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE p.id = ?",
+			p.Id,
+		).Scan(&p.Username); err != nil {
+			return nil, fmt.Errorf("getPosts username error: %v", err)
+		}
+
+		// get timeago
+		p.TimeAgo = utilities.TimeAgo(p.Created_at)
+
+		// get reactions
+		if p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id); err != nil {
+			return nil, fmt.Errorf("getPosts reactions error: %v", err)
+		}
+
+		// Get comments for the post
+		if p.Comments, err = GetCommentsByPost(p.Id); err != nil {
+			return nil, fmt.Errorf("getPosts comments error: %v", err)
+		}
+
+		// Get categories for the post
+		if p.Categories, err = GetCategoriesByPost(p.Id); err != nil {
+			return nil, fmt.Errorf("getPosts categories error: %v", err)
+		}
+		posts = append(posts, p)
+	}
+	// Check for any errors that occurred during iteration
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("getPosts rows error: %v", err)
+	}
+
+	return posts, nil
 }

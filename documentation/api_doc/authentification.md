@@ -352,3 +352,4 @@ Session Deleted
 * Session cookies are marked as HttpOnly.
 * User passwords are never returned in API responses.
 * Sessions expire automatically after 24 hours.
+

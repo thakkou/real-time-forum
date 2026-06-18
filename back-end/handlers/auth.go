@@ -24,7 +24,7 @@ const RULES string = `
 
 // Login
 func Login(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("login")
+	fmt.Println("loginss")
 	if r.URL.Path != "/login" {
 		utilities.WriteJSON(w, 404, `path not found`, nil)
 		return
