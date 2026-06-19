@@ -1,4 +1,5 @@
-//designe the db schema
+
+//designe the db schema------> done
 //creat the crud for messages
   impliment function esentials
     -SendMessage(senderID, receiverID, text)
@@ -15,3 +16,8 @@
 }
    GET /api/messages/{user2}?offset=10&limit=10 (get 10 by 10 messages)
    //
+
+
+
+//to get users
+This section must be organized by the last message sent (just like discord). If the user is new and does not present messages you must organize it in alphabetic order.
