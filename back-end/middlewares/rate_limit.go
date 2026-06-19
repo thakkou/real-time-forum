@@ -19,7 +19,7 @@ func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.Handler
 
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Invalid IP address")
+			utilities.WriteJSON(w, 500, "invalid Ip adress", nil)
 			return
 		}
 
@@ -35,18 +35,21 @@ func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.Handler
 				ip, r.URL.Path, time.Now(),
 			)
 			if err != nil {
-				utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+				utilities.WriteJSON(w, 500, "Internal Server Error", nil)
+
 				return
 			}
 			handler(w, r)
 			return
 		} else if err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+			utilities.WriteJSON(w, 500, "Internal Server Error", nil)
+
 			return
 		}
 
 		if time.Since(lastRequest) < minInterval {
-			utilities.HandleError(w, http.StatusTooManyRequests, "Please wait before sending another request.")
+			utilities.WriteJSON(w, 500, "Please wait before sending another request.", nil)
+
 			return
 		}
 
@@ -55,7 +58,8 @@ func RateLimit(handler http.HandlerFunc, minInterval time.Duration) http.Handler
 			time.Now(), ip, r.URL.Path,
 		)
 		if err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+			utilities.WriteJSON(w, 500, "Internal Server Error", nil)
+
 			return
 		}
 

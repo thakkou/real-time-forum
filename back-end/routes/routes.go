@@ -90,4 +90,20 @@ func RegisterRoutes() {
 		"/api/comments/{id}/{endpoint}",
 		middlewares.CheckSessionCookie(handlers.CommentResolver, true),
 	)
+
+	// user routes
+	http.HandleFunc(
+		"/api/users",
+		middlewares.RateLimit(
+			middlewares.CheckSessionCookie(handlers.GetUsers, true),
+			3*time.Second,
+		),
+	)
+	http.HandleFunc(
+		"/api/users/{id}",
+		middlewares.RateLimit(
+			middlewares.CheckSessionCookie(handlers.GetPostById, true),
+			3*time.Second,
+		),
+	)
 }

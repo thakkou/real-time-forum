@@ -4,9 +4,10 @@
     -SendMessage(senderID, receiverID, text)
     -GetConversation(userID, otherUserID, limit, offset)
     -GetLastMessage(userID)
+    
    GET /api/users  (get all users to show in the UI)
+    GET /api/users/{id}     (get user profile)
    GET /api/messages/conversations
-   GET /api/users/{id}     (get user profile)
    post  /api/messages (send new private message)
   body  {
   "receiverId": 5,

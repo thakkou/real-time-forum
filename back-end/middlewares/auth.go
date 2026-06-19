@@ -43,12 +43,13 @@ func CheckSessionCookie(handler http.HandlerFunc, requiresAuth bool) http.Handle
 				utilities.ClearSessionCookie(w)
 
 			default:
-				utilities.HandleError(w, http.StatusInternalServerError, "Database error")
+				utilities.WriteJSON(w, http.StatusInternalServerError, "database error", nil)
 				return
 			}
 		}
 		if requiresAuth {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			utilities.WriteJSON(w, http.StatusSeeOther, "user should be login ", nil)
+			return
 		} else {
 			handler(w, r)
 		}
