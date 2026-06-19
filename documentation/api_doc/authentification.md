@@ -39,8 +39,8 @@ The following endpoints are rate limited:
 
 | Endpoint       | Limit                     |
 | -------------- | ------------------------- |
-| POST /login    | 1 request every 2 seconds |
-| POST /register | 1 request every 2 seconds |
+| POST /api/login    | 1 request every 2 seconds |
+| POST /api/register | 1 request every 2 seconds |
 
 ---
 
@@ -53,7 +53,7 @@ Creates a new user account.
 ### Endpoint
 
 ```http
-POST /register
+POST /api/register
 ```
 
 ### Request Body
@@ -168,7 +168,7 @@ Authenticates a user using either email or username.
 ### Endpoint
 
 ```http
-POST /login
+POST /api/login
 ```
 
 ### Request Body
@@ -258,7 +258,7 @@ Destroys the current session and removes the session cookie.
 ### Endpoint
 
 ```http
-POST /logout
+POST /api/logout
 ```
 
 ### Authentication

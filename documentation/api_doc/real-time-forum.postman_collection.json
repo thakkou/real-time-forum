@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "73fdb7a5-dae9-499c-8f37-b74a0f0d2c2b",
 		"name": "real-time-forum",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "28827225"
 	},
 	"item": [
@@ -12,9 +12,28 @@
 				{
 					"name": "login",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
-						"url": "http://localhost:8080/"
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"identifier\": \"john.doe@example.com\",\n  \"password\": \"SecurePass123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"login"
+							]
+						}
 					},
 					"response": []
 				},
@@ -32,23 +51,40 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/register"
+						"url": {
+							"raw": "http://localhost:8080/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"register"
+							]
+						}
 					},
 					"response": []
 				},
 				{
 					"name": "logout",
 					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "profile",
-					"request": {
-						"method": "GET",
-						"header": []
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"identifier\": \"john@example.com\",\n  \"password\": \"secret123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/logout",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"logout"
+							]
+						}
 					},
 					"response": []
 				}
@@ -56,11 +92,134 @@
 		},
 		{
 			"name": "postes",
-			"item": []
+			"item": [
+				{
+					"name": "post-no-image",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"My First Go Post\",\n  \"text\": \"This is a test post created from Postman using JSON.\",\n  \"categories\": [\n    \"General\",\n    \"Lifestyle\",\n    \"Education\"\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/posts/create",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"posts",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deletePost",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"My First Go Post\",\n  \"text\": \"This is a test post created from Postman using JSON.\",\n  \"categories\": [\n    \"General\",\n    \"Lifestyle\",\n    \"Education\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/posts/1/delete",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"posts",
+								"1",
+								"delete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getposts",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"My First Go Post\",\n  \"text\": \"This is a test post created from Postman using JSON.\",\n  \"categories\": [\n    \"General\",\n    \"Lifestyle\",\n    \"Education\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/posts/getPosts/?my-liked-posts&my-creat-posts",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"posts",
+								"getPosts",
+								""
+							],
+							"query": [
+								{
+									"key": "my-liked-posts",
+									"value": null
+								},
+								{
+									"key": "my-creat-posts",
+									"value": null
+								},
+								{
+									"key": "categories",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "categories",
+									"value": "ssss",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		},
 		{
 			"name": "comments",
-			"item": []
+			"item": [
+				{
+					"name": "addComment",
+					"request": {
+						"method": "POST",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "deleteComment",
+					"request": {
+						"method": "DELETE",
+						"header": []
+					},
+					"response": []
+				}
+			]
 		},
 		{
 			"name": "likes",
@@ -71,7 +230,17 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://localhost:8080/test"
+				"url": {
+					"raw": "http://localhost:8080/test",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"test"
+					]
+				}
 			},
 			"response": []
 		}

@@ -61,7 +61,8 @@ func RegisterRoutes() {
 			3*time.Second,
 		),
 	)
-
+	
+	//this resolver for liking,disliking,delete
 	http.HandleFunc(
 		"/api/posts/{id}/{endpoint}",
 		middlewares.CheckSessionCookie(handlers.PostResolver, true),
@@ -77,8 +78,9 @@ func RegisterRoutes() {
 		),
 	)
 
-	// http.HandleFunc(
-	// 	"/api/comments/{id}/{endpoint}",
-	// 	middlewares.CheckSessionCookie(handlers.CommentResolver, true),
-	// )
+	//this resolver for liking,disliking,delete
+	http.HandleFunc(
+		"/api/comments/{id}/{endpoint}",
+		middlewares.CheckSessionCookie(handlers.CommentResolver, true),
+	)
 }

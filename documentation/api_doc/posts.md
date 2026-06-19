@@ -232,12 +232,35 @@ GET /api/posts/getPosts?my-liked-posts=true&categories=Education
       "Created_at": "2026-06-18T13:51:55.859009543+01:00",
       "TimeAgo": "47 minutes ago",
       "Title": "My First Go Post",
-      "Text": "This is a test post created from Postman using JSON.",
+      "Text": "This is a test post created from Postman using JSON",
       "LikeCount": 0,
       "DislikeCount": 0,
       "IsLiked": 0,
-      "Comments": null,
-      "Categories": [
+      "Comments": [
+                {
+                    "Id": 1,
+                    "UserId": 1,
+                    "Nickname": "john_doe",
+                    "Created_at": "2026-06-18T16:56:57.973285361+01:00",
+                    "TimeAgo": "13 minutes ago",
+                    "Text": "test this comment on post one ",
+                    "LikeCount": 0,
+                    "DislikeCount": 0,
+                    "IsLiked": 0
+                },
+                {
+                    "Id": 2,
+                    "UserId": 1,
+                    "Nickname": "john_doe",
+                    "Created_at": "2026-06-18T17:05:15.790498247+01:00",
+                    "TimeAgo": "4 minutes ago",
+                    "Text": "test this comment on post 3 ",
+                    "LikeCount": 0,
+                    "DislikeCount": 0,
+                    "IsLiked": 0
+                }
+            ], 
+             "Categories": [
         "Education",
         "General",
         "Lifestyle"

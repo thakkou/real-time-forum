@@ -18,7 +18,6 @@ var (
 	GOOGLE_CLIENT_ID     string
 	GOOGLE_CLIENT_SECRET string
 	redirectURI          = "http://localhost:8080/auth/google/callback"
-
 	// Github
 	GITHUB_CLIENT_ID     string
 	GITHUB_CLIENT_SECRET string

@@ -17,13 +17,13 @@ import (
 func CreatePost(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("posts")
 	if r.URL.Path != "/api/posts/create" {
-		utilities.HandleError(w, http.StatusNotFound, "Page Not Found")
+		utilities.WriteJSON(w, http.StatusNotFound, "Page Not Found", nil)
 		return
 	}
 
 	if r.Method != http.MethodPost {
 		fmt.Println(r.Method)
-		utilities.HandleError(w, http.StatusMethodNotAllowed, "Method Not Allowed")
+		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method Not Allowed", nil)
 		return
 	}
 	// this for code is for image upload i will update it later
@@ -62,22 +62,22 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// ParseMultipartForm sets the in-memory buffer limit.
 	// If the file exceeds that limit, Go silently spills the overflow to a temp file on disk.
 	// if err != nil {
-	// 	utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20Mb.") // 400
+	// 	utilities.WriteJSON(w, http.StatusBadRequest, "Image max size is 20Mb.") // 400
 	// 	return
 	// }
 
 	// 2. Sanitize form data
 	if title == "" || text == "" {
-		utilities.HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
+		utilities.WriteJSON(w, http.StatusBadRequest, "Title and text cannot be empty", nil)
 		return
 	}
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	if len(title) > 255 || len(text) > 1000 {
-		utilities.HandleError(w, http.StatusBadRequest, "Title cannot exceed 255 characters")
+		utilities.WriteJSON(w, http.StatusBadRequest, "Title cannot exceed 255 characters", nil)
 		return
 	}
 	if len(categories) == 0 {
-		utilities.HandleError(w, http.StatusBadRequest, "At least one category must be selected")
+		utilities.WriteJSON(w, http.StatusBadRequest, "At least one category must be selected", nil)
 		return
 	}
 
@@ -93,7 +93,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// 	// Layer 2: header.Size — fast pre-check, avoids reading the file at all (depends on content-length)
 	// 	// not 100% trustworthy (client-declared) but useful to reject obviously large files early
 	// 	if header.Size > maxImageSize {
-	// 		utilities.HandleError(w, http.StatusBadRequest, "Image max size is 20MB")
+	// 		utilities.WriteJSON(w, http.StatusBadRequest, "Image max size is 20MB")
 	// 		return
 	// 	}
 
@@ -102,11 +102,11 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// 	limitedReader := io.LimitReader(file, maxImageSize+1)
 	// 	fileBytes, err := io.ReadAll(limitedReader)
 	// 	if err != nil {
-	// 		utilities.HandleError(w, http.StatusInternalServerError, "Internal server error")
+	// 		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal server error")
 	// 		return
 	// 	}
 	// 	if int64(len(fileBytes)) > maxImageSize {
-	// 		utilities.HandleError(w, http.StatusRequestEntityTooLarge, "Image max size is 20MB")
+	// 		utilities.WriteJSON(w, http.StatusRequestEntityTooLarge, "Image max size is 20MB")
 	// 		return
 	// 	}
 
@@ -115,23 +115,23 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// 	file.Seek(0, 0) // without it, Read may give EOF error
 	// 	_, err = file.Read(buffer)
 	// 	if err != nil && err != io.EOF {
-	// 		utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
+	// 		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not save image")
 	// 		return
 	// 	}
 	// 	// Reset file pointer so it can be read again later
 	// 	if _, err := file.Seek(0, 0); err != nil {
-	// 		utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
+	// 		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not save image")
 	// 		return
 	// 	}
 	// 	contentType := http.DetectContentType(buffer)
 	// 	if !strings.HasPrefix(contentType, "image/") { // svg not handled: complicated + unsafe xml
-	// 		utilities.HandleError(w, http.StatusBadRequest, "Invalid image type")
+	// 		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid image type")
 	// 		return
 	// 	}
 
 	// 	imageUri, err = utilities.SaveImage(file, header)
 	// 	if err != nil {
-	// 		utilities.HandleError(w, http.StatusInternalServerError, "Could not save image")
+	// 		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not save image")
 	// 		return
 	// 	}
 	// }
@@ -140,13 +140,13 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("session_id")
 	userId, err := utilities.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		utilities.HandleError(w, http.StatusUnauthorized, "Invalid or expired session")
+		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid or expired session", nil)
 		return
 	}
 
 	tx, err := database.Database.Begin()
 	if err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Could not create post")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not create post", nil)
 		return
 	}
 	defer tx.Rollback()
@@ -160,13 +160,13 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		// imageUri,
 	)
 	if err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Could not create post")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not create post", nil)
 		return
 	}
 
 	postID, err := result.LastInsertId()
 	if err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Could not retrieve post ID")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not retrieve post ID", nil)
 		return
 	}
 
@@ -176,7 +176,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 			"SELECT id FROM category WHERE name = ?",
 			categoryName,
 		).Scan(&categoryID); err != nil {
-			utilities.HandleError(w, http.StatusBadRequest, "Invalid category: "+categoryName)
+			utilities.WriteJSON(w, http.StatusBadRequest, "Invalid category: "+categoryName, nil)
 			return
 		}
 
@@ -185,13 +185,13 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 			postID,
 			categoryID,
 		); err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Could not associate categories with post")
+			utilities.WriteJSON(w, http.StatusInternalServerError, "Could not associate categories with post", nil)
 			return
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Could not save post")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not save post", nil)
 		return
 	}
 
@@ -210,53 +210,56 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		utilities.HandleError(w, http.StatusUnauthorized, "Not logged in")
+		utilities.WriteJSON(w, http.StatusUnauthorized, "Not logged in", nil)
 		return
 	}
 
 	userId, err := utilities.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		utilities.HandleError(w, http.StatusUnauthorized, "Invalid session")
+		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid session", nil)
 		return
 	}
 
 	postId, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		utilities.HandleError(w, http.StatusBadRequest, "Invalid post ID")
+		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid post ID", nil)
 		return
 	}
 
 	switch endpoint {
 	case "like":
 		if r.Method != http.MethodPost {
-			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
 			return
 		}
 		if err := ReactToPost(userId, postId, 1); err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Could not react to post")
+			fmt.Println("error", err, userId, postId)
+
+			utilities.WriteJSON(w, http.StatusInternalServerError, "Could not react to post", nil)
 			return
 		}
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		utilities.WriteJSON(w, 200, "post liked succesfully", nil)
 
 	case "dislike":
 		if r.Method != http.MethodPost {
-			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
 			return
 		}
 		if err := ReactToPost(userId, postId, -1); err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Could not react to post")
+			fmt.Println("error", err)
+			utilities.WriteJSON(w, http.StatusInternalServerError, "Could not react to post", nil)
 			return
 		}
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		utilities.WriteJSON(w, 200, "post disliked succesfully", nil)
 
 	case "delete":
 		if r.Method != http.MethodDelete {
-			utilities.HandleError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
 			return
 		}
 
 		if err := DeletePost(postId, userId); err != nil {
-			utilities.HandleError(w, http.StatusForbidden, err.Error())
+			utilities.WriteJSON(w, http.StatusForbidden, err.Error(), nil)
 			return
 		}
 		utilities.WriteJSON(w, 200, "post deleted successfully", map[string]any{
@@ -264,7 +267,7 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			"deleted": true,
 		})
 	default:
-		utilities.HandleError(w, http.StatusNotFound, "Unknown endpoint")
+		utilities.WriteJSON(w, http.StatusNotFound, "Unknown endpoint", nil)
 	}
 }
 
@@ -273,7 +276,6 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		utilities.WriteJSON(w, http.StatusNotFound, "url not found", nil)
 		return
 	}
-	fmt.Println("posts get ")
 
 	if r.Method != http.MethodGet {
 		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
@@ -393,7 +395,6 @@ func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe boo
 
 		// get comments
 		if p.Comments, err = GetCommentsByPost(p.Id); err != nil {
-			
 			return nil, fmt.Errorf("GetFiltrtPOst comments error: %v", err)
 		}
 
