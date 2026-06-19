@@ -272,11 +272,6 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPosts(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/api/posts/getPosts" {
-		utilities.WriteJSON(w, http.StatusNotFound, "url not found", nil)
-		return
-	}
-
 	if r.Method != http.MethodGet {
 		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
 		return
@@ -290,25 +285,54 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	categories := r.Form["categories"]
 	isLiked := r.FormValue("my-liked-posts") == "true"
 	isByMe := r.FormValue("my-creat-posts") == "true"
-	fmt.Println("isliked", isLiked)
-	fmt.Println("isByMe", isByMe)
-	fmt.Println("categories", categories, len(categories))
 
 	var userID int
 
-	cookie, err := r.Cookie("session_id")
-	if err == nil {
+	if cookie, err := r.Cookie("session_id"); err == nil {
 		userID, _ = utilities.GetUserIDFromCookie(cookie.Value)
 	}
 
 	posts, err := GetFilteredPosts(userID, categories, isLiked, isByMe)
 	if err != nil {
-		fmt.Println("errors", err)
 		utilities.WriteJSON(w, http.StatusInternalServerError, "failed to get posts", nil)
 		return
 	}
 
 	utilities.WriteJSON(w, http.StatusOK, "posts fetched successfully", posts)
+}
+
+func GetPostById(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
+		return
+	}
+
+	postID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid post ID", nil)
+		return
+	}
+
+	post, err := GetPost(postID)
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusNotFound, "Post not found", nil)
+		return
+	}
+
+	comments, err := GetCommentsByPost(postID)
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not get comments", nil)
+		return
+	}
+
+	post.Comments = comments
+
+	utilities.WriteJSON(
+		w,
+		http.StatusOK,
+		"Post fetched successfully",
+		post,
+	)
 }
 
 // Returns filtered posts
@@ -394,9 +418,9 @@ func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe boo
 		}
 
 		// get comments
-		if p.Comments, err = GetCommentsByPost(p.Id); err != nil {
-			return nil, fmt.Errorf("GetFiltrtPOst comments error: %v", err)
-		}
+		// if p.Comments, err = GetCommentsByPost(p.Id); err != nil {
+		// 	return nil, fmt.Errorf("GetFiltrtPOst comments error: %v", err)
+		// }
 
 		// get categories
 		if p.Categories, err = GetCategoriesByPost(p.Id); err != nil {
@@ -583,4 +607,38 @@ func GetAllPosts() ([]models.Post, error) {
 	}
 
 	return posts, nil
+}
+
+func GetPost(postID int) (models.Post, error) {
+	var p models.Post
+
+	err := database.Database.QueryRow(`
+		SELECT id, user_id, created_at, title, text
+		FROM posts
+		WHERE id = ?
+	`, postID).Scan(
+		&p.Id,
+		&p.UserId,
+		&p.Created_at,
+		&p.Title,
+		&p.Text,
+	)
+	if err != nil {
+		return p, err
+	}
+
+	if err := database.Database.QueryRow(
+		"SELECT nickname FROM users WHERE id = ?",
+		p.UserId,
+	).Scan(&p.Nickname); err != nil {
+		return p, err
+	}
+
+	p.TimeAgo = utilities.TimeAgo(p.Created_at)
+
+	p.LikeCount, p.DislikeCount, _ = GetReactionsByPost(p.Id)
+
+	p.Categories, _ = GetCategoriesByPost(p.Id)
+
+	return p, nil
 }
