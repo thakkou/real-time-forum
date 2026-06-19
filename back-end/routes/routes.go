@@ -106,4 +106,12 @@ func RegisterRoutes() {
 			3*time.Second,
 		),
 	)
+	// conversation and message conversation
+	http.HandleFunc(
+		"/api/messages",
+		middlewares.RateLimit(
+			middlewares.CheckSessionCookie(handlers.SendMessage, true),
+			3*time.Second,
+		),
+	)
 }
