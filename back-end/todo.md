@@ -1,23 +1,105 @@
+//start implimenting ws
+what i should impliment ??
+//1-add a part i store all conected user
+map[userID]*ws.Conn
+-ws handlers
+  -connect
+  -read messages
+  -route events
 
-//designe the db schema------> done
-//creat the crud for messages
-  impliment function esentials
-    -SendMessage(senderID, receiverID, text)
-    -GetConversation(userID, otherUserID, limit, offset)
-    -GetLastMessage(userID)
-    
-   GET /api/users  (get all users to show in the UI)
-    GET /api/users/{id}     (get user profile)
-   GET /api/messages/conversations
-   post  /api/messages (send new private message)
-  body  {
-  "receiverId": 5,
-  "text": "hello"
+-event Router
+ "send_message","typing","read"
+
+
+ --------------------- workflow -------------
+ # connct ws
+ const ws = new WebSocket("ws://localhost:8080/ws")
+
+ # identify user
+ {
+  "event": "auth",
+  "token": "session_id"
 }
-   GET /api/messages/{user2}?offset=10&limit=10 (get 10 by 10 messages)
-   //
+# STEP 3 — Send message event
+{
+  "event": "send_message",
+  "data": {
+    "conversation_id": 12,
+    "text": "hello"
+  }
+}
 
+🧱 4. Basic workflow (what you should implement)
+STEP 1 — Connect WS
 
+Frontend:
 
-//to get users
-This section must be organized by the last message sent (just like discord). If the user is new and does not present messages you must organize it in alphabetic order.
+const ws = new WebSocket("ws://localhost:8080/ws")
+
+Backend:
+
+upgrade HTTP → WS
+STEP 2 — Identify user
+
+After connect:
+
+{
+  "event": "auth",
+  "token": "session_id"
+}
+
+Backend:
+
+validate session
+store connection in map
+STEP 3 — Send message event
+
+Frontend:
+
+{
+  "event": "send_message",
+  "data": {
+    "conversation_id": 12,
+    "text": "hello"
+  }
+}
+
+Backend:
+
+save message in DB
+find receiver
+push event
+STEP 4 — Receive real-time message
+
+Backend sends:
+
+{
+  "event": "new_message",
+  "data": {
+    "conversation_id": 12,
+    "sender_id": 1,
+    "text": "hello",
+    "created_at": "..."
+  }
+}
+
+Frontend:
+
+instantly append to chat UI
+🔥 5. Events you SHOULD implement for your project
+
+You don’t need everything. This is enough:
+
+💬 Chat events
+send_message
+new_message
+load_messages
+👤 User status
+user_online
+user_offline
+⌨️ UX events
+typing
+stop_typing
+📡 system
+auth
+ping/pong
