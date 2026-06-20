@@ -11,6 +11,7 @@ import (
 	"forum/database"
 	"forum/models"
 	"forum/utilities"
+	"forum/ws"
 )
 
 // =========================
@@ -143,6 +144,8 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	tx.Commit()
 	createdPost, err := GetPost(int(postID))
+
+	go ws.BroadcastExcept(strconv.Itoa(userId), "new_post", createdPost)
 	if err != nil {
 		utilities.WriteJSON(w, http.StatusInternalServerError, "could not fetch created post", nil)
 		return

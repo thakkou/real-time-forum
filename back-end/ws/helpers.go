@@ -26,6 +26,7 @@ var (
 
 // this func send the notification and the data to all users exept u
 func BroadcastExcept(senderID string, eventType string, data any) {
+	fmt.Println("start brodcasting ")
 	payload := map[string]any{
 		"event_type": eventType,
 		"data":       data,
@@ -74,7 +75,7 @@ func StoreClient(userID string, isLoggedIn bool, conn *websocket.Conn) *Client {
 	Clients[userID] = client
 	mu.Unlock()
 	fmt.Println("client store it succesfully")
-	
+
 	return client
 }
 
