@@ -579,7 +579,28 @@ func GetConversationByID(w http.ResponseWriter, r *http.Request) {
 	// -------------------------
 	idStr := r.PathValue("convID")
 	conversationID, err := strconv.Atoi(idStr)
-	fmt.Println("========== GET CONVERSATION BY ID ==========", conversationID)
+	if err != nil {
+		utilities.WriteJSON(w, 400, "invalid conversation id", nil)
+		return
+	}
+
+	// -------------------------
+	// OFFSET + LIMIT
+	// -------------------------
+	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+	if limit > 50 {
+		limit = 50
+	}
+
+	fmt.Println("conversation:", conversationID, "offset:", offset, "limit:", limit)
 
 	// -------------------------
 	// VERIFY USER BELONGS TO CONVERSATION
@@ -593,7 +614,6 @@ func GetConversationByID(w http.ResponseWriter, r *http.Request) {
 	`, conversationID, userID, userID).Scan(&convID)
 
 	if err == sql.ErrNoRows {
-		fmt.Println("errors", err)
 		utilities.WriteJSON(w, 403, "not allowed", nil)
 		return
 	}
@@ -603,15 +623,15 @@ func GetConversationByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// -------------------------
-	// GET LAST 10 MESSAGES (OLD → NEW)
+	// GET MESSAGES (PAGINATED)
 	// -------------------------
 	rows, err := database.Database.Query(`
 		SELECT id, sender_id, text, created_at
 		FROM MESSAGES
 		WHERE conversation_id = ?
-		ORDER BY created_at ASC
-		LIMIT 10
-	`, conversationID)
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?
+	`, conversationID, limit, offset)
 	if err != nil {
 		utilities.WriteJSON(w, 500, "db error", nil)
 		return
@@ -651,6 +671,4 @@ func GetConversationByID(w http.ResponseWriter, r *http.Request) {
 		"conversation_id": convID,
 		"messages":        messages,
 	})
-
-	fmt.Println("========== END GET CONVERSATION ==========")
 }
