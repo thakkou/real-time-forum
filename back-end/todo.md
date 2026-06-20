@@ -1,3 +1,14 @@
+1-store all conected clients
+2-write event of write messages
+
+
+--actions to do
+-start by storing onlie from oflines 
+-a message notification 
+-post notification 
+-react to ur post
+-typing in progresse
+
 //start implimenting ws
 what i should impliment ??
 //1-add a part i store all conected user
