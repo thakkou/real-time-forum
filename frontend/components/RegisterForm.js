@@ -60,11 +60,14 @@ export const RegisterForm = () => (`
         </div>
         <div class="field">
           <label>Gender</label>
-          <select name="gender" id="gender">
-            <option value="" disabled selected hidden>Choose an option...</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
+          <div class="gender-group" name="gender" id="gender">
+            <label class="gender-option">
+              <input type="radio" name="gender" value="Male" /> Male
+            </label>
+            <label class="gender-option">
+              <input type="radio" name="gender" value="Female" /> Female
+            </label>
+          </div>
         </div>
       </div>
       <div class="field">
@@ -126,7 +129,7 @@ export const RegisterForm = () => (`
     <!-- end -->
 
     <div class="link-row">
-      Already have an account? <a href="/login"> Login</a>
+      Already have an account? <a onclick="navigate('login')"> Login</a>
     </div>
   </div>
 `);

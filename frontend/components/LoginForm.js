@@ -53,6 +53,6 @@ export const LoginForm = () => (`
     </div>
     <!-- end -->
 
-    <div class="link-row">No account? <a href="/register"> Register</a></div>
+    <div class="link-row">No account? <a onclick="navigate('register')"> Register</a></div>
   </div>
 `);

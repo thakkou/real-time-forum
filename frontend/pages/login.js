@@ -1,4 +1,3 @@
-// <html lang="en">
 //   <head>
 //     <meta charset="UTF-8" />
 //     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -6,9 +5,8 @@
 //     <link rel="stylesheet" href="/assets/style.css" />
 //   </head>
 
+import { LoginForm } from '../components/LoginForm.js';
+
 export async function render() {
-    return `
-        <h1>Chat</h1>
-        <div id="messages"></div>
-    `;
+    return LoginForm();
 }

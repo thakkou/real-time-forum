@@ -28,7 +28,9 @@ const server = http.createServer(async (req, res) => {
 
         if (path.resolve(decodedPath) === '/favicon.ico' ||
             path.resolve(decodedPath).startsWith('/public/') ||
-            path.resolve(decodedPath).startsWith('/scripts/')) {
+            path.resolve(decodedPath).startsWith('/scripts/') ||
+            path.resolve(decodedPath).startsWith('/components/') ||
+            path.resolve(decodedPath).startsWith('/pages/')) {
             fs.readFile(`.${decodedPath}`, (err, data) => {
                 if (err) throw err;
 
