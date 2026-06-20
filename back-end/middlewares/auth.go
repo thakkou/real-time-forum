@@ -14,44 +14,72 @@ import (
 // false: prevents already-logged-in users from accessing login/register pages.
 func CheckSessionCookie(handler http.HandlerFunc, requiresAuth bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// No session cookie
 		cookie, err := r.Cookie("session_id")
-		// 1. cookie existence in request
-		if err == nil && cookie.Value != "" {
-			var expiryTime time.Time
-			err = database.Database.QueryRow(
-				"SELECT expires_at FROM sessions WHERE id = ?", cookie.Value,
-			).Scan(&expiryTime)
-
-			switch err {
-			case nil:
-				// session found
-				if expiryTime.After(time.Now()) {
-					if requiresAuth {
-						handler(w, r)
-					} else {
-						http.Redirect(w, r, "/", http.StatusSeeOther)
-					}
-					return
-				}
-
-				// expired
-				utilities.DeleteSession(cookie.Value)
-				utilities.ClearSessionCookie(w)
-
-			case sql.ErrNoRows:
-				// session not found
-				utilities.ClearSessionCookie(w)
-
-			default:
-				utilities.WriteJSON(w, http.StatusInternalServerError, "database error", nil)
+		if err != nil || cookie.Value == "" {
+			if requiresAuth {
+				utilities.WriteJSON(w, http.StatusUnauthorized, "login required", nil)
 				return
 			}
-		}
-		if requiresAuth {
-			utilities.WriteJSON(w, http.StatusSeeOther, "user should be login ", nil)
-			return
-		} else {
+
 			handler(w, r)
+			return
 		}
+
+		// Check session in database
+		var expiryTime time.Time
+		err = database.Database.QueryRow(
+			"SELECT expires_at FROM sessions WHERE id = ?",
+			cookie.Value,
+		).Scan(&expiryTime)
+
+		switch err {
+		case nil:
+			// continue below
+
+		case sql.ErrNoRows:
+			utilities.ClearSessionCookie(w)
+
+			if requiresAuth {
+				utilities.WriteJSON(w, http.StatusUnauthorized, "login required", nil)
+				return
+			}
+
+			handler(w, r)
+			return
+
+		default:
+			utilities.WriteJSON(w, http.StatusInternalServerError, "database error", nil)
+			return
+		}
+
+		// Session expired
+		if expiryTime.Before(time.Now()) {
+			utilities.DeleteSession(cookie.Value)
+			utilities.ClearSessionCookie(w)
+
+			if requiresAuth {
+				utilities.WriteJSON(w, http.StatusUnauthorized, "session expired", nil)
+				return
+			}
+
+			handler(w, r)
+			return
+		}
+
+		// Valid session
+		if requiresAuth {
+			handler(w, r)
+			return
+		}
+
+		// Guest-only route (/login, /register, ...)
+		utilities.WriteJSON(
+			w,
+			http.StatusConflict,
+			"you already have an active session, please log out first",
+			nil,
+		)
+		return
 	}
 }

@@ -93,12 +93,21 @@ func RegisterRoutes() {
 
 	// user routes
 	http.HandleFunc(
-		"/api/users",
+		"/api/conversations",
 		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.GetUsers, true),
+			middlewares.CheckSessionCookie(handlers.GetConversation, true),
 			3*time.Second,
 		),
 	)
+
+	http.HandleFunc(
+		"/api/conversation/{convID}",
+		middlewares.RateLimit(
+			middlewares.CheckSessionCookie(handlers.GetConversationByID, true),
+			3*time.Second,
+		),
+	)
+
 	http.HandleFunc(
 		"/api/users/{id}",
 		middlewares.RateLimit(

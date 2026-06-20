@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"forum/database"
 	"forum/utilities"
@@ -14,6 +15,36 @@ type SendMessageRequest struct {
 	ReceiverID     int    `json:"receiver_id"`
 	Text           string `json:"text"`
 	ConversationID *int   `json:"conversation_id"`
+}
+
+type User struct {
+	ID        int    `json:"id"`
+	Nickname  string `json:"nickname"`
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
+	Age       int    `json:"age"`
+	Gender    string `json:"gender"`
+}
+
+type Profile struct {
+	ID        int    `json:"id"`
+	Nickname  string `json:"nickname"`
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
+	Age       int    `json:"age"`
+	Gender    string `json:"gender"`
+}
+
+type ConversationPreview struct {
+	ConversationID *int    `json:"conversation_id"`
+	Date           *string `json:"date"`
+	LastMessage    *string `json:"last_message"`
+	Status         string  `json:"status"`
+}
+
+type UserFeedItem struct {
+	Profile      Profile             `json:"profile"`
+	Conversation ConversationPreview `json:"conversation"`
 }
 
 func SendMessage(w http.ResponseWriter, r *http.Request) {
@@ -358,4 +389,268 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			"message_id":      messageID,
 		},
 	)
+}
+
+// get all users to show in the UI the first 30 and add throttle to add more 30 by 30   (?offset=10&limit=10)
+// rule of sorting 1 for last conversation then alphabitique
+func GetConversation(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("start get users")
+
+	cookie, _ := r.Cookie("session_id")
+
+	userId, err := utilities.GetUserIDFromCookie(cookie.Value)
+	if err != nil {
+		utilities.WriteJSON(w, 405, "not authorized", nil)
+		return
+	}
+
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil || limit <= 0 {
+		limit = 30
+	}
+	if limit > 30 {
+		limit = 30
+	}
+
+	items := []UserFeedItem{}
+
+	// =========================
+	// 1. USERS WITH CONVERSATION
+	// =========================
+	rows, err := database.Database.Query(`
+		SELECT 
+		    c.id,
+			u.id, u.nickname, u.firstname, u.lastname, u.age, u.gender,
+			c.last_message,
+			c.last_message_at
+		FROM USERS u
+		JOIN CONVERSATIONS c
+			ON (
+				(c.user1_id = ? AND c.user2_id = u.id)
+				OR
+				(c.user2_id = ? AND c.user1_id = u.id)
+			)
+		WHERE u.id != ?
+		ORDER BY c.last_message_at DESC
+		LIMIT ? OFFSET ?;
+	`, userId, userId, userId, limit, offset)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			convID   int
+			u        Profile
+			lastMsg  sql.NullString
+			lastDate sql.NullString
+		)
+
+		err := rows.Scan(
+			&convID,
+			&u.ID,
+			&u.Nickname,
+			&u.Firstname,
+			&u.Lastname,
+			&u.Age,
+			&u.Gender,
+			&lastMsg,
+			&lastDate,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		var msgPtr *string
+		if lastMsg.Valid {
+			msgPtr = &lastMsg.String
+		}
+
+		var datePtr *string
+		if lastDate.Valid {
+			datePtr = &lastDate.String
+		}
+		convID = convID // normal int from SQL
+
+		convIDPtr := &convID
+
+		items = append(items, UserFeedItem{
+			Profile: u,
+			Conversation: ConversationPreview{
+				ConversationID: convIDPtr,
+				Date:           datePtr,
+				LastMessage:    msgPtr,
+				Status:         "active",
+			},
+		})
+	}
+
+	// If full, return early
+	if len(items) >= limit {
+		utilities.WriteJSON(w, 200, "ok", items)
+		return
+	}
+
+	remaining := limit - len(items)
+
+	// =========================
+	// 2. USERS WITHOUT CONVERSATION
+	// =========================
+	rows2, err := database.Database.Query(`
+		SELECT u.id, u.nickname, u.firstname, u.lastname, u.age, u.gender
+		FROM USERS u
+		WHERE u.id != ?
+		AND u.id NOT IN (
+			SELECT 
+				CASE 
+					WHEN user1_id = ? THEN user2_id
+					ELSE user1_id
+				END
+			FROM CONVERSATIONS
+			WHERE user1_id = ? OR user2_id = ?
+		)
+		ORDER BY u.nickname COLLATE NOCASE ASC
+		LIMIT ?;
+	`, userId, userId, userId, userId, remaining)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rows2.Close()
+
+	for rows2.Next() {
+		var u Profile
+
+		err := rows2.Scan(
+			&u.ID,
+			&u.Nickname,
+			&u.Firstname,
+			&u.Lastname,
+			&u.Age,
+			&u.Gender,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		items = append(items, UserFeedItem{
+			Profile: u,
+			Conversation: ConversationPreview{
+				ConversationID: nil,
+				Date:           nil,
+				LastMessage:    nil,
+				Status:         "new",
+			},
+		})
+	}
+
+	// =========================
+	// RESPONSE
+	// =========================
+	utilities.WriteJSON(w, 200, "ok", items)
+}
+
+func GetConversationByID(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("========== GET CONVERSATION BY ID ==========")
+
+	// -------------------------
+	// AUTH
+	// -------------------------
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		utilities.WriteJSON(w, 401, "unauthorized", nil)
+		return
+	}
+
+	userID, err := utilities.GetUserIDFromCookie(cookie.Value)
+	if err != nil {
+		utilities.WriteJSON(w, 401, "unauthorized", nil)
+		return
+	}
+
+	// -------------------------
+	// GET conversation ID
+	// -------------------------
+	idStr := r.PathValue("convID")
+	conversationID, err := strconv.Atoi(idStr)
+	fmt.Println("========== GET CONVERSATION BY ID ==========", conversationID)
+
+	// -------------------------
+	// VERIFY USER BELONGS TO CONVERSATION
+	// -------------------------
+	var convID int
+	err = database.Database.QueryRow(`
+		SELECT id
+		FROM CONVERSATIONS
+		WHERE id = ?
+		AND (user1_id = ? OR user2_id = ?)
+	`, conversationID, userID, userID).Scan(&convID)
+
+	if err == sql.ErrNoRows {
+		fmt.Println("errors", err)
+		utilities.WriteJSON(w, 403, "not allowed", nil)
+		return
+	}
+	if err != nil {
+		utilities.WriteJSON(w, 500, "db error", nil)
+		return
+	}
+
+	// -------------------------
+	// GET LAST 10 MESSAGES (OLD → NEW)
+	// -------------------------
+	rows, err := database.Database.Query(`
+		SELECT id, sender_id, text, created_at
+		FROM MESSAGES
+		WHERE conversation_id = ?
+		ORDER BY created_at ASC
+		LIMIT 10
+	`, conversationID)
+	if err != nil {
+		utilities.WriteJSON(w, 500, "db error", nil)
+		return
+	}
+	defer rows.Close()
+
+	type Message struct {
+		ID        int    `json:"id"`
+		SenderID  int    `json:"sender_id"`
+		Text      string `json:"text"`
+		CreatedAt string `json:"created_at"`
+	}
+
+	messages := []Message{}
+
+	for rows.Next() {
+		var m Message
+
+		err := rows.Scan(
+			&m.ID,
+			&m.SenderID,
+			&m.Text,
+			&m.CreatedAt,
+		)
+		if err != nil {
+			utilities.WriteJSON(w, 500, "scan error", nil)
+			return
+		}
+
+		messages = append(messages, m)
+	}
+
+	// -------------------------
+	// RESPONSE
+	// -------------------------
+	utilities.WriteJSON(w, 200, "ok", map[string]interface{}{
+		"conversation_id": convID,
+		"messages":        messages,
+	})
+
+	fmt.Println("========== END GET CONVERSATION ==========")
 }

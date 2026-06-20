@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,7 +10,14 @@ import (
 	"forum/database"
 	"forum/handlers"
 	"forum/routes"
+	"forum/utilities"
 )
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	utilities.WriteJSON(w, 200, "server is healty", nil)
+	fmt.Println("healt")
+	return
+}
 
 func main() {
 	if err := InitEnviron(); err != nil {
@@ -19,7 +27,7 @@ func main() {
 	if err := database.Init(); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
-
+	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/assets/", handlers.Static)
 	http.HandleFunc("/uploads/", handlers.Static)
 

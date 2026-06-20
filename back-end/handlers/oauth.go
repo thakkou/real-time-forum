@@ -40,7 +40,7 @@ func OAuthLogin(w http.ResponseWriter, r *http.Request) {
 		scope = "read:user user:email"
 
 	default:
-		utilities.HandleError(w, http.StatusNotFound, "Unknown endpoint")
+		utilities.WriteJSON(w, http.StatusNotFound, "Unknown endpoint", nil)
 	}
 
 	// Generate a random state token to prevent CSRF
@@ -91,7 +91,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		userInfoURL = "https://api.github.com/user"
 
 	default:
-		utilities.HandleError(w, http.StatusNotFound, "Unknown endpoint")
+		utilities.WriteJSON(w, http.StatusNotFound, "Unknown endpoint", nil)
 	}
 
 	// 1. Validate state to prevent CSRF
@@ -144,7 +144,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)", user.Email,
 	).Scan(&emailExists)
 	if err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Database error")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Database error", nil)
 		return
 	}
 	var newUsername string
@@ -163,7 +163,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 				"SELECT EXISTS(SELECT 1 FROM users WHERE name = ? COLLATE NOCASE)", newUsername,
 			).Scan(&nameExists)
 			if err != nil {
-				utilities.HandleError(w, http.StatusInternalServerError, "Database error")
+				utilities.WriteJSON(w, http.StatusInternalServerError, "Database error", nil)
 				return
 			}
 		}
@@ -185,7 +185,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 			nil,
 		)
 		if err != nil {
-			utilities.HandleError(w, http.StatusInternalServerError, "Server error")
+			utilities.WriteJSON(w, http.StatusInternalServerError, "Server error", nil)
 			return
 		}
 	}
@@ -206,7 +206,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	// Delete any existing sessions for this user
 	_, err = database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
 	if err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Server error")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Server error", nil)
 		return
 	}
 
@@ -218,7 +218,7 @@ func OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		sessionID, expiration, userID,
 	)
 	if err != nil {
-		utilities.HandleError(w, http.StatusInternalServerError, "Server error")
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Server error", nil)
 		return
 	}
 
