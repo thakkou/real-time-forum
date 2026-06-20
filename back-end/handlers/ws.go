@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"sync"
 
 	"forum/utilities"
+	"forum/ws"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -19,17 +19,6 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
-
-type Client struct {
-	conn   *websocket.Conn
-	isAuth bool
-	id     string
-}
-
-var (
-	Clients = make(map[string]*Client)
-	mu      sync.RWMutex
-)
 
 func HandlerWs(w http.ResponseWriter, r *http.Request) {
 	var userId string
@@ -54,22 +43,24 @@ func HandlerWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &Client{
-		conn:   conn,
-		isAuth: isLoggedIn,
-		id:     userId,
-	}
+	client := ws.StoreClient(userId, isLoggedIn, conn)
 
-	mu.Lock()
-	Clients[userId] = client
-	mu.Unlock()
-
-	fmt.Println("[WS] connected:", userId)
+	go ws.HandleClient(client)
 }
 
-// here i will add a step to identify users
-// if user login i store here token or userId
-// depend on token i will run events
+//1-write a message identifier to triger a function based on message type and extract the data
+//2-event name
+/*
+1-post-notification
+2-sent-message-event
+3-like comment/post
+4-typing in progress
+*/
+//3-data type i should write
+/*
+{
+}
+*/
 
 //for all clients
 /*
@@ -83,4 +74,27 @@ func HandlerWs(w http.ResponseWriter, r *http.Request) {
    -message notification send and rescive
    - x react to ur notification
    -typing in progress
+*/
+
+/*this is a structure how to sent the response and for who
+-new_posts //all users exept sender {
+type:"new post created",
+data:{
+user created:{
+nickname,id
+},
+postData:{
+`post data`}
+}}
+-commented/liked/newcomment/new message/typing  //all those are sent to one
+{
+type:"x_to_u",
+data:{
+user created:{
+nickname,id
+},
+xData:{
+`post data`}
+}}}
+
 */
