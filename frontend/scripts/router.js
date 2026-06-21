@@ -1,9 +1,73 @@
-export const templates = {
-  feed: () => import('../pages/feed.js'),
-  login: () => import('../pages/login.js'),
-  register: () => import('../pages/register.js'),
-  error: () => import('../pages/error.js'),
-  chat: () => import('../pages/chat.js'),
+export const routes = { // turn it to map !
+    '/': {
+        method: 'GET',
+        page: () => import('../pages/feed.js')
+    },
+
+    '/feed': {
+        method: 'GET',
+        page: () => import('../pages/feed.js'), // duplicated
+        // auth: true
+    },
+
+    '/login': {
+        method: 'GET',
+        page: () => import('../pages/login.js')
+    },
+
+    '/register': {
+        method: 'GET',
+        page: () => import('../pages/register.js')
+    },
+
+    // 'error': () => import('../pages/error.js'),
+
+    '/chat': {
+        method: 'GET',
+        page: () => import('../pages/chat.js'),
+        // auth: true
+    }
+};
+
+// code that need to implement 'navigate' method:
+// . logout form in Header
+// . login form in LoginForm
+// . post creation in PostCreationForm
+// . comment creation in Post
+// . register form in RegisterForm
+
+export const router = {
+    async navigate(path) {
+        history.pushState({}, '', path);
+        await this.render();
+
+        // Load the page-specific script
+        loadPageScript(path.slice(1));
+    },
+
+    async render() {
+        const loader = routes[location.pathname].page; // page was not found
+
+        if (!loader) {
+            document.body.innerHTML = '<h1>404</h1>';
+            return;
+        }
+
+        const page = await loader();
+        // console.log(page)
+
+        document.querySelector('#app').innerHTML =
+            await page.render();
+    },
+
+    async init() {
+        window.addEventListener(
+            'popstate',
+            () => this.render()
+        );
+
+        await this.render();
+    }
 };
 
 // ========================
@@ -201,43 +265,4 @@ function loadPageScript(pageName) {
     pageScripts[pageName]();
     window.currentPage = pageName;
   }
-}
-
-
-// ========================
-// ROUTER WITH HASH SUPPORT
-// ========================
-export function getRouteFromHash() {
-  // Get the hash without the # symbol
-  const hash = window.location.hash.slice(1);
-  // Check if the hash corresponds to a valid route
-  if (hash && templates[hash]) {
-    return hash;
-  }
-  // Default to home
-  return 'feed';
-}
-
-export function updateHash(route) {
-  window.location.hash = route; // why hash ?!
-}
-
-export async function navigate(page, options = { updateHash: true }) {
-  // Update URL hash if needed
-  if (options.updateHash) {
-    updateHash(page);
-  }
-  
-  // Render the template
-  const mod = templates[page]();
-  app.innerHTML = await (await mod).render();
-  
-  // Load the page-specific script
-  loadPageScript(page);
-}
-
-// Handle browser back/forward buttons
-export function handleRouteChange() {
-  const route = getRouteFromHash();
-  navigate(route, { updateHash: false });
 }

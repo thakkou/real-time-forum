@@ -2,8 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 
-// import { PORT } from './config.js';
-import { routes, router } from './core/router.js';
+import { routes } from './scripts/router.js'; // router
 // import { socket } from './core/websocket.js';
 
 const PORT = 3000;

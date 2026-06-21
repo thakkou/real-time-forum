@@ -1,6 +1,6 @@
 export const LoginForm = () => (`
   <div class="card">
-    <a href="/" style="font-size: 12px;">← Back to Home</a>
+    <a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>
     <h1>Login</h1>
     <p class="subtitle">Welcome back</p>
     {{if .Message}}
@@ -53,6 +53,6 @@ export const LoginForm = () => (`
     </div>
     <!-- end -->
 
-    <div class="link-row">No account? <a onclick="navigate('register')"> Register</a></div>
+    <div class="link-row">No account? <a onclick="navigate('/register')"> Register</a></div>
   </div>
 `);

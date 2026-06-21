@@ -1,3 +1,3 @@
-export const getPOstes=()=>{
+export const getPosts = () => {
     
 }

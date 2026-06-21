@@ -1,6 +1,6 @@
 export const RegisterForm = () => (`
   <div class="card">
-    <a href="/" style="font-size: 12px;">← Back to Home</a>
+    <a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>
     <h1>Register</h1>
     <p class="subtitle">Create your account</p>
     {{if .Message}}
@@ -129,7 +129,7 @@ export const RegisterForm = () => (`
     <!-- end -->
 
     <div class="link-row">
-      Already have an account? <a onclick="navigate('login')"> Login</a>
+      Already have an account? <a onclick="navigate('/login')"> Login</a>
     </div>
   </div>
 `);

@@ -1,4 +1,4 @@
-import { templates, getRouteFromHash, updateHash, navigate, handleRouteChange } from './router.js';
+import { router } from './router.js';
 
 const app = document.getElementById("app");
 
@@ -6,12 +6,10 @@ const app = document.getElementById("app");
 const loadedScripts = new Map();
 
 
-
-
 // ========================
 // GLOBAL FUNCTIONS
 // ========================
-window.navigate = navigate;
+window.navigate = router.navigate.bind(router); // navigate
 window.reactToPost = async function(postId, endpoint) {
   const url = `/api/posts/${postId}/${endpoint}`;
   try {
@@ -36,9 +34,4 @@ window.reactToComment = async function(commentId, endpoint) {
 // ========================
 // INITIALIZE APP
 // ========================
-// Listen for hash changes (back/forward buttons)
-window.addEventListener('hashchange', handleRouteChange);
-
-// Initialize the app based on current hash
-const initialRoute = getRouteFromHash();
-navigate(initialRoute, { updateHash: false });
+router.init();
