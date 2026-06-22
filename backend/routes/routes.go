@@ -33,7 +33,7 @@ func RegisterRoutes() {
 	)
 
 	// auth providers
-
+	
 	// http.HandleFunc(
 	// 	"/api/auth/{provider}",
 	// 	middlewares.CheckSessionCookie(handlers.OAuthLogin, false),

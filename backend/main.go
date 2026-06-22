@@ -27,7 +27,13 @@ func main() {
 	if err := database.Init(); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
+	// this health check for server
+
 	http.HandleFunc("/health", healthHandler)
+
+	// this websokets
+	http.HandleFunc("/ws", handlers.HandlerWs)
+
 	http.HandleFunc("/assets/", handlers.Static)
 	http.HandleFunc("/uploads/", handlers.Static)
 

@@ -9,6 +9,12 @@ const loadedScripts = new Map();
 // ========================
 // GLOBAL FUNCTIONS
 // ========================
+//later 
+window.env = {
+    serverUri: "http://localhost:8080/api",
+    wsUri:"ws://http://localhost:8080/ws"
+};
+
 window.navigate = router.navigate.bind(router); // navigate
 window.reactToPost = async function(postId, endpoint) {
   const url = `/api/posts/${postId}/${endpoint}`;

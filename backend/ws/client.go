@@ -1,0 +1,23 @@
+package ws
+
+import "fmt"
+
+func HandleClient(client *Client) {
+	defer func() {
+		mu.Lock()
+		delete(Clients, client.id)
+		mu.Unlock()
+
+		client.conn.Close()
+	}()
+
+	for {
+		_, msg, err := client.conn.ReadMessage()
+		if err != nil {
+			fmt.Println("client disconnected:", client.id)
+			return
+		}
+
+		HandleMessage(client, msg)
+	}
+}
