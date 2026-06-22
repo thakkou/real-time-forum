@@ -1,24 +1,11 @@
 // import { socket } from '../core/websocket.js';
 
+import { Header } from '../components/Header.js';
+
 export async function render() {
-    return `
-        <!-- HEADER -->
-    <header class="navbar">
-      <div class="logo">
-        <a href="/" style="text-decoration: none; color: inherit;">01Forum</a>
-      </div>
-      <div class="auth-buttons">
-        {{if .IsLoggedIn}}
-        <span class="welcome">Welcome, {{.User.Name}}</span>
-        <form action="/logout" method="POST">
-          <button type="submit" class="btn logout">Logout</button>
-        </form>
-        {{else}}
-        <a type="button" href="/login" class="btn login">Login</a>
-        <a type="button" href="/register" class="btn register">Register</a>
-        {{end}}
-      </div>
-    </header>
+  const header = Header();
+  return `
+    ${header}
  
     <!-- MESSAGES LAYOUT -->
     <div class="messages-container">
@@ -219,8 +206,7 @@ export async function render() {
  
       </main>
     </div>
-
-    `;
+  `;
 }
 
 // document.addEventListener(

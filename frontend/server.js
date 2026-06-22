@@ -26,7 +26,7 @@ const server = http.createServer(async (req, res) => {
         const mimeType = MIME_TYPES[ext] || 'application/octet-stream';
 
         if (path.resolve(decodedPath) === '/favicon.ico' ||
-            path.resolve(decodedPath).startsWith('/public/') ||
+            path.resolve(decodedPath).startsWith('/styles/') ||
             path.resolve(decodedPath).startsWith('/scripts/') ||
             path.resolve(decodedPath).startsWith('/components/') ||
             path.resolve(decodedPath).startsWith('/pages/')) {
