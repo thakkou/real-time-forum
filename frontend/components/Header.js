@@ -6,6 +6,11 @@ export const Header = () => (`
         <div class="auth-buttons">
             {{if .IsLoggedIn}}
             <span class="welcome">Welcome, {{.User.Name}}</span>
+
+            <button class="btn chat" data-count="9" onclick="navigate('chat')">
+                <i class="fa-regular fa-message"></i>
+            </button>
+
             <form action="/logout" method="POST">
                 <button type="submit" class="btn logout">Logout</button>
             </form>

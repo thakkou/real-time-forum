@@ -123,13 +123,38 @@ a:hover {
   text-decoration: none;
 }
 
-.btn.login {
+.btn.login, .btn.chat {
   border-color: var(--border-loud);
   color: var(--text);
 }
-.btn.login:hover {
+
+.btn.login:hover, .btn.chat:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.btn.chat {
+  position: relative;
+}
+
+.btn.chat i {
+    font-size: 1rem;
+}
+
+.btn.chat::before {
+  content: attr(data-count);
+  position: absolute;
+  top: -0.25em;
+  right: -0.25em;
+  width: 2em;
+  height: 2em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background-color: #ff0033;
+  color: white;
+  font-size: 0.7em;
 }
 
 .btn.register {
