@@ -44,8 +44,8 @@ function showToast(message, type = 'success', duration = 3000) {
     }, duration);
 }
 
-showToast('Message received!');
-showToast('User connected', 'success');
-showToast('Connection lost', 'error');
-showToast('New notification', 'warning', 5000);
+// showToast('Message received!');
+// showToast('User connected', 'success');
+// showToast('Connection lost', 'error');
+// showToast('New notification', 'warning', 5000);
 

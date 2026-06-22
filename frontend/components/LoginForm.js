@@ -3,16 +3,13 @@ export const LoginForm = () => (`
     <a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>
     <h1>Login</h1>
     <p class="subtitle">Welcome back</p>
-    {{if .Message}}
-    <div class="form-error">{{.Message}}</div>
-    <br>
-    {{end}}
+    <div class="form-error" id="login-error" style="display:none;"></div>
     <form action="/login" method="POST">
       <div class="field">
         <label>Email or Username</label>
         <input
           type="text"
-          name="email"
+          name="identifier"
           placeholder="Email or Username"
           required
           autocomplete="off"

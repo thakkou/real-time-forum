@@ -3,10 +3,8 @@ export const RegisterForm = () => (`
     <a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>
     <h1>Register</h1>
     <p class="subtitle">Create your account</p>
-    {{if .Message}}
-    <pre class="form-error">{{.Message}}</pre>
-    <br>
-    {{end}}
+        <div class="form-error" id="login-error" style="display:none;"></div>
+
     <form action="/register" method="POST">
       <div class="field">
         <label>Nickname</label>
@@ -17,7 +15,7 @@ export const RegisterForm = () => (`
           minlength="2"
           maxlength="50"
           autocomplete="nickname"
-          value="{{.Name}}"
+          value=""
         />
       </div>
       <div class="double-field">
@@ -30,7 +28,7 @@ export const RegisterForm = () => (`
             minlength="2"
             maxlength="50"
             autocomplete="given-name"
-            value="{{.FirstName}}"
+            value=""
             />
         </div>
         <div class="field">
@@ -42,7 +40,7 @@ export const RegisterForm = () => (`
             minlength="2"
             maxlength="50"
             autocomplete="family-name"
-            value="{{.LastName}}"
+            value=""
           />
         </div>
       </div>
@@ -55,9 +53,10 @@ export const RegisterForm = () => (`
             required
             min="1"
             max="99"
-            value="{{.Age}}"
+            value=""
           />
         </div>
+        
         <div class="field">
           <label>Gender</label>
           <div class="gender-group" name="gender" id="gender">
@@ -78,7 +77,7 @@ export const RegisterForm = () => (`
           required
           autocomplete="email"
           maxlength="100"
-          value="{{.Email}}"
+          value=""
         />
       </div>
       <div class="field">

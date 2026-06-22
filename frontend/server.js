@@ -16,7 +16,9 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon',
 };
 
+
 const server = http.createServer(async (req, res) => {
+    
     try {
         // const path = req.url.split('?')[0];
 
@@ -28,6 +30,7 @@ const server = http.createServer(async (req, res) => {
 
         if (path.resolve(decodedPath) === '/favicon.ico' ||
             path.resolve(decodedPath).startsWith('/styles/') ||
+              path.resolve(decodedPath).startsWith('/api/') ||
             path.resolve(decodedPath).startsWith('/scripts/') ||
             path.resolve(decodedPath).startsWith('/components/') ||
             path.resolve(decodedPath).startsWith('/pages/')) {

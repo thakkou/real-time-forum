@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -24,52 +23,52 @@ const RULES string = `
 
 // Login
 func Login(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("loginss")
 	if r.URL.Path != "/api/login" {
-		utilities.WriteJSON(w, 404, `path not found`, nil)
+		utilities.WriteJSON(w, http.StatusNotFound, "path not found", nil)
 		return
 	}
 
-	if r.Method != "POST" {
-		utilities.WriteJSON(w, 405, `method not allowed`, nil)
+	if r.Method != http.MethodPost {
+		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "method not allowed", nil)
 		return
 	}
-	// Content type (optional but fine to keep)
+
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		utilities.WriteJSON(w, http.StatusBadRequest, "Content-Type must be application/json", nil)
 		return
 	}
 
-	type loginMOdel struct {
+	type LoginModel struct {
 		Identifier string `json:"identifier"`
 		Password   string `json:"password"`
 	}
-	userLog, err := utilities.ReadJSONRequest[loginMOdel](r)
+
+	userLog, err := utilities.ReadJSONRequest[LoginModel](r)
 	if err != nil {
-		fmt.Println("errors", err)
 		utilities.WriteJSON(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
-	fmt.Println("userLog", userLog)
 
-	identifier := userLog.Identifier
-	password := userLog.Password
-
-	if identifier == "" || password == "" {
-		utilities.WriteJSON(w, http.StatusBadRequest, `bad credentials`, nil)
-
+	if userLog.Identifier == "" || userLog.Password == "" {
+		utilities.WriteJSON(w, http.StatusBadRequest, "bad credentials", nil)
 		return
 	}
 
-	fmt.Println("ident", identifier, password)
-	var userID int
-	var hashedPassword sql.NullString
+	var (
+		userID         int
+		nickname       string
+		hashedPassword sql.NullString
+	)
 
 	err = database.Database.QueryRow(
-		"SELECT id, password FROM users WHERE email = ? OR nickname = ?", identifier, identifier,
-	).Scan(&userID, &hashedPassword)
+		`SELECT id, nickname, password
+		 FROM users
+		 WHERE email = ? OR nickname = ?`,
+		userLog.Identifier,
+		userLog.Identifier,
+	).Scan(&userID, &nickname, &hashedPassword)
 	if err != nil {
-		utilities.WriteJSON(w, http.StatusBadRequest, `Invalid email/username or password.`, nil)
+		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid email/username or password.", nil)
 		return
 	}
 
@@ -78,25 +77,33 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = bcrypt.CompareHashAndPassword([]byte(hashedPassword.String), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(hashedPassword.String),
+		[]byte(userLog.Password),
+	); err != nil {
 		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid email/username or password.", nil)
 		return
 	}
 
-	// Delete any existing sessions for this user
-	_, err = database.Database.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
+	// Remove old sessions
+	_, err = database.Database.Exec(
+		"DELETE FROM sessions WHERE user_id = ?",
+		userID,
+	)
 	if err != nil {
 		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", nil)
 		return
-
 	}
 
+	// Create new session
 	sessionID := uuid.New().String()
 	expiration := time.Now().Add(24 * time.Hour)
 
 	_, err = database.Database.Exec(
-		"INSERT INTO SESSIONS (id, expires_at, user_id) VALUES (?, ?, ?)",
-		sessionID, expiration, userID,
+		"INSERT INTO sessions (id, expires_at, user_id) VALUES (?, ?, ?)",
+		sessionID,
+		expiration,
+		userID,
 	)
 	if err != nil {
 		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", nil)
@@ -110,7 +117,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Expires:  expiration,
 	})
-	utilities.WriteJSON(w, 201, "Ilogin Sucess", nil)
+
+	utilities.WriteJSON(w, http.StatusOK, "Login Success", map[string]any{
+		"user_id":  userID,
+		"nickname": nickname,
+	})
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -130,12 +141,11 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = utilities.DeleteSession(cookie.Value)
-	// + need to remove cookie from storage
 	if err != nil {
 		log.Println(err)
 	}
 
-	http.SetCookie(w, &http.Cookie{ // delete cookie ------------------- TODO: function already exists
+	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
 		Value:    "",
 		Path:     "/",

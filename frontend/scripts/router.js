@@ -19,7 +19,6 @@ export const routes = { // turn it to map !
         method: 'GET',
         page: () => import('../pages/login.js')
     },
-
     '/register': {
         method: 'GET',
         page: () => import('../pages/register.js')

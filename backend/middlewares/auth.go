@@ -77,7 +77,7 @@ func CheckSessionCookie(handler http.HandlerFunc, requiresAuth bool) http.Handle
 		utilities.WriteJSON(
 			w,
 			http.StatusConflict,
-			"you already have an active session, please log out first",
+			"Not autorize",
 			nil,
 		)
 		return
