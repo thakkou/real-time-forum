@@ -3,7 +3,8 @@
         display: grid;
         grid-template-columns: 280px 1fr;
         height: calc(100vh - 60px);
-        max-width: 1200px;
+        /* max-width: 1200px; */
+        min-width: 512px;
         margin: 0 auto;
         overflow: hidden;
       }
@@ -489,6 +490,10 @@
       .ws-dot.connecting {
         background: #facc15;
       }
+
+      #mobileBar {
+        display: none;
+      }
  
       /* ── Mobile ──────────────────────────────────────────────────── */
       @media (max-width: 768px) {
@@ -509,6 +514,13 @@
  
         .users-panel.mobile-open {
           display: flex;
+        }
+
+        #mobileBar {
+          display:flex;
+          padding: 0.5rem 1rem;
+          border-bottom: 1px solid var(--border);
+          background: var(--surface);
         }
  
         .chat-header {

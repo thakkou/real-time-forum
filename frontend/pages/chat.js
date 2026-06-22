@@ -110,7 +110,7 @@ export async function render() {
       <main class="chat-panel" id="chatPanel">
  
         <!-- Mobile toggle button (shown inside chat area on mobile) -->
-        <div style="display:flex; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); background: var(--surface);" id="mobileBar">
+        <div id="mobileBar">
           <button class="mobile-users-toggle" id="mobileUsersToggle">
             ☰ Users
           </button>

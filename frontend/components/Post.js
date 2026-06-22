@@ -1,5 +1,5 @@
 export const Post = () => (`
-    <article class="post" data-post-id="{{.Id}}">
+    <article class="post" data-post-id="{{.Id}}" onclick="navigate('/post')">
         <div class="post-header">
         <div class="delete-block">
             <h3>{{.Title}}</h3>

@@ -1,6 +1,7 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { routes } from './scripts/router.js'; // router
 // import { socket } from './core/websocket.js';
@@ -65,7 +66,11 @@ const server = http.createServer(async (req, res) => {
         // const ext = path.extname(filePath);
         // const mimeType = MIME_TYPES[ext] || 'application/octet-stream';
 
-        fs.readFile('./index.html', (err, data) => {
+        // To run the server with node from anywhere. (needs to handle all files)
+        // const __filename = fileURLToPath(import.meta.url);
+        // const __dirname = path.dirname(__filename);
+        // const indexPath = path.join(__dirname, 'index.html');
+        fs.readFile('./index.html', (err, data) => { // indexPath instead
             if (err) throw err;
 
             res.writeHead(200, { 'Content-Type': 'text/html' }); // mimeType });

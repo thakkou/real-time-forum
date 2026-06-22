@@ -7,7 +7,7 @@ export const Header = () => (`
             {{if .IsLoggedIn}}
             <span class="welcome">Welcome, {{.User.Name}}</span>
 
-            <button class="btn chat" data-count="9" onclick="navigate('chat')">
+            <button class="btn chat" data-count="9" onclick="navigate('/chat')">
                 <i class="fa-regular fa-message"></i>
             </button>
 

@@ -10,6 +10,11 @@ export const routes = { // turn it to map !
         // auth: true
     },
 
+    '/post': { // with id !!!
+        method: 'GET',
+        page: () => import('../pages/post.js'),
+    },
+
     '/login': {
         method: 'GET',
         page: () => import('../pages/login.js')
@@ -42,7 +47,8 @@ export const router = {
         await this.render();
 
         // Load the page-specific script
-        await loadPageScript(path.slice(1));
+        const scriptName = path.slice(1) || 'feed';
+        await loadPageScript(scriptName);
     },
 
     async render() {
@@ -68,9 +74,11 @@ export const router = {
 
         await this.render();
         // Load the page-specific script
-        await loadPageScript('feed');
+        // await loadPageScript(window.location.pathname.slice(1)); // feed default
+        const scriptName = window.location.pathname.slice(1) || 'feed';
+        await loadPageScript(scriptName);
         // loaded first time, must be :
-        // 1. chnaged depending on app state (first page)
+        // 1. chnaged depending on app state (first page) x
         // 2. not loaded if already exists (same in navigate) -> is default behavior maybe !?
     }
 };
@@ -83,6 +91,7 @@ const pageScripts = {
   login: () => import('./specific/_login.js'),
   register: () => import('./specific/_register.js'),
   chat: () => import('./specific/_chat.js'),
+  // single post
 };
 
 async function loadPageScript(pageName) {
