@@ -3,7 +3,8 @@ export const RegisterForm = () => (`
     <a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>
     <h1>Register</h1>
     <p class="subtitle">Create your account</p>
-        <div class="form-error" id="register-error" style="display:none;"></div>
+    <pre class="form-error" id="register-error" style="display:none;"></pre>
+    <br>
 
     <form action="/register" method="POST">
       <div class="field">

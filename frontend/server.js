@@ -1,7 +1,7 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+// import { fileURLToPath } from 'url';
 
 import { routes } from './scripts/router.js'; // router
 // import { socket } from './core/websocket.js';
@@ -30,7 +30,8 @@ const server = http.createServer(async (req, res) => {
 
         if (path.resolve(decodedPath) === '/favicon.ico' ||
             path.resolve(decodedPath).startsWith('/styles/') ||
-              path.resolve(decodedPath).startsWith('/api/') ||
+            path.resolve(decodedPath).startsWith('/api/') ||
+            path.resolve(decodedPath).startsWith('/services/') ||
             path.resolve(decodedPath).startsWith('/scripts/') ||
             path.resolve(decodedPath).startsWith('/components/') ||
             path.resolve(decodedPath).startsWith('/pages/')) {

@@ -77,7 +77,7 @@ func CheckSessionCookie(handler http.HandlerFunc, requiresAuth bool) http.Handle
 		utilities.WriteJSON(
 			w,
 			http.StatusConflict,
-			"Not autorize",
+			"Unauthorized",
 			nil,
 		)
 		return
