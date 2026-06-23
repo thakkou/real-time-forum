@@ -33,7 +33,7 @@ func RegisterRoutes() {
 	)
 
 	// auth providers
-	
+
 	// http.HandleFunc(
 	// 	"/api/auth/{provider}",
 	// 	middlewares.CheckSessionCookie(handlers.OAuthLogin, false),
@@ -47,16 +47,18 @@ func RegisterRoutes() {
 	// postes
 
 	http.HandleFunc(
-		"/api/posts/getPosts",
+		"/api/posts",
 		middlewares.RateLimit(
-			handlers.GetPosts,
+			middlewares.CheckSessionCookie(handlers.GetPosts, true),
 			3*time.Second,
 		),
 	)
+
 	http.HandleFunc(
-		"/api/posts/getPost/{id}",
+		"/api/posts/{id}",
 		middlewares.RateLimit(
-			handlers.GetPostById,
+			middlewares.CheckSessionCookie(handlers.GetPostById, true),
+
 			3*time.Second,
 		),
 	)
