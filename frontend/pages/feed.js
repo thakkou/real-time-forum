@@ -18,7 +18,6 @@ import { Post } from '../components/Post.js';
 export async function render(data = {}) {
   const header = Header(data.nickname);
   const postCreationForm = PostCreationForm();
-  const post = Post();
   return `
     ${header}
 
@@ -30,7 +29,6 @@ export async function render(data = {}) {
 
         <form method="GET" action="/" id="filter-form">
           <!-- My Posts / Liked Posts Buttons -->
-          {{if .IsLoggedIn}}
           <div class="filter-group registered-only">
             <button type="button" name="my-creat-postes" class="filter-btn">
               My Created Posts
@@ -40,7 +38,6 @@ export async function render(data = {}) {
               Posts I Liked
             </button>
           </div>
-          {{end}}
 
           <!-- Categories -->
           <div class="filter-group">
@@ -118,17 +115,12 @@ export async function render(data = {}) {
           </details>
         </aside>
 
-        <!-- POSTS LIST -->
-        <section class="posts">
-          {{if gt (len .Posts) 0}}
-
-          {{range .Posts}}
-          ${post}
-          {{end}}
-        {{else}}
-          <h1 class="no-post">No posts right now</h1>
-        {{end}}
-        </section>
+<section class="posts">
+  ${data.Posts && data.Posts.length > 0
+    ? data.Posts.map(post => Post(post)).join("")
+    : `<div class="no-post">No pstes...</div>`
+  }
+</section>
       </main>
     </div>
   `;

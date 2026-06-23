@@ -1,92 +1,161 @@
 import { CommentResolver,CreatComment } from "../../api/comments.js";
-import { getPosts } from "../../api/posts.js";
+import { getPosts ,PostResolver} from "../../api/posts.js";
+import { Post } from "../../components/Post.js";
+let page = 1;
+let loading = false;
+let hasMore = true;
+
+function throttle(fn, delay = 200) {
+  let last = 0;
+  return (...args) => {
+    const now = Date.now();
+    if (now - last < delay) return;
+    last = now;
+    fn(...args);
+  };
+}
+
+let offset = 0;
+
+async function fetchPosts() {
+  if (loading || !hasMore) return;
+
+  loading = true;
+
+  const params = new URLSearchParams(window.location.search);
+
+  const categories = params.getAll("categories");
+  const isLiked = params.has("my-liked-posts");
+  const isCreatedByMe = params.has("my-creat-posts");
+
+  try {
+    const res = await getPosts({
+      offset,
+      limit: 5,
+      categories,
+      isLiked,
+      isCreatedByMe,
+    });
+
+    const posts = res.data;
+    console.log("the posts",posts)
+
+    if (!posts || posts.length === 0) {
+      hasMore = false;
+      loading = false;
+      return;
+    }
+
+    renderPosts(posts);
+
+    offset += posts.length;
+  } catch (err) {
+    console.error("Failed to load posts:", err);
+  }
+
+  loading = false;
+}
+
+
+function renderPosts(posts) {
+  const container = document.querySelector(".posts");
+
+  console.log("rendering posts:", posts);
+
+  const empty = container.querySelector(".no-post");
+  if (empty) empty.remove();
+
+  container.insertAdjacentHTML(
+    "beforeend",
+    posts.map(Post).join("")
+  );
+}
+
+
+async function handleAction(postId, type) {
+  try {
+    const res = await PostResolver(postId, type);
+    const json = await res.json();
+
+    console.log(json.message);
+
+    // refresh or update UI later if needed
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function handleComment(postId, text) {
+  try {
+    const res = await CreatComment(postId, text);
+    const json = await res.json();
+
+    console.log(json.message);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 function setupHomePage() {
-    //get all posts 10 by 10
+  // initial load
+  fetchPosts();
+    // give DOM time to settle before scroll logic
+  setTimeout(() => {
+    fetchPosts(); // safety initial fetch (important fix)
+  }, 50);
 
-    document.querySelectorAll('.filter-btn').forEach((button) => {
-    button.addEventListener('click', function() {
-        this.classList.toggle('active');
-        const hiddenInputs = {
-        'my-creat-postes': document.getElementById('input-my-creat-postes'),
-        'my-liked-post': document.getElementById('input-my-liked-post'),
-        };
-        Object.keys(hiddenInputs).forEach((name) => {
-        if (hiddenInputs[name]) hiddenInputs[name].value = '';
-        });
-        const activeButtons = Array.from(document.querySelectorAll('.filter-btn.active'));
-        activeButtons.forEach((btn) => {
-        if (hiddenInputs[btn.name]) {
-            hiddenInputs[btn.name].value = 'true';
-        }
-        });
-    });
-    });
+  // infinite scroll (throttled)
+  window.addEventListener(
+    "scroll",
+    throttle(() => {
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
 
+      if (scrollTop + windowHeight >= docHeight - 200) {
+        fetchPosts();
+      }
+    }, 200)
+  );
+
+  // event delegation (like / dislike / comments)
+  document.addEventListener("click", async (e) => {
+    const likeBtn = e.target.closest(".like-btn");
+    const dislikeBtn = e.target.closest(".dislike-btn");
+    const commentBtn = e.target.closest(".comment-btn");
+    const sendCommentBtn = e.target.closest(".send-comment");
+
+    if (likeBtn) {
+      const id = likeBtn.dataset.id;
+      await handleAction(id, "like");
+    }
+
+    if (dislikeBtn) {
+      const id = dislikeBtn.dataset.id;
+      await handleAction(id, "dislike");
+    }
+
+    if (commentBtn) {
+      const id = commentBtn.dataset.id;
+      const box = document.getElementById(`comments-${id}`);
+      box.style.display = box.style.display === "none" ? "block" : "none";
+    }
+
+    if (sendCommentBtn) {
+      const id = sendCommentBtn.dataset.id;
+      const input = document.querySelector(`#comments-${id} .comment-input`);
+
+      if (input.value.trim()) {
+        await handleComment(id, input.value);
+        input.value = "";
+      }
+    }
+  });
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupHomePage);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupHomePage);
 } else {
-    setupHomePage();
+  setupHomePage();
 }
 
-//this will be clean up  ASAP
-
-//     function reactToPost(postId, endpoint) {
-//     const url = `/api/posts/${postId}/${endpoint}`;
-//     return fetch(url, { method: 'POST' })
-//         .then(response => {
-//         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-//         window.location.reload();
-//         })
-//         .catch(error => console.error('Error sending reaction:', error));
-//     }
-
-//     function handlePostReactionsClick(event) {
-//     const button = event.target;
-//     const postContainer = button.closest('.post');
-//     const postId = postContainer?.getAttribute('data-post-id');
-//     if (!postId) return;
-    
-//     let endpoint;
-//     if (button.classList.contains('like-btn')) endpoint = 'like';
-//     else if (button.classList.contains('dislike-btn')) endpoint = 'dislike';
-//     else return;
-    
-//     reactToPost(postId, endpoint);
-//     }
-
-//     function reactToComment(commentId, endpoint) {
-//     const url = `/api/comments/${commentId}/${endpoint}`;
-//     return fetch(url, { method: 'POST' })
-//         .then(response => {
-//         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-//         window.location.reload();
-//         })
-//         .catch(error => console.error('Error sending reaction:', error));
-//     }
-
-//     function handleCommentReactionsClick(event) {
-//     const button = event.target;
-//     const commentContainer = button.closest('.comment');
-//     const commentId = commentContainer?.getAttribute('data-comment-id');
-//     if (!commentId) return;
-    
-//     let endpoint;
-//     if (button.classList.contains('comment-like-btn')) endpoint = 'like';
-//     else if (button.classList.contains('comment-dislike-btn')) endpoint = 'dislike';
-//     else return;
-    
-//     reactToComment(commentId, endpoint);
-//     }
-
-//     document.querySelectorAll('.like-btn, .dislike-btn').forEach(button => {
-//     button.removeEventListener('click', handlePostReactionsClick);
-//     button.addEventListener('click', handlePostReactionsClick);
-//     });
-    
-//     document.querySelectorAll('.comment-like-btn, .comment-dislike-btn').forEach(button => {
-//     button.removeEventListener('click', handleCommentReactionsClick);
-//     button.addEventListener('click', handleCommentReactionsClick);
-//     });
-// }

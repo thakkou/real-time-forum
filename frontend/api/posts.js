@@ -1,25 +1,31 @@
 const serverURI = env.serverUri;
 
 export const getPosts = async ({
+  offset = 0,
+  limit = 30,
   categories = [],
   isLiked = false,
   isCreatedByMe = false,
 } = {}) => {
   const params = new URLSearchParams();
-  
 
+  // pagination
+  params.append("offset", offset);
+  params.append("limit", limit);
+
+  // categories
   categories.forEach((c) => params.append("categories", c));
 
   if (isLiked) {
-    params.append("my-liked-posts", "true");
+    params.append("my-liked-posts", "");
   }
 
   if (isCreatedByMe) {
-    params.append("my-creat-posts", "true");
+    params.append("my-creat-posts", "");
   }
 
   const response = await fetch(
-    `${serverURI}/api/posts?${params.toString()}`,
+    `${serverURI}/posts?${params.toString()}`,
     {
       method: "GET",
       credentials: "include",

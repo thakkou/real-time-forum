@@ -220,12 +220,28 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	liked := r.FormValue("my-liked-posts") == "true"
 	byMe := r.FormValue("my-creat-posts") == "true"
 
+
+	limit := 30
+	offset := 0
+
+	if l := r.FormValue("limit"); l != "" {
+		if v, err := strconv.Atoi(l); err == nil && v > 0 {
+			limit = v
+		}
+	}
+
+	if o := r.FormValue("offset"); o != "" {
+		if v, err := strconv.Atoi(o); err == nil && v >= 0 {
+			offset = v
+		}
+	}
+
 	var userID int
 	if cookie, err := r.Cookie("session_id"); err == nil {
 		userID, _ = utilities.GetUserIDFromCookie(cookie.Value)
 	}
 
-	posts, err := GetFilteredPosts(userID, categories, liked, byMe)
+	posts, err := GetFilteredPosts(userID, categories, liked, byMe, limit, offset)
 	if err != nil {
 		utilities.WriteJSON(w, 500, "error", nil)
 		return
@@ -261,7 +277,13 @@ func GetPostById(w http.ResponseWriter, r *http.Request) {
 // FILTERED POSTS
 // =========================
 
-func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe bool) ([]models.Post, error) {
+func GetFilteredPosts(
+	userID int,
+	categories []string,
+	likedByMe, postedByMe bool,
+	limit int,
+	offset int,
+) ([]models.Post, error) {
 	query := `
 		SELECT DISTINCT p.id, p.user_id, p.created_at, p.title, p.text
 		FROM posts p
@@ -296,7 +318,8 @@ func GetFilteredPosts(userID int, categories []string, likedByMe, postedByMe boo
 		query += " WHERE " + strings.Join(cond, " AND ")
 	}
 
-	query += " ORDER BY p.created_at DESC"
+	query += " ORDER BY p.created_at DESC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
 
 	rows, err := database.Database.Query(query, args...)
 	if err != nil {

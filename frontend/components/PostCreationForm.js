@@ -1,5 +1,4 @@
 export const PostCreationForm = () => (`
-    {{if .IsLoggedIn}}
     <!-- CREATE POST (REGISTERED USERS ONLY) -->
     <section class="create-post">
         <details>
@@ -62,5 +61,4 @@ export const PostCreationForm = () => (`
             </form>
         </details>
     </section>
-    {{end}}    
 `);
