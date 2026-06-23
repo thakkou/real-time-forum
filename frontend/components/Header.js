@@ -9,10 +9,10 @@ export const Header = (nickname = "NONE") => (`
             <button class="btn chat" data-count="9" onclick="navigate('/chat')">
                 <i class="fa-regular fa-message"></i>
             </button>
-
-            <form action="/logout" method="POST">
-                <button type="submit" class="btn logout">Logout</button>
-            </form>
+            
+<button class="btn logout" id="logout-btn">
+  Logout
+</button>
         </div>
     </header>
 `);

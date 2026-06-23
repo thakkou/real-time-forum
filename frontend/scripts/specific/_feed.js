@@ -1,4 +1,5 @@
 import { CommentResolver,CreatComment } from "../../api/comments.js";
+import {logout} from '../../api/auth.js'
 import { getPosts ,PostResolver} from "../../api/posts.js";
 import { Post } from "../../components/Post.js";
 let page = 1;
@@ -118,6 +119,15 @@ function setupHomePage() {
     }, 200)
   );
 
+  //event of logout
+  document.addEventListener("click", (e) => {
+  const logoutBtn = e.target.closest("#logout-btn");
+
+  if (logoutBtn) {
+    handleLogout();
+  }
+});
+
   // event delegation (like / dislike / comments)
   document.addEventListener("click", async (e) => {
     const likeBtn = e.target.closest(".like-btn");
@@ -159,3 +169,20 @@ if (document.readyState === "loading") {
   setupHomePage();
 }
 
+
+
+
+//logout event
+async function handleLogout() {
+  try {
+    await logout(); // call API
+
+    // clear client state if needed
+    localStorage.clear();
+
+    // redirect to login page
+    window.location.href = "/login";
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+}
