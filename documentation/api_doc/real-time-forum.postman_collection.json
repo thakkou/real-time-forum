@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identifier\": \"john.doe@example.com\",\n  \"password\": \"SecurePass123!\"\n}",
+							"raw": "{\n  \"identifier\": \"john_doe\",\n  \"password\": \"SecurePass123!\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -24,13 +24,14 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/login",
+							"raw": "http://localhost:8080/api/login",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "8080",
 							"path": [
+								"api",
 								"login"
 							]
 						}
@@ -44,7 +45,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"nickname\": \"john_doe\",\r\n  \"first_name\": \"John\",\r\n  \"last_name\": \"Doe\",\r\n  \"gender\": \"male\",\r\n  \"age\": \"25\",\r\n  \"email\": \"john.doe@example.com\",\r\n  \"password\": \"SecurePass123!\",\r\n  \"confirm_password\": \"SecurePass123!\"\r\n}",
+							"raw": "{\r\n  \"nickname\": \"john_doe2\",\r\n  \"first_name\": \"John\",\r\n  \"last_name\": \"Doe\",\r\n  \"gender\": \"male\",\r\n  \"age\": \"25\",\r\n  \"email\": \"john.doe@example01.com\",\r\n  \"password\": \"SecurePass123\",\r\n  \"confirm_password\": \"SecurePass123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -52,13 +53,14 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/register",
+							"raw": "http://localhost:8080/api/register",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "8080",
 							"path": [
+								"api",
 								"register"
 							]
 						}
@@ -72,16 +74,17 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identifier\": \"john@example.com\",\n  \"password\": \"secret123\"\n}"
+							"raw": "{\n  \"identifier\": \"john@example.com\",\n  \"password\": \"secret123!\"\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8080/logout",
+							"raw": "http://localhost:8080/api/logout",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "8080",
 							"path": [
+								"api",
 								"logout"
 							]
 						}
@@ -100,7 +103,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"title\": \"My First Go Post\",\n  \"text\": \"This is a test post created from Postman using JSON.\",\n  \"categories\": [\n    \"General\",\n    \"Lifestyle\",\n    \"Education\"\n  ]\n}",
+							"raw": "{\n  \"title\": \"general kge \",\n  \"text\": \"This is a test post created from Postman using JSON.\",\n  \"categories\": [\n    \"General\"\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -162,7 +165,7 @@
 							"raw": "{\n  \"title\": \"My First Go Post\",\n  \"text\": \"This is a test post created from Postman using JSON.\",\n  \"categories\": [\n    \"General\",\n    \"Lifestyle\",\n    \"Education\"\n  ]\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/posts/getPosts/?my-liked-posts&my-creat-posts",
+							"raw": "http://localhost:8080/api/posts?my-liked-posts&my-creat-posts",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -170,9 +173,7 @@
 							"port": "8080",
 							"path": [
 								"api",
-								"posts",
-								"getPosts",
-								""
+								"posts"
 							],
 							"query": [
 								{
@@ -197,6 +198,71 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "likePost",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/posts/5/like",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"posts",
+								"5",
+								"like"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "dislikePosts",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/posts/6/dislike",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"posts",
+								"6",
+								"dislike"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getPost",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/posts/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"posts",
+								"2"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -207,7 +273,29 @@
 					"name": "addComment",
 					"request": {
 						"method": "POST",
-						"header": []
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"postId\":\"2\",\n\"text\":\"test this comment is liked or not \"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/comments/create",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"comments",
+								"create"
+							]
+						}
 					},
 					"response": []
 				},
@@ -215,30 +303,170 @@
 					"name": "deleteComment",
 					"request": {
 						"method": "DELETE",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/comments/4/delete",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"comments",
+								"4",
+								"delete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "likecomment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/comments/6/like",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"comments",
+								"6",
+								"like"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "dislikecomment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/comments/6/dislike",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"comments",
+								"6",
+								"dislike"
+							]
+						}
 					},
 					"response": []
 				}
 			]
 		},
 		{
-			"name": "likes",
-			"item": []
+			"name": "messages",
+			"item": [
+				{
+					"name": "sendMessage",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"receiver_id\": 3,\n  \"text\": \"hamdullah\",\n\"conversation_id\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/messages",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"name": "test",
+			"name": "conversation",
+			"item": [
+				{
+					"name": "getConversations",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "getConversationById",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://Localhost:8080/api/conversation/2?offset=20&limit=10",
+							"protocol": "http",
+							"host": [
+								"Localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"conversation",
+								"2"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "20"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "health",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
 				"method": "GET",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"identifier\": \"john.doe@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+				},
 				"url": {
-					"raw": "http://localhost:8080/test",
+					"raw": "http://localhost:8080/api/health",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"test"
+						"api",
+						"health"
 					]
 				}
 			},

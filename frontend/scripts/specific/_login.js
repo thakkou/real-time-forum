@@ -1,5 +1,6 @@
 
-// import {login} from "../../api/auth.js"
+import {login} from "../../api/auth.js"
+
 const setupLoginPage = () => {
   console.log("kisk");
 
@@ -38,37 +39,6 @@ if (document.readyState === 'loading') {
     setupLoginPage();
 }
 
-const serverURI = env.serverUri;
-
- const login = async (credentials) => {
-  try {
-    console.log("login the api", credentials);
-    console.log(`${serverURI}/login`);
-
-    const response = await fetch(`${serverURI}/login`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        identifier: credentials.identifier,
-        password: credentials.password,
-      }),
-    });
-    const data = await response.json();
-    console.log("the response",data,data.status_code)
-
-    if (data.status_code !=200) {
-      throw new Error(data.message || "Login failed");
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Login error:", error);
-    throw error;
-  }
-};
 
 
 
