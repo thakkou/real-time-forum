@@ -43,7 +43,7 @@ export const getPosts = async ({
 
 export const getPostByID = async ({ id }) => {
   const response = await fetch(
-    `${serverURI}/api/posts/getPost/${id}`,
+    `${serverURI}/posts/${id}`,
     {
       method: "GET",
       credentials: "include",
