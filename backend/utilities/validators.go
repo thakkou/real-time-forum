@@ -55,6 +55,7 @@ func IsValidAge(age any) bool {
 
 // IsValidGender
 func IsValidGender(gender string) bool {
+	gender = strings.ToLower(gender)
 	return gender == "male" || gender == "female"
 }
 

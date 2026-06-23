@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -216,6 +217,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		!utilities.IsValidGender(user.Gender) ||
 		!utilities.IsValidEmail(user.Email) ||
 		!utilities.IsValidPassword(user.Password) {
+		fmt.Println(user)
 
 		utilities.WriteJSON(w, http.StatusBadRequest, "invalid input", RULES)
 		return

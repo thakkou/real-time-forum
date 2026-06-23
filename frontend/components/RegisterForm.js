@@ -3,14 +3,14 @@ export const RegisterForm = () => (`
     <a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>
     <h1>Register</h1>
     <p class="subtitle">Create your account</p>
-        <div class="form-error" id="login-error" style="display:none;"></div>
+        <div class="form-error" id="register-error" style="display:none;"></div>
 
     <form action="/register" method="POST">
       <div class="field">
         <label>Nickname</label>
         <input
           type="text"
-          name="name"
+          name="nickname"
           required
           minlength="2"
           maxlength="50"
@@ -102,7 +102,7 @@ export const RegisterForm = () => (`
           autocomplete="new-password"
         />
       </div>
-      <button type="submit">Register</button>
+      <button id="register-btn" type="submit">Register</button>
     </form>
 
     <!-- start -->

@@ -1,20 +1,21 @@
 
 function setupRegisterPage() {
 console.log("api loaded")
-    const form = document.getElementById("register-form");
+  const form = document.querySelector("form");
     if (!form) return;
 
     const btn = document.getElementById("register-btn");
-    const errorBox = document.getElementById("form-error");
+    const errorBox = document.getElementById("register-error");
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
+
         const formData = e.target;
 
         const nickname = formData.nickname.value.trim();
-        const first_name = formData.first_name.value.trim();
-        const last_name = formData.last_name.value.trim();
+        const first_name = formData.firstname.value.trim();
+        const last_name = formData.lastname.value.trim();
         const age = parseInt(formData.age.value, 10);
         const gender = formData.querySelector('input[name="gender"]:checked');
         const email = formData.email.value.trim();
@@ -75,6 +76,8 @@ console.log("api loaded")
 
         btn.disabled = true;
         btn.textContent = "Registering...";
+        console.log(nickname)
+
 
         try {
             const res = await register({
@@ -116,7 +119,12 @@ if (document.readyState === "loading") {
 
 const serverURI = env.serverUri;
 
-export const register = async (userData) => {
+ const register = async (userData) => {
+
+
+console.log(userData)
+
+
   try {
     const response = await fetch(`${serverURI}/register`, {
       method: "POST",

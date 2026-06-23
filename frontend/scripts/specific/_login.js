@@ -37,9 +37,10 @@ if (document.readyState === 'loading') {
 } else {
     setupLoginPage();
 }
+
 const serverURI = env.serverUri;
 
-export const login = async (credentials) => {
+ const login = async (credentials) => {
   try {
     console.log("login the api", credentials);
     console.log(`${serverURI}/login`);
