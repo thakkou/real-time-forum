@@ -15,8 +15,8 @@ import { Header } from '../components/Header.js';
 import { PostCreationForm } from '../components/PostCreationForm.js';
 import { Post } from '../components/Post.js';
 
-export async function render() {
-  const header = Header();
+export async function render(data = {}) {
+  const header = Header(data.nickname);
   const postCreationForm = PostCreationForm();
   const post = Post();
   return `

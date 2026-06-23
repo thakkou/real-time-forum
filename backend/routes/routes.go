@@ -32,6 +32,11 @@ func RegisterRoutes() {
 		),
 	)
 
+	http.HandleFunc(
+		"/api/me",
+		middlewares.CheckSessionCookie(handlers.GetUsernameByToken, true),
+	)
+
 	// auth providers
 
 	// http.HandleFunc(
