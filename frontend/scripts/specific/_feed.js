@@ -1,11 +1,20 @@
-import { CommentResolver,CreatComment } from "../../api/comments.js";
-import {logout} from '../../api/auth.js'
-import { getPosts ,PostResolver} from "../../api/posts.js";
+import { CommentResolver, CreatComment } from "../../api/comments.js";
+import { logout } from "../../api/auth.js";
+import { getPosts, PostResolver,CreatePost } from "../../api/posts.js";
 import { Post } from "../../components/Post.js";
-let page = 1;
-let loading = false;
-let hasMore = true;
 
+/* ======================
+   STATE
+====================== */
+const state = {
+  offset: 0,
+  loading: false,
+  hasMore: true,
+};
+
+/* ======================
+   UTILS
+====================== */
 function throttle(fn, delay = 200) {
   let last = 0;
   return (...args) => {
@@ -16,52 +25,99 @@ function throttle(fn, delay = 200) {
   };
 }
 
-let offset = 0;
+function resetFeed() {
+  state.offset = 0;
+  state.hasMore = true;
+  document.querySelector(".posts").innerHTML = "";
+}
 
+/* ======================
+   API ACTIONS
+====================== */
 async function fetchPosts() {
-  if (loading || !hasMore) return;
+  if (state.loading || !state.hasMore) return;
 
-  loading = true;
+  state.loading = true;
 
   const params = new URLSearchParams(window.location.search);
 
   const categories = params.getAll("categories");
-  const isLiked = params.has("my-liked-posts");
-  const isCreatedByMe = params.has("my-creat-posts");
+  const isLiked = params.get("my-liked-post") === "true";
+  const isCreatedByMe = params.get("my-creat-postes") === "true";
 
   try {
     const res = await getPosts({
-      offset,
-      limit: 5,
+      offset: state.offset,
+      limit: 30,
       categories,
       isLiked,
       isCreatedByMe,
     });
 
     const posts = res.data;
-    console.log("the posts",posts)
 
-    if (!posts || posts.length === 0) {
-      hasMore = false;
-      loading = false;
+    if (!posts?.length) {
+      state.hasMore = false;
       return;
     }
 
     renderPosts(posts);
-
-    offset += posts.length;
+    state.offset += posts.length;
   } catch (err) {
     console.error("Failed to load posts:", err);
+  } finally {
+    state.loading = false;
   }
+}
 
-  loading = false;
+async function handleAction(postId, type) {
+  try {
+    const res = await PostResolver({ id: postId, type });
+    await res.json();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function handleComment(postId, text) {
+  try {
+    const res = await CreatComment(postId, text);
+    await res.json();
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 
+async function handleCreatePost(form) {
+  const formData = new FormData(form);
+
+  const data = {
+    title: formData.get("title"),
+    text: formData.get("text"),
+    categories: formData.getAll("categories"), // if checkbox/multi-select
+  };
+
+  try {
+    const result = await CreatePost({ data });
+
+    console.log("Post created:", result);
+
+    // reset feed and reload
+    resetFeed();
+    fetchPosts();
+
+    form.reset();
+  } catch (err) {
+    console.error("Create post failed:", err.message);
+  }
+}
+
+/* ======================
+   UI RENDER
+====================== */
 function renderPosts(posts) {
   const container = document.querySelector(".posts");
-
-  console.log("rendering posts:", posts);
 
   const empty = container.querySelector(".no-post");
   if (empty) empty.remove();
@@ -72,40 +128,38 @@ function renderPosts(posts) {
   );
 }
 
+/* ======================
+   FILTERS
+====================== */
+function toggleFilter(name, button) {
+  const input = document.querySelector(`input[name='${name}']`);
+  const isActive = button.classList.contains("active");
 
-async function handleAction(postId, type) {
-  try {
-    const res = await PostResolver(postId, type);
-    const json = await res.json();
+  button.classList.toggle("active");
+  input.value = isActive ? "" : "true";
 
-    console.log(json.message);
-
-    // refresh or update UI later if needed
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-async function handleComment(postId, text) {
-  try {
-    const res = await CreatComment(postId, text);
-    const json = await res.json();
-
-    console.log(json.message);
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-function setupHomePage() {
-  // initial load
+  resetFeed();
   fetchPosts();
-    // give DOM time to settle before scroll logic
-  setTimeout(() => {
-    fetchPosts(); // safety initial fetch (important fix)
-  }, 50);
+}
 
-  // infinite scroll (throttled)
+/* ======================
+   LOGOUT
+====================== */
+async function handleLogout() {
+  try {
+    await logout();
+    localStorage.clear();
+    window.location.href = "/login";
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+}
+
+/* ======================
+   EVENTS
+====================== */
+function setupEvents() {
+  /* Scroll */
   window.addEventListener(
     "scroll",
     throttle(() => {
@@ -119,35 +173,41 @@ function setupHomePage() {
     }, 200)
   );
 
-  //event of logout
-  document.addEventListener("click", (e) => {
-  const logoutBtn = e.target.closest("#logout-btn");
+  /*creat a post */
+  const createPostForm = document.getElementById("create-post-form");
 
-  if (logoutBtn) {
-    handleLogout();
-  }
-});
+if (createPostForm) {
+  createPostForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    handleCreatePost(e.target);
+  });
+}
 
-  // event delegation (like / dislike / comments)
+  /* Click delegation */
   document.addEventListener("click", async (e) => {
     const likeBtn = e.target.closest(".like-btn");
     const dislikeBtn = e.target.closest(".dislike-btn");
     const commentBtn = e.target.closest(".comment-btn");
     const sendCommentBtn = e.target.closest(".send-comment");
 
+    const createdBtn = e.target.closest("[name='my-creat-postes']");
+    const likedBtn = e.target.closest("[name='my-liked-post']");
+    const logoutBtn = e.target.closest("#logout-btn");
+
+    if (createdBtn) return toggleFilter("my-creat-postes", createdBtn);
+    if (likedBtn) return toggleFilter("my-liked-post", likedBtn);
+    if (logoutBtn) return handleLogout();
+
     if (likeBtn) {
-      const id = likeBtn.dataset.id;
-      await handleAction(id, "like");
+      await handleAction(likeBtn.dataset.id, "like");
     }
 
     if (dislikeBtn) {
-      const id = dislikeBtn.dataset.id;
-      await handleAction(id, "dislike");
+      await handleAction(dislikeBtn.dataset.id, "dislike");
     }
 
     if (commentBtn) {
-      const id = commentBtn.dataset.id;
-      const box = document.getElementById(`comments-${id}`);
+      const box = document.getElementById(`comments-${commentBtn.dataset.id}`);
       box.style.display = box.style.display === "none" ? "block" : "none";
     }
 
@@ -161,28 +221,34 @@ function setupHomePage() {
       }
     }
   });
+
+  /* Filter form */
+  document
+    .getElementById("filter-form")
+    .addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const params = new URLSearchParams(new FormData(e.target));
+      const url = new URL(window.location);
+
+      window.history.pushState({}, "", `${url.pathname}?${params.toString()}`);
+
+      resetFeed();
+      fetchPosts();
+    });
+}
+
+/* ======================
+   INIT
+====================== */
+function setupHomePage() {
+  fetchPosts();
+  setTimeout(fetchPosts, 50); // safety double fetch
+  setupEvents();
 }
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", setupHomePage);
 } else {
   setupHomePage();
-}
-
-
-
-
-//logout event
-async function handleLogout() {
-  try {
-    await logout(); // call API
-
-    // clear client state if needed
-    localStorage.clear();
-
-    // redirect to login page
-    window.location.href = "/login";
-  } catch (err) {
-    console.error("Logout failed:", err);
-  }
 }

@@ -27,8 +27,8 @@ export async function render(data = {}) {
         <h3>Filter Posts</h3>
 
 
-        <form method="GET" action="/" id="filter-form">
-          <!-- My Posts / Liked Posts Buttons -->
+<form id="filter-form">     
+     <!-- My Posts / Liked Posts Buttons -->
           <div class="filter-group registered-only">
             <button type="button" name="my-creat-postes" class="filter-btn">
               My Created Posts

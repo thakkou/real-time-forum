@@ -61,7 +61,7 @@ export const getPostByID = async ({ id }) => {
 
 export const CreatePost = async ({ data }) => {
   const response = await fetch(
-    `${serverURI}/api/posts/create`,
+    `${serverURI}/posts/create`,
     {
       method: "POST",
       credentials: "include",
@@ -89,7 +89,7 @@ export const PostResolver = async ({ id, type }) => {
   const method = type === "delete" ? "DELETE" : "POST";
 
   const response = await fetch(
-    `${serverURI}/api/posts/${id}/${type}`,
+    `${serverURI}/posts/${id}/${type}`,
     {
       method,
       credentials: "include",

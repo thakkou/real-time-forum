@@ -1,11 +1,10 @@
 export const PostCreationForm = () => (`
-    <!-- CREATE POST (REGISTERED USERS ONLY) -->
     <section class="create-post">
         <details>
             <summary>
             <h2>Create New Post</h2>
             </summary>
-            <form action="/api/posts/create" method="POST" enctype="multipart/form-data">
+<form id="create-post-form">
             <!-- Title -->
             <input type="text" name="title" placeholder="Post title" maxlength="255" required />
 

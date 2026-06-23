@@ -30,12 +30,12 @@ export const Post = (post) => `
     <pre>${post.Text}</pre>
   </div>
 
-  <div class="post-actions">
-    <button class="like-btn ${post.IsLiked === 1 ? "active" : ""}">
+    <div class="post-actions">
+    <button class="like-btn ${post.IsLiked === 1 ? "active" : ""}" data-id="${post.Id}">
       👍 ${post.LikeCount}
     </button>
 
-    <button class="dislike-btn ${post.IsLiked === -1 ? "active" : ""}">
+    <button class="dislike-btn ${post.IsLiked === -1 ? "active" : ""}" data-id="${post.Id}">
       👎 ${post.DislikeCount}
     </button>
   </div>

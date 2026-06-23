@@ -1,30 +1,35 @@
 export const routes = { // turn it to map !
     '/': {
         method: 'GET',
+        name:"home",
         page: () => import('../pages/feed.js'),
         auth: true,
     },
 
     '/feed': {
         method: 'GET',
+        name:"feeds",
         page: () => import('../pages/feed.js'), // duplicated
         auth: true,
     },
 
-    '/post': { // with id !!!
+    '/post/:id': { // with id !!!
         method: 'GET',
+        name:"post detaills",
         page: () => import('../pages/post.js'),
         auth: true,
     },
 
     '/login': {
         method: 'GET',
+        name:"login",
         page: () => import('../pages/login.js'),
         auth: false,
     },
 
     '/register': {
         method: 'GET',
+        name:"register",
         page: () => import('../pages/register.js'),
         auth: false,
     },
@@ -46,8 +51,16 @@ export const routes = { // turn it to map !
 // . register form in RegisterForm
 
 async function guard(path) {
-    const requiresAuth = routes[path].auth;
-    const me = await isAuthenticated();
+const matched = matchRoute(path);
+
+if (!matched) {
+    history.pushState({}, '', '/');
+    return null;
+}
+
+const requiresAuth = matched.route.auth;
+
+const me = await isAuthenticated();
     if (requiresAuth && !me.authenticated) {
         path = '/login';
     } else if (!requiresAuth && me.authenticated) {
@@ -70,39 +83,42 @@ export const router = {
         await loadPageScript(scriptName);
     },
 
-    async render(data = {}) {
-        const requiresAuth = routes[location.pathname]
-        const loader = routes[location.pathname].page; // page was not found
+   async render(data = {}) {
+    const matched = matchRoute(location.pathname);
 
-        if (!loader) {
-            document.body.innerHTML = '<h1>404</h1>';
-            return;
-        }
-
-        const page = await loader();
-        document.querySelector('#app').innerHTML =
-            await page.render(data);
-    },
-
-    async init() {
-        window.addEventListener(
-            'popstate',
-            async () => {
-                const nickname = await guard(location.pathname)
-                this.render({ nickname: nickname })
-            }
-        );
-
-        const nickname = await guard(location.pathname)
-        await this.render({ nickname: nickname });
-        // Load the page-specific script
-        // await loadPageScript(window.location.pathname.slice(1)); // feed default
-        const scriptName = window.location.pathname.slice(1) || 'feed';
-        await loadPageScript(scriptName);
-        // loaded first time, must be :
-        // 1. chnaged depending on app state (first page) x
-        // 2. not loaded if already exists (same in navigate) -> is default behavior maybe !?
+    if (!matched) {
+        document.body.innerHTML = '<h1>404</h1>';
+        return;
     }
+
+    const loader = matched.route.page;
+
+    if (!loader) {
+        document.body.innerHTML = '<h1>404</h1>';
+        return;
+    }
+
+    const page = await loader();
+
+    document.querySelector('#app').innerHTML =
+        await page.render({
+            ...data,
+            params: matched.params
+        });
+},
+
+   async init() {
+    window.addEventListener('popstate', async () => {
+        const nickname = await guard(location.pathname);
+        this.render({ nickname });
+    });
+
+    const nickname = await guard(location.pathname);
+    await this.render({ nickname });
+
+    const scriptName = location.pathname.split('/')[1] || 'feed';
+    await loadPageScript(scriptName);
+}
 };
 
 // ========================
@@ -113,8 +129,33 @@ const pageScripts = {
   login: () => import('./specific/_login.js'),
   register: () => import('./specific/_register.js'),
   chat: () => import('./specific/_chat.js'),
-  // single post
+  post: () => import('./specific/_post.js'), // ✅ ADD THIS
 };
+
+function matchRoute(path) {
+    for (const route in routes) {
+        const paramNames = [];
+
+        const regexPath = route.replace(/:([^/]+)/g, (_, key) => {
+            paramNames.push(key);
+            return '([^/]+)';
+        });
+
+        const regex = new RegExp(`^${regexPath}$`);
+        const match = path.match(regex);
+
+        if (match) {
+            const params = {};
+            paramNames.forEach((name, i) => {
+                params[name] = match[i + 1];
+            });
+
+            return { route: routes[route], params };
+        }
+    }
+
+    return null;
+}
 
 async function loadPageScript(pageName) {
   if (window.currentPageScript && typeof window.currentPageScript.cleanup === 'function') {
