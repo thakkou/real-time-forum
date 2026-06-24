@@ -150,6 +150,9 @@ ws.on("client_disconnect", (userId) => {
     this.renderOnlineUsers?.([...onlineUsers]);
 });
 
+ws.on("new_post",(data)=>{
+    console.log(data)
+})
 ws.on("new_message", (data) => {
     console.log("new message:", data);
     showToast(data.text, "success");
