@@ -106,112 +106,60 @@ export async function render(data = {}) {
         </div>
       </aside>
  
-      <!-- RIGHT PANEL: Chat area -->
-      <main class="chat-panel" id="chatPanel">
- 
-        <!-- Mobile toggle button (shown inside chat area on mobile) -->
+      <!-- RIGHT PANEL: Chat area --><main class="chat-panel" id="chatPanel">
+       
         <div id="mobileBar">
           <button class="mobile-users-toggle" id="mobileUsersToggle">
             ☰ Users
           </button>
         </div>
- 
-        <!-- Chat with k0r3y (default open for demo) -->
-        <div id="chatView">
+
+        <div class="chat-empty" id="chatEmpty">
+          <p>Pick a conversation from the left<br>or start a new one.</p>
+        </div>
+
+        <div id="chatView" style="display:none; flex-direction: column; flex: 1; overflow: hidden;">
+          
           <div class="chat-header">
             <button class="back-btn" id="backBtn">← Back</button>
+
             <div class="user-avatar">
-              <div class="avatar-circle" id="chatAvatarInitials">KR</div>
-              <span class="online-dot online" id="chatStatusDot"></span>
+              <div class="avatar-circle" id="chatAvatarInitials"></div>
+              <span class="online-dot offline" id="chatStatusDot"></span>
             </div>
+
             <div class="chat-header-info">
-              <div class="chat-header-name" id="chatHeaderName">k0r3y</div>
-              <div class="chat-header-status online" id="chatHeaderStatus">● Online</div>
-            </div>
-          </div>
- 
-          <div class="chat-messages" id="chatMessages">
-            <!-- Load-more sentinel at top -->
-            <div class="load-more-indicator" id="loadMoreIndicator">Loading older messages...</div>
- 
-            <!-- Day separator -->
-            <div class="day-separator"><span>Yesterday</span></div>
- 
-            <!-- Message group: from them -->
-            <div class="message-group theirs">
-              <div class="message-sender">k0r3y</div>
-              <div class="message-row">
-                <div class="message-bubble">hey, saw your post about the Go project</div>
-                <div class="message-meta">
-                  <span>Jun 20 · 18:41</span>
-                </div>
-              </div>
-              <div class="message-row">
-                <div class="message-bubble">did you end up using goroutines for the handlers?</div>
-                <div class="message-meta">
-                  <span>Jun 20 · 18:42</span>
-                </div>
-              </div>
-            </div>
- 
-            <!-- Message group: from me -->
-            <div class="message-group mine">
-              <div class="message-sender">you</div>
-              <div class="message-row">
-                <div class="message-bubble">yeah, each request spins up its own goroutine via the stdlib mux</div>
-                <div class="message-meta">Jun 20 · 18:45</div>
-              </div>
-              <div class="message-row">
-                <div class="message-bubble">it's actually pretty clean, no external deps</div>
-                <div class="message-meta">Jun 20 · 18:45</div>
-              </div>
-            </div>
- 
-            <div class="day-separator"><span>Today</span></div>
- 
-            <div class="message-group theirs">
-              <div class="message-sender">k0r3y</div>
-              <div class="message-row">
-                <div class="message-bubble">yo did you see the new post?</div>
-                <div class="message-meta">Jun 21 · 09:12</div>
+              <div class="chat-header-name" id="chatHeaderName">Select a chat</div>
+              <div class="chat-header-status offline" id="chatHeaderStatus">
+                ● Offline
               </div>
             </div>
           </div>
- 
-          <!-- Input -->
+
+          <div class="chat-messages" id="chatMessages"></div>
+
           <div class="chat-input-area">
             <div class="chat-input-form">
               <div class="chat-input-wrapper">
                 <textarea
                   class="chat-input"
                   id="messageInput"
-                  placeholder="Message k0r3y..."
+                  placeholder="Message..."
                   rows="1"
                   maxlength="1000"
                 ></textarea>
               </div>
               <button class="send-btn" id="sendBtn">Send ↵</button>
             </div>
+
             <div class="ws-status">
               <span class="ws-dot connected" id="wsDot"></span>
               <span id="wsStatusText">Connected</span>
             </div>
           </div>
+
         </div>
- 
-        <!-- Empty state (shown when no user is selected) — hidden by default in demo -->
-        <div class="chat-empty" id="chatEmpty" style="display: none;">
-          <p>Pick a conversation from the left<br>or start a new one.</p>
-        </div>
- 
       </main>
     </div>
   `;
 }
-
-// document.addEventListener(
-//     'ws:new_message',
-//     e => {
-//         console.log(e.detail);
-//     }
-// );

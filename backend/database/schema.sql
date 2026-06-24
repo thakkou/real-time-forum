@@ -10,8 +10,11 @@ CREATE TABLE IF NOT EXISTS USERS (
     gender TEXT NOT NULL,
 
     email TEXT NOT NULL UNIQUE,
-    password TEXT 
+    password TEXT ,
+    last_seen DATETIME
 );
+
+ALTER TABLE USERS ADD COLUMN last_seen DATETIME;
 
 CREATE INDEX IF NOT EXISTS idx_username  ON users(nickname COLLATE NOCASE);
 -- SESSIONS

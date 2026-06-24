@@ -5,7 +5,7 @@ export const getConversations = async ({
   limit = 30,
 } = {}) => {
   const response = await fetch(
-    `${serverURI}/api/conversations?offset=${offset}&limit=${limit}`,
+    `${serverURI}/conversations?offset=${offset}&limit=${limit}`,
     {
       method: "GET",
       credentials: "include",
@@ -29,7 +29,7 @@ export const getConversationById = async (
   } = {}
 ) => {
   const response = await fetch(
-    `${serverURI}/api/conversation/${conversationId}?offset=${offset}&limit=${limit}`,
+    `${serverURI}/conversation/${conversationId}?offset=${offset}&limit=${limit}`,
     {
       method: "GET",
       credentials: "include",

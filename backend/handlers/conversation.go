@@ -36,10 +36,14 @@ type Profile struct {
 }
 
 type ConversationPreview struct {
-	ConversationID *int    `json:"conversation_id"`
+	ConversationID *int    `json:"conversationId"`
 	Date           *string `json:"date"`
-	LastMessage    *string `json:"last_message"`
+	LastMessage    *string `json:"lastMessage"`
 	Status         string  `json:"status"`
+
+	LastSeen    *string `json:"lastSeen"`
+	UnreadCount int     `json:"unreadCount"`
+	LastSender  string  `json:"lastSender"`
 }
 
 type UserFeedItem struct {
@@ -423,6 +427,7 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 		SELECT 
 		    c.id,
 			u.id, u.nickname, u.firstname, u.lastname, u.age, u.gender,
+			u.last_seen,
 			c.last_message,
 			c.last_message_at
 		FROM USERS u
@@ -448,6 +453,7 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 			u        Profile
 			lastMsg  sql.NullString
 			lastDate sql.NullString
+			lastSeen sql.NullString
 		)
 
 		err := rows.Scan(
@@ -458,12 +464,42 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 			&u.Lastname,
 			&u.Age,
 			&u.Gender,
+			&lastSeen,
 			&lastMsg,
 			&lastDate,
 		)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
+		}
+
+		// =========================
+		// DEFAULT LAST SEEN
+		// =========================
+		lastSeenStr := "24/06/2026"
+		if lastSeen.Valid {
+			lastSeenStr = lastSeen.String
+		}
+
+		// =========================
+		// UNREAD MESSAGES
+		// =========================
+		var unreadCount int
+		_ = database.Database.QueryRow(`
+			SELECT COUNT(*)
+			FROM MESSAGES
+			WHERE conversation_id = ?
+			AND sender_id != ?
+			AND is_read = 0
+		`, convID, userId).Scan(&unreadCount)
+
+		// =========================
+		// WHO SENT LAST MESSAGE
+		// =========================
+		lastSender := "them"
+		if lastMsg.Valid {
+			// optional: you can improve this later with sender_id in messages
+			lastSender = "unknown"
 		}
 
 		var msgPtr *string
@@ -475,28 +511,22 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 		if lastDate.Valid {
 			datePtr = &lastDate.String
 		}
-		convID = convID // normal int from SQL
-
-		convIDPtr := &convID
 
 		items = append(items, UserFeedItem{
 			Profile: u,
 			Conversation: ConversationPreview{
-				ConversationID: convIDPtr,
+				ConversationID: &convID,
 				Date:           datePtr,
 				LastMessage:    msgPtr,
 				Status:         "active",
+
+				// NEW FIELDS YOU SHOULD ADD IN STRUCT
+				LastSeen:    &lastSeenStr,
+				UnreadCount: unreadCount,
+				LastSender:  lastSender,
 			},
 		})
 	}
-
-	// If full, return early
-	if len(items) >= limit {
-		utilities.WriteJSON(w, 200, "ok", items)
-		return
-	}
-
-	remaining := limit - len(items)
 
 	// =========================
 	// 2. USERS WITHOUT CONVERSATION
@@ -516,7 +546,7 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 		)
 		ORDER BY u.nickname COLLATE NOCASE ASC
 		LIMIT ?;
-	`, userId, userId, userId, userId, remaining)
+	`, userId, userId, userId, userId, limit)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -546,13 +576,14 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 				Date:           nil,
 				LastMessage:    nil,
 				Status:         "new",
+
+				LastSeen:    nil,
+				UnreadCount: 0,
+				LastSender:  "",
 			},
 		})
 	}
 
-	// =========================
-	// RESPONSE
-	// =========================
 	utilities.WriteJSON(w, 200, "ok", items)
 }
 

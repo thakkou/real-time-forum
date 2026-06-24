@@ -1,10 +1,10 @@
 export const Post = (post) => `
-<article class="post" data-post-id="${post.Id}" onclick="navigate('/post/${post.Id}')">
+<article class="post" data-post-id="${post.Id}">
   <div class="post-header">
     <div class="delete-block">
       <h3>${post.Title}</h3>
 
-      ${post.IsOwner ? `
+      ${window.profile?.id == post.UserId ? `
         <button class="delete-btn btn small danger" type="button">
           🗑
         </button>
@@ -30,13 +30,13 @@ export const Post = (post) => `
     <pre>${post.Text}</pre>
   </div>
 
-    <div class="post-actions">
+  <div class="post-actions">
     <button class="like-btn ${post.IsLiked === 1 ? "active" : ""}" data-id="${post.Id}">
-      👍 ${post.LikeCount}
+      👍 <span class="like-count">${post.LikeCount}</span>
     </button>
 
     <button class="dislike-btn ${post.IsLiked === -1 ? "active" : ""}" data-id="${post.Id}">
-      👎 ${post.DislikeCount}
+      👎 <span class="dislike-count">${post.DislikeCount}</span>
     </button>
   </div>
 </article>

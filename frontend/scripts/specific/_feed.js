@@ -55,7 +55,7 @@ async function fetchPosts() {
     });
 
     const posts = res.data;
-
+    console.log("posts",posts)
     if (!posts?.length) {
       state.hasMore = false;
       return;
@@ -73,7 +73,8 @@ async function fetchPosts() {
 async function handleAction(postId, type) {
   try {
     const res = await PostResolver({ id: postId, type });
-    await res.json();
+    console.log(res)
+    return res; 
   } catch (err) {
     console.error(err);
   }
@@ -183,10 +184,30 @@ if (createPostForm) {
   });
 }
 
+/* click the buttons */
+document.addEventListener("click", (e) => {
+  const post = e.target.closest(".post");
+
+  if (!post) return;
+
+  if (
+    e.target.closest("button") ||
+    e.target.closest(".like-btn") ||
+    e.target.closest(".dislike-btn") ||
+    e.target.closest(".comment-btn") ||
+    e.target.closest(".send-comment")
+  ) {
+    return;
+  }
+
+  navigate(`/post/${post.dataset.postId}`);
+});
+
   /* Click delegation */
   document.addEventListener("click", async (e) => {
     const likeBtn = e.target.closest(".like-btn");
     const dislikeBtn = e.target.closest(".dislike-btn");
+    const deleteBtn = e.target.closest(".delete-btn");
     const commentBtn = e.target.closest(".comment-btn");
     const sendCommentBtn = e.target.closest(".send-comment");
 
@@ -198,14 +219,29 @@ if (createPostForm) {
     if (likedBtn) return toggleFilter("my-liked-post", likedBtn);
     if (logoutBtn) return handleLogout();
 
-    if (likeBtn) {
-      await handleAction(likeBtn.dataset.id, "like");
-    }
+if (likeBtn) {
+  const res = await handleAction(likeBtn.dataset.id, "like");
 
-    if (dislikeBtn) {
-      await handleAction(dislikeBtn.dataset.id, "dislike");
-    }
+  if (res?.message === "liked") {
+    updatePostUI(likeBtn.dataset.id, "like", res.data);
+  }
+}
 
+if (dislikeBtn) {
+  const res = await handleAction(dislikeBtn.dataset.id, "dislike");
+
+  if (res?.message === "disliked") {
+    updatePostUI(dislikeBtn.dataset.id, "dislike", res.data);
+  }
+}
+
+if (deleteBtn) {
+  const res = await handleAction(deleteBtn.dataset.id, "delete");
+
+  if (res?.message === "deleted") {
+    updatePostUI(deleteBtn.dataset.id, "delete");
+  }
+}
     if (commentBtn) {
       const box = document.getElementById(`comments-${commentBtn.dataset.id}`);
       box.style.display = box.style.display === "none" ? "block" : "none";
@@ -251,4 +287,40 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", setupHomePage);
 } else {
   setupHomePage();
+}
+
+
+function updatePostUI(postId, action, data) {
+  const post = document.querySelector(`.post[data-post-id="${postId}"]`);
+  if (!post) return;
+
+  const likeBtn = post.querySelector(".like-btn");
+  const dislikeBtn = post.querySelector(".dislike-btn");
+
+  const likeCount = post.querySelector(".like-count");
+  const dislikeCount = post.querySelector(".dislike-count");
+
+  if (action === "like") {
+    likeBtn?.classList.add("active");
+    dislikeBtn?.classList.remove("active");
+
+    if (data) {
+      if (likeCount) likeCount.innerText = data.likes;
+      if (dislikeCount) dislikeCount.innerText = data.dislikes;
+    }
+  }
+
+  if (action === "dislike") {
+    dislikeBtn?.classList.add("active");
+    likeBtn?.classList.remove("active");
+
+    if (data) {
+      if (likeCount) likeCount.innerText = data.likes;
+      if (dislikeCount) dislikeCount.innerText = data.dislikes;
+    }
+  }
+
+  if (action === "delete") {
+    post.remove();
+  }
 }

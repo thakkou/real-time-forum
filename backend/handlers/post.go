@@ -18,9 +18,12 @@ import (
 // CORE POST ENRICHMENT
 // =========================
 
-func enrichPost(p *models.Post) error {
+func enrichPost(p *models.Post, userId int) error {
 	p.TimeAgo = utilities.TimeAgo(p.Created_at)
 
+	// =========================
+	// USER INFO
+	// =========================
 	if err := database.Database.QueryRow(
 		"SELECT nickname FROM users WHERE id = ?",
 		p.UserId,
@@ -28,18 +31,47 @@ func enrichPost(p *models.Post) error {
 		return err
 	}
 
+	// =========================
+	// REACTIONS COUNT
+	// =========================
 	var err error
 	p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id)
 	if err != nil {
 		return err
 	}
 
+	// =========================
+	// USER REACTION (IMPORTANT)
+	// =========================
+	var isLike int
+
+	err = database.Database.QueryRow(`
+		SELECT is_like
+		FROM POST_REACTIONS
+		WHERE user_id = ? AND post_id = ?
+	`, userId, p.Id).Scan(&isLike)
+
+	if err == sql.ErrNoRows {
+		p.IsLiked = 0 // no reaction
+	} else if err != nil {
+		return err
+	} else {
+		p.IsLiked = isLike // 1 or -1
+	}
+
+	// =========================
+	// CATEGORIES
+	// =========================
 	p.Categories, err = GetCategoriesByPost(p.Id)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func enrichPostWithComments(p *models.Post) error {
-	if err := enrichPost(p); err != nil {
+func enrichPostWithComments(p *models.Post, userId int) error {
+	if err := enrichPost(p, userId); err != nil {
 		return err
 	}
 
@@ -163,44 +195,79 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		utilities.WriteJSON(w, http.StatusUnauthorized, "Not logged in", nil)
+		utilities.WriteJSON(w, http.StatusUnauthorized, "not logged in", nil)
 		return
 	}
 
 	userId, _ := utilities.GetUserIDFromCookie(cookie.Value)
-	postId, _ := strconv.Atoi(r.PathValue("id"))
+	postId, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid post id", nil)
+		return
+	}
 
 	switch endpoint {
 
+	// =========================
+	// LIKE
+	// =========================
 	case "like":
 		if r.Method != http.MethodPost {
-			utilities.WriteJSON(w, 405, "Method not allowed", nil)
+			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "method not allowed", nil)
 			return
 		}
-		_ = ReactToPost(userId, postId, 1)
-		utilities.WriteJSON(w, 200, "liked", nil)
 
+		_ = ReactToPost(userId, postId, 1)
+
+		likes, dislikes, _ := GetReactionsByPost(postId)
+
+		utilities.WriteJSON(w, 200, "liked", map[string]any{
+			"postId":       postId,
+			"likes":        likes,
+			"dislikes":     dislikes,
+			"userReaction": "like",
+		})
+
+	// =========================
+	// DISLIKE
+	// =========================
 	case "dislike":
 		if r.Method != http.MethodPost {
-			utilities.WriteJSON(w, 405, "Method not allowed", nil)
+			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "method not allowed", nil)
 			return
 		}
-		_ = ReactToPost(userId, postId, -1)
-		utilities.WriteJSON(w, 200, "disliked", nil)
 
+		_ = ReactToPost(userId, postId, -1)
+
+		likes, dislikes, _ := GetReactionsByPost(postId)
+
+		utilities.WriteJSON(w, 200, "disliked", map[string]any{
+			"postId":       postId,
+			"likes":        likes,
+			"dislikes":     dislikes,
+			"userReaction": "dislike",
+		})
+
+	// =========================
+	// DELETE
+	// =========================
 	case "delete":
 		if r.Method != http.MethodDelete {
-			utilities.WriteJSON(w, 405, "Method not allowed", nil)
+			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "method not allowed", nil)
 			return
 		}
+
 		if err := DeletePost(postId, userId); err != nil {
 			utilities.WriteJSON(w, 403, err.Error(), nil)
 			return
 		}
-		utilities.WriteJSON(w, 200, "deleted", nil)
+
+		utilities.WriteJSON(w, 200, "deleted", map[string]any{
+			"postId": postId,
+		})
 
 	default:
-		utilities.WriteJSON(w, 404, "Unknown endpoint", nil)
+		utilities.WriteJSON(w, 404, "unknown endpoint", nil)
 	}
 }
 
@@ -219,7 +286,6 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	categories := r.Form["categories"]
 	liked := r.FormValue("my-liked-posts") == "true"
 	byMe := r.FormValue("my-creat-posts") == "true"
-
 
 	limit := 30
 	offset := 0
@@ -335,7 +401,7 @@ func GetFilteredPosts(
 			return nil, err
 		}
 
-		if err := enrichPost(&p); err != nil {
+		if err := enrichPost(&p, userID); err != nil {
 			return nil, err
 		}
 
@@ -389,9 +455,25 @@ func GetPost(postID int) (models.Post, error) {
 		return p, err
 	}
 
-	if err := enrichPostWithComments(&p); err != nil {
+	if err := enrichPostWithComments(&p, p.UserId); err != nil {
 		return p, err
 	}
 
 	return p, nil
+}
+
+func GetUserReaction(userId, postId int) (int, error) {
+	var reaction int
+
+	err := database.Database.QueryRow(`
+		SELECT is_like
+		FROM POST_REACTIONS
+		WHERE user_id = ? AND post_id = ?
+	`, userId, postId).Scan(&reaction)
+
+	if err == sql.ErrNoRows {
+		return 0, nil // no reaction
+	}
+
+	return reaction, err
 }

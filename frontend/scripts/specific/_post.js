@@ -1,6 +1,6 @@
-
-import { getPostByID } from "../../api/posts.js";
-import { Post } from "../../components/Post.js";
+import { getPostByID, PostResolver } from "../../api/posts.js";
+import { CommentResolver, CreatComment } from "../../api/comments.js";
+import { PostDetail } from "../../components/PostDetaille.js";
 
 const setupPostPage = async () => {
   try {
@@ -11,30 +11,161 @@ const setupPostPage = async () => {
       return;
     }
 
-    console.log("Loading post:", id);
-
-    const data = await getPostByID({ id });
+    const response = await getPostByID({ id });
+    console.log(response)
 
     const container = document.getElementById("post-detaille");
 
-    container.innerHTML = Post(data);
+    container.innerHTML = PostDetail(response.data);
+
+    setupEventListeners();
   } catch (err) {
     console.error("Failed to load post:", err.message);
   }
 };
 
+function setupEventListeners() {
+  setupPostActions();
+  setupCommentActions();
+  setupCreateComment();
+  setupDeletePost();
+}
+
+function setupPostActions() {
+  document.querySelector(".like-btn")?.addEventListener("click", async (e) => {
+    e.stopPropagation();
+
+    const id = e.currentTarget.dataset.id;
+
+    try {
+      await PostResolver({
+        id,
+        type: "like",
+      });
+
+      setupPostPage();
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  document.querySelector(".dislike-btn")?.addEventListener("click", async (e) => {
+    e.stopPropagation();
+
+    const id = e.currentTarget.dataset.id;
+
+    try {
+      await PostResolver({
+        id,
+        type: "dislike",
+      });
+
+      setupPostPage();
+    } catch (err) {
+      console.error(err);
+    }
+  });
+}
+
+function setupCommentActions() {
+  document.querySelectorAll(".comment-like-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.currentTarget.dataset.id;
+
+      try {
+        await CommentResolver({
+          id,
+          type: "like",
+        });
+
+        setupPostPage();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  });
+
+  document.querySelectorAll(".comment-dislike-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.currentTarget.dataset.id;
+
+      try {
+        await CommentResolver({
+          id,
+          type: "dislike",
+        });
+
+        setupPostPage();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  });
+}
+
+function setupCreateComment() {
+  const form = document.getElementById("comment-form");
+
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const input = form.querySelector('input[name="comment"]');
+
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    try {
+      await CreatComment({
+        data: {
+          postId: form.dataset.postId,
+          text,
+        },
+      });
+
+      input.value = "";
+
+      setupPostPage();
+    } catch (err) {
+      console.error(err);
+    }
+  });
+}
+
+function setupDeletePost() {
+  const btn = document.querySelector(".delete-btn");
+
+  if (!btn) return;
+
+  btn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+
+    const postId = getPostIdFromURL();
+
+    if (!confirm("Delete this post?")) return;
+
+    try {
+      await PostResolver({
+        id: postId,
+        type: "delete",
+      });
+
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+    }
+  });
+}
+
 function getPostIdFromURL() {
-  const parts = window.location.pathname.split('/');
+  const parts = window.location.pathname.split("/");
   return parts[2];
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupPostPage);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupPostPage);
 } else {
-    setupPostPage();
+  setupPostPage();
 }
-
-
-
-
-

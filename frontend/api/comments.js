@@ -2,7 +2,7 @@ const serverURI = env.serverUri;
 
 export const CreatComment = async ({ data }) => {
   const response = await fetch(
-    `${serverURI}/api/comments/create`,
+    `${serverURI}/comments/create`,
     {
       method: "POST",
       credentials: "include",
@@ -29,7 +29,7 @@ export const CommentResolver = async ({ id, type }) => {
   const method = type === "delete" ? "DELETE" : "POST";
 
   const response = await fetch(
-    `${serverURI}/api/comments/${id}/${type}`,
+    `${serverURI}/comments/${id}/${type}`,
     {
       method,
       credentials: "include",

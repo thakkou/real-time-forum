@@ -50,19 +50,24 @@ func GetUsersById(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUsernameByToken(w http.ResponseWriter, r *http.Request) {
-	// errors not checked !!!
 	cookie, _ := r.Cookie("session_id")
-	var userId, nickname string
-	database.Database.QueryRow( // returns error
+
+	var userId, nickname, lastSeen string
+
+	database.Database.QueryRow(
 		"SELECT user_id FROM sessions WHERE id = ?",
 		cookie.Value,
 	).Scan(&userId)
-	database.Database.QueryRow( // returns error
-		"SELECT nickname FROM users WHERE id = ?",
+
+	database.Database.QueryRow(
+		"SELECT nickname,last_seen FROM users WHERE id = ?",
 		userId,
-	).Scan(&nickname)
+	).Scan(&nickname, &lastSeen)
+
 	utilities.WriteJSON(w, 200, "success", map[string]any{
 		"authenticated": true,
+		"id":            userId,
 		"nickname":      nickname,
+		"last_seen":     lastSeen,
 	})
 }

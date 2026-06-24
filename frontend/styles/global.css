@@ -536,6 +536,12 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
+.post-detail-wrapper {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
 .post-header h3 {
   font-family: var(--serif);
   font-size: 1.25rem;
@@ -706,6 +712,16 @@ textarea {
   flex: 1;
   padding: 0.45rem 0.75rem;
   font-size: 0.82rem;
+}
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.comment-delete-btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.6rem;
 }
 
 /* ── Auth Cards (login / register / error) ────────────────────── */
