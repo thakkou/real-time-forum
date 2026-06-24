@@ -11,7 +11,7 @@ func HandleClient(client *Client) {
 		delete(Clients, client.id)
 		mu.Unlock()
 		client.conn.Close()
-		BroadcastExcept(client.id, "client disconnect", client.id)
+		BroadcastExcept(client.id, "client_disconnect", client.id)
 	}()
 
 	for {

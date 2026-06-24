@@ -1,4 +1,5 @@
 import { showToast, ws } from '../services/websoket.js';
+import { saveOnlineUsers ,getOnlineUsers} from './main.js';
 export const routes = { // turn it to map !
     '/': {
         method: 'GET',
@@ -119,14 +120,46 @@ export const router = {
     const nickname = await guard(location.pathname);
       if (nickname) {
         ws.connect();
-        ws.onMessage((event) => {
-    console.log(event.data);
 
-    const data = JSON.parse(event.data);
-    showToast(data.event_type)
+const onlineUsers=getOnlineUsers()
+ws.on("init", (data) => {
+    console.log("init users:", data);
 
-    console.log(data);
-    });}
+    data.forEach(id => onlineUsers.add(id));
+
+    saveOnlineUsers(onlineUsers);
+
+    this.renderOnlineUsers?.([...onlineUsers]);
+});
+ws.on("client_connect", (userId) => {
+    console.log("user connected:", userId);
+
+    onlineUsers.add(userId);
+
+    saveOnlineUsers(onlineUsers);
+
+    this.renderOnlineUsers?.([...onlineUsers]);
+});
+ws.on("client_disconnect", (userId) => {
+    console.log("user disconnected:", userId);
+
+    onlineUsers.delete(userId);
+
+    saveOnlineUsers(onlineUsers);
+
+    this.renderOnlineUsers?.([...onlineUsers]);
+});
+
+ws.on("new_message", (data) => {
+    console.log("new message:", data);
+    showToast(data.text, "success");
+});
+
+
+ws.on("typing", (data) => {
+        console.log("someone is typing:", data.userId);
+});
+}
 
     await this.render({ nickname });
 

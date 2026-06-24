@@ -1,6 +1,7 @@
 console.log("start setupe the chat page")
 import {getConversations,getConversationById} from "../../api/conversations.js"
 import {createMessage} from "../../api/messages.js"
+import {getOnlineUsers} from "../main.js"
 
 
 let currentConversationId = null;
@@ -40,20 +41,30 @@ const setupChatPage = async () => {
 
 
 function renderUsers(items) {
+  console.log("the items", items);
+
   usersList.innerHTML = "";
+
+  const onlineUsers = getOnlineUsers();
 
   const online = [];
   const offline = [];
 
-  const now = Date.now();
-
   items.forEach((item) => {
-    const lastSeen = item.conversation.lastSeen;
+    const userId = String(item.profile.id); // 🔥 FORCE STRING
 
-    // simple rule:
-    // if lastSeen exists → offline
-    if (lastSeen) offline.push(item);
-    else online.push(item);
+    console.log(
+      "checking:",
+      userId,
+      onlineUsers.has(userId),
+      onlineUsers
+    );
+
+    if (onlineUsers.has(userId)) {
+      online.push(item);
+    } else {
+      offline.push(item);
+    }
   });
 
   usersList.appendChild(sectionTitle("Online"));
@@ -62,7 +73,6 @@ function renderUsers(items) {
   usersList.appendChild(sectionTitle("Offline"));
   offline.forEach(renderUserItem);
 }
-
 function sectionTitle(text) {
   const div = document.createElement("div");
   div.className = "section-divider";
