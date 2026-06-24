@@ -1,4 +1,4 @@
-import { ws } from '../services/websoket.js';
+import { showToast, ws } from '../services/websoket.js';
 export const routes = { // turn it to map !
     '/': {
         method: 'GET',
@@ -119,6 +119,14 @@ export const router = {
     const nickname = await guard(location.pathname);
       if (nickname) {
         ws.connect();
+        ws.onMessage((event) => {
+    console.log(event.data);
+
+    const data = JSON.parse(event.data);
+    showToast(data.event_type)
+
+    console.log(data);
+});
     }
 
     await this.render({ nickname });

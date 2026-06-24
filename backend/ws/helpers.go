@@ -26,20 +26,25 @@ var (
 
 // this func send the notification and the data to all users exept u
 func BroadcastExcept(senderID string, eventType string, data any) {
-	fmt.Println("start brodcasting ")
+	fmt.Println("start broadcasting")
+
 	payload := map[string]any{
 		"event_type": eventType,
 		"data":       data,
 	}
 
 	mu.RLock()
-	defer mu.RUnlock()
+	clientsCopy := make([]*Client, 0, len(Clients))
 
 	for userID, client := range Clients {
 		if userID == senderID {
 			continue
 		}
+		clientsCopy = append(clientsCopy, client)
+	}
+	mu.RUnlock()
 
+	for _, client := range clientsCopy {
 		if err := client.conn.WriteJSON(payload); err != nil {
 			fmt.Println("broadcast error:", err)
 		}

@@ -54,7 +54,8 @@ func main() {
 
 	// this websokets
 	http.HandleFunc("/ws", handlers.HandlerWs)
-
+	// test ws
+	http.HandleFunc("/ws/test", handlers.TestBroadcast)
 	http.HandleFunc("/assets/", handlers.Static)
 	http.HandleFunc("/uploads/", handlers.Static)
 

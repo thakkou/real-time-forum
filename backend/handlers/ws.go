@@ -47,6 +47,13 @@ func HandlerWs(w http.ResponseWriter, r *http.Request) {
 	go ws.HandleClient(client)
 }
 
+func TestBroadcast(w http.ResponseWriter, r *http.Request) {
+	ws.BroadcastExcept("", "test_event", map[string]string{
+		"message": "hello everyone 👋",
+	})
+	w.Write([]byte("sent"))
+}
+
 //1-write a message identifier to triger a function based on message type and extract the data
 //2-event name
 /*
