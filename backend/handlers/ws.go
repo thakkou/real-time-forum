@@ -8,7 +8,6 @@ import (
 	"forum/utilities"
 	"forum/ws"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -22,20 +21,20 @@ var upgrader = websocket.Upgrader{
 
 func HandlerWs(w http.ResponseWriter, r *http.Request) {
 	var userId string
-	isLoggedIn := false
 
 	cookie, err := r.Cookie("session_id")
-	if err == nil && cookie.Value != "" {
-		id, err := utilities.GetUserIDFromCookie(cookie.Value)
-		if err == nil {
-			userId = strconv.Itoa(id)
-			isLoggedIn = true
-		}
+	if err != nil || cookie.Value == "" {
+		http.Error(w, `{"error":"not authenticated"}`, http.StatusUnauthorized)
+		return
 	}
 
-	if !isLoggedIn {
-		userId = "guest_" + uuid.NewString()
+	id, err := utilities.GetUserIDFromCookie(cookie.Value)
+	if err != nil {
+		http.Error(w, `{"error":"not authenticated"}`, http.StatusUnauthorized)
+		return
 	}
+
+	userId = strconv.Itoa(id)
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -43,7 +42,7 @@ func HandlerWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := ws.StoreClient(userId, isLoggedIn, conn)
+	client := ws.StoreClient(userId, conn)
 
 	go ws.HandleClient(client)
 }

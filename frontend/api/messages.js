@@ -6,7 +6,7 @@ export const createMessage = async ({
   conversationId = null,
 }) => {
   const response = await fetch(
-    `${serverURI}/api/messages`,
+    `${serverURI}/messages`,
     {
       method: "POST",
       credentials: "include",

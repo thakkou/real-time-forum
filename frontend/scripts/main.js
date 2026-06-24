@@ -12,7 +12,7 @@ const loadedScripts = new Map();
 //later 
 window.env = {
     serverUri: "http://localhost:8080/api",
-    wsUri:"ws://http://localhost:8080/ws"
+    wsUri:"ws://localhost:8080/ws"
 };
 
 window.navigate = router.navigate.bind(router); // navigate

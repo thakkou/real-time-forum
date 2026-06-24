@@ -64,18 +64,17 @@ func NotifyUser(userID string, eventType string, data any) {
 	client.conn.WriteJSON(payload)
 }
 
-func StoreClient(userID string, isLoggedIn bool, conn *websocket.Conn) *Client {
+func StoreClient(userID string, conn *websocket.Conn) *Client {
 	client := &Client{
-		conn:   conn,
-		isAuth: isLoggedIn,
-		id:     userID,
+		conn: conn,
+		id:   userID,
 	}
 
 	mu.Lock()
 	Clients[userID] = client
 	mu.Unlock()
 	fmt.Println("client store it succesfully")
-
+	fmt.Println("client is stored", client)
 	return client
 }
 

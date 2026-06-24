@@ -1,3 +1,4 @@
+import { ws } from '../services/websoket.js';
 export const routes = { // turn it to map !
     '/': {
         method: 'GET',
@@ -108,12 +109,18 @@ export const router = {
 },
 
    async init() {
+
     window.addEventListener('popstate', async () => {
         const nickname = await guard(location.pathname);
         this.render({ nickname });
     });
+  
 
     const nickname = await guard(location.pathname);
+      if (nickname) {
+        ws.connect();
+    }
+
     await this.render({ nickname });
 
     const scriptName = location.pathname.split('/')[1] || 'feed';
