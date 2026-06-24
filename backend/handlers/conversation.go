@@ -9,6 +9,7 @@ import (
 
 	"forum/database"
 	"forum/utilities"
+	"forum/ws"
 )
 
 type SendMessageRequest struct {
@@ -382,6 +383,9 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		req.ReceiverID,
 	)
 
+	fmt.Println("========== send the socket events ==========")
+	fmt.Println("user 2", user1, senderID)
+	ws.NotifyUser(strconv.Itoa(user1), "new messagge", nil)
 	fmt.Println("========== SEND MESSAGE END ==========")
 
 	utilities.WriteJSON(
