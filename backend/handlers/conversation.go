@@ -384,8 +384,16 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	)
 
 	fmt.Println("========== send the socket events ==========")
-	fmt.Println("user 2", user1, senderID)
-	ws.NotifyUser(strconv.Itoa(user1), "new messagge", nil)
+	ws.NotifyUser(
+		strconv.Itoa(req.ReceiverID),
+		"new_message",
+		map[string]interface{}{
+			"conversation_id": conversationID,
+			"message_id":      messageID,
+			"sender_id":       senderID,
+			"text":            req.Text,
+		},
+	)
 	fmt.Println("========== SEND MESSAGE END ==========")
 
 	utilities.WriteJSON(
