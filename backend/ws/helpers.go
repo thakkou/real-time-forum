@@ -78,8 +78,8 @@ func StoreClient(userID string, conn *websocket.Conn) *Client {
 	mu.Lock()
 	Clients[userID] = client
 	mu.Unlock()
-	fmt.Println("client store it succesfully")
-	fmt.Println("client is stored", client)
+	BroadcastExcept(client.id, "client is Connect", client.id)
+
 	return client
 }
 

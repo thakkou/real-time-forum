@@ -1,6 +1,8 @@
 package ws
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func HandleClient(client *Client) {
 	defer func() {
@@ -8,8 +10,8 @@ func HandleClient(client *Client) {
 		mu.Lock()
 		delete(Clients, client.id)
 		mu.Unlock()
-
 		client.conn.Close()
+		BroadcastExcept(client.id, "client disconnect", client.id)
 	}()
 
 	for {

@@ -126,8 +126,7 @@ export const router = {
     showToast(data.event_type)
 
     console.log(data);
-});
-    }
+    });}
 
     await this.render({ nickname });
 
