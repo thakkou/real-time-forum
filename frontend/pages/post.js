@@ -7,6 +7,7 @@ export async function render(data = {}) {
   return `
     ${header}
     <div id="post-detaille">
+    <div class="post-detail-wrapper"></div>
     </div>
     
     `;

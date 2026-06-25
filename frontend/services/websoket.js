@@ -1,3 +1,5 @@
+import { Toast } from '../components/Toast.js';
+
 class WSService {
     constructor() {
         this.socket = null;
@@ -68,13 +70,12 @@ class WSService {
 
 export const ws = new WSService();
 
+// ===================================================
 
 export function showToast(message, type = 'success', duration = 3000) {
     const container = document.getElementById('toast-container');
 
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
+    const toast = Toast(message, type);
 
     container.appendChild(toast);
 
@@ -90,3 +91,50 @@ export function showToast(message, type = 'success', duration = 3000) {
         }, 300);
     }, duration);
 }
+
+// showToast('Message received!');
+// showToast('User connected', 'success');
+// showToast('Connection lost', 'error');
+// showToast('New notification', 'warning', 5000);
+
+// socket.onmessage = (event) => {
+//     showToast('New message received');
+// };
+
+// ===========================================================
+
+
+// CORE
+// ====
+
+// Web socket manager
+
+// class SocketManager {
+//     #ws;
+
+//     connect() {
+//         this.#ws = new WebSocket('/ws');
+
+//         this.#ws.onmessage = (event) => {
+//             const msg = JSON.parse(event.data);
+
+//             document.dispatchEvent(
+//                 new CustomEvent(
+//                     `ws:${msg.type}`,
+//                     { detail: msg.payload }
+//                 )
+//             );
+//         };
+//     }
+
+//     send(type, payload) {
+//         this.#ws.send(
+//             JSON.stringify({
+//                 type,
+//                 payload
+//             })
+//         );
+//     }
+// }
+
+// export const socket = new SocketManager();

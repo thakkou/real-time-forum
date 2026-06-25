@@ -10,9 +10,9 @@ export const Header = (nickname = "NONE") => (`
                 <i class="fa-regular fa-message"></i>
             </button>
             
-<button class="btn logout" id="logout-btn">
-  Logout
-</button>
+            <button class="btn logout" id="logout-btn">
+                Logout
+            </button>
         </div>
     </header>
 `);

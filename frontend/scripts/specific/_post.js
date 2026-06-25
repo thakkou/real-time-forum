@@ -1,6 +1,6 @@
 import { getPostByID, PostResolver } from "../../api/posts.js";
 import { CommentResolver, CreatComment } from "../../api/comments.js";
-import { PostDetail } from "../../components/PostDetaille.js";
+import { Post } from "../../components/Post.js";
 
 const setupPostPage = async () => {
   try {
@@ -16,7 +16,7 @@ const setupPostPage = async () => {
 
     const container = document.getElementById("post-detaille");
 
-    container.innerHTML = PostDetail(response.data);
+    container.innerHTML = Post(response.data, { withComments: true });
 
     setupEventListeners();
   } catch (err) {
