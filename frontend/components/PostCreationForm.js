@@ -61,3 +61,6 @@ export const PostCreationForm = () => (`
         </details>
     </section>
 `);
+
+// <form action="/api/posts/create" method="POST" enctype="multipart/form-data">
+// maybe needed for uploading images...

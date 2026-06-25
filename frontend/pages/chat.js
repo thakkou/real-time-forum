@@ -144,7 +144,7 @@ export async function render(data = {}) {
                 <textarea
                   class="chat-input"
                   id="messageInput"
-                  placeholder="Message..."
+                  placeholder="Message k0r3y..."
                   rows="1"
                   maxlength="1000"
                 ></textarea>
@@ -163,3 +163,65 @@ export async function render(data = {}) {
     </div>
   `;
 }
+
+
+// document.addEventListener(
+//     'ws:new_message',
+//     e => {
+//         console.log(e.detail);
+//     }
+// );
+
+
+// previous messages listing
+// =========================
+
+// <div class="chat-header-name" id="chatHeaderName">k0r3y</div>
+//     <div class="chat-header-status online" id="chatHeaderStatus">● Online</div>
+//   </div>
+// </div>
+
+// <div class="chat-messages" id="chatMessages">
+//   <!-- Load-more sentinel at top -->
+//   <div class="load-more-indicator" id="loadMoreIndicator">Loading older messages...</div>
+
+//   <!-- Day separator -->
+//   <div class="day-separator"><span>Yesterday</span></div>
+
+//   <!-- Message group: from them -->
+//   <div class="message-group theirs">
+//     <div class="message-sender">k0r3y</div>
+//     <div class="message-row">
+//       <div class="message-bubble">hey, saw your post about the Go project</div>
+//       <div class="message-meta">
+//         <span>Jun 20 · 18:41</span>
+//       </div>
+//     </div>
+//     <div class="message-row">
+//       <div class="message-bubble">did you end up using goroutines for the handlers?</div>
+//       <div class="message-meta">
+//         <span>Jun 20 · 18:42</span>
+//       </div>
+//     </div>
+//   </div>
+
+//   <!-- Message group: from me -->
+//   <div class="message-group mine">
+//     <div class="message-sender">you</div>
+//     <div class="message-row">
+//       <div class="message-bubble">yeah, each request spins up its own goroutine via the stdlib mux</div>
+//       <div class="message-meta">Jun 20 · 18:45</div>
+//     </div>
+//     <div class="message-row">
+//       <div class="message-bubble">it's actually pretty clean, no external deps</div>
+//       <div class="message-meta">Jun 20 · 18:45</div>
+//     </div>
+//   </div>
+
+//   <div class="day-separator"><span>Today</span></div>
+
+//   <div class="message-group theirs">
+//     <div class="message-sender">k0r3y</div>
+//     <div class="message-row">
+//       <div class="message-bubble">yo did you see the new post?</div>
+//       <div class="message-meta">Jun 21 · 09:12</div>

@@ -1,9 +1,14 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+// import { fileURLToPath } from 'url';
+
+// import { routes } from './scripts/router.js'; // causes error: document is not defined !!!
+// import { socket } from './core/websocket.js';
 
 const PORT = 3000;
 
+// Map file extensions to MIME types
 const MIME_TYPES = {
     '.html': 'text/html',
     '.css': 'text/css',
@@ -11,8 +16,12 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon',
 };
 
-const server = http.createServer((req, res) => {
+const server = http.createServer((req, res) => { // async
     try {
+        // const path = req.url.split('?')[0];
+
+        // public and scripts
+        // const SCRIPTS = path.resolve('./scripts');
         const decodedPath = decodeURIComponent(req.url).split('?')[0];
 
         const ext = path.extname(decodedPath);
@@ -22,37 +31,45 @@ const server = http.createServer((req, res) => {
         // 1. STATIC FILES
         // =========================
 
-const filePath = path.join(process.cwd(), decodedPath);
+        const filePath = path.join(process.cwd(), decodedPath);
 
-const isFileRequest =
-    decodedPath.includes('.') || decodedPath === '/favicon.ico';
+        const isFileRequest = // what this variable mean ? what else can be ?!
+            decodedPath.includes('.') || decodedPath === '/favicon.ico';
 
-if (isFileRequest) {
-    fs.readFile(filePath, (err, data) => {
-        if (err) {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('File not found');
+        const isAllowed = path.resolve(decodedPath).startsWith('/styles/') ||
+            path.resolve(decodedPath).startsWith('/api/') ||
+            path.resolve(decodedPath).startsWith('/services/') ||
+            path.resolve(decodedPath).startsWith('/scripts/') ||
+            path.resolve(decodedPath).startsWith('/components/') ||
+            path.resolve(decodedPath).startsWith('/pages/');
+
+        // let route = routes[decodedPath];
+        // if (!route || route.method !== req.method) route = null;
+
+        // routes.find(
+        //     r => r.method === req.method &&
+        //         r.path === req.url.split('?')[0]
+        // );
+
+        if (isFileRequest && isAllowed) {
+            fs.readFile(filePath, (err, data) => {
+                if (err) {
+                    res.writeHead(404, { 'Content-Type': 'text/plain' });
+                    res.end('File not found');
+                    return;
+                }
+
+                const ext = path.extname(filePath);
+
+                res.writeHead(200, {
+                    'Content-Type': MIME_TYPES[ext] || 'application/octet-stream'
+                });
+
+                res.end(data);
+            });
+
             return;
         }
-
-        const ext = path.extname(filePath);
-
-        const mimeTypes = {
-            '.html': 'text/html',
-            '.css': 'text/css',
-            '.js': 'application/javascript',
-            '.ico': 'image/x-icon',
-        };
-
-        res.writeHead(200, {
-            'Content-Type': mimeTypes[ext] || 'application/octet-stream'
-        });
-
-        res.end(data);
-    });
-
-    return;
-}
 
         // =========================
         // 2. SPA FALLBACK (IMPORTANT)
@@ -71,10 +88,22 @@ if (isFileRequest) {
     } catch (err) {
         console.error(err);
 
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end(`500 — ${err.message}`);
+        if (err.code === 'ENOENT') {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end(`404 — File not found: ${urlPath}`);
+        } else {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end(`500 — Internal server error: ${err.message}`);
+        }
+
+        // res.writeHead(500, { 'Content-Type': 'text/plain' });
+        // res.end(`500 — ${err.message}`);
     }
 });
+
+// if (localStorage.getItem('token')) {
+//     socket.connect();
+// }
 
 server.listen(PORT, () => {
     console.log(`Http server running at http://localhost:${PORT}`);

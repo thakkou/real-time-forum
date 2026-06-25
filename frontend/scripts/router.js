@@ -53,16 +53,16 @@ export const routes = { // turn it to map !
 // . register form in RegisterForm
 
 async function guard(path) {
-const matched = matchRoute(path);
+    const matched = matchRoute(path);
 
-if (!matched) {
-    history.pushState({}, '', '/');
-    return null;
-}
+    // if (!matched) {
+    //     history.pushState({}, '', '/');
+    //     return null;
+    // }
 
-const requiresAuth = matched.route.auth;
+    const requiresAuth = matched.route.auth;
 
-const me = await isAuthenticated();
+    const me = await isAuthenticated();
     if (requiresAuth && !me.authenticated) {
         path = '/login';
     } else if (!requiresAuth && me.authenticated) {
@@ -73,6 +73,7 @@ const me = await isAuthenticated();
 }
 
 import { isAuthenticated } from '../services/auth.js';
+
 export const router = {
     async navigate(path) {
         // check if auth (do also for init())
@@ -85,90 +86,89 @@ export const router = {
         await loadPageScript(scriptName);
     },
 
-   async render(data = {}) {
-    const matched = matchRoute(location.pathname);
+    async render(data = {}) {
+        const matched = matchRoute(location.pathname);
 
-    if (!matched) {
-        document.body.innerHTML = '<h1>404</h1>';
-        return;
-    }
+        if (!matched) {
+            document.body.innerHTML = '<h1>404</h1>';
+            return;
+        }
 
-    const loader = matched.route.page;
+        const loader = matched.route.page;
 
-    if (!loader) {
-        document.body.innerHTML = '<h1>404</h1>';
-        return;
-    }
+        if (!loader) {
+            document.body.innerHTML = '<h1>404</h1>';
+            return;
+        }
 
-    const page = await loader();
+        const page = await loader();
 
-    document.querySelector('#app').innerHTML =
-        await page.render({
-            ...data,
-            params: matched.params
+        document.querySelector('#app').innerHTML =
+            await page.render({
+                ...data,
+                params: matched.params
+            });
+    },
+
+    async init() {
+
+        window.addEventListener('popstate', async () => {
+            const nickname = await guard(location.pathname);
+            this.render({ nickname });
         });
-},
+    
 
-   async init() {
-
-    window.addEventListener('popstate', async () => {
         const nickname = await guard(location.pathname);
-        this.render({ nickname });
-    });
-  
+        if (nickname) {
+            ws.connect();
 
-    const nickname = await guard(location.pathname);
-      if (nickname) {
-        ws.connect();
+            const onlineUsers = getOnlineUsers();
 
-const onlineUsers=getOnlineUsers()
-ws.on("init", (data) => {
-    console.log("init users:", data);
+            ws.on("init", (data) => {
+                console.log("init users:", data);
+                data.forEach(id => onlineUsers.add(id));
+                saveOnlineUsers(onlineUsers);
+                this.renderOnlineUsers?.([...onlineUsers]);
+            });
 
-    data.forEach(id => onlineUsers.add(id));
+            ws.on("client_connect", (userId) => {
+                console.log("user connected:", userId);
+                onlineUsers.add(userId);
+                saveOnlineUsers(onlineUsers);
+                this.renderOnlineUsers?.([...onlineUsers]);
+            });
 
-    saveOnlineUsers(onlineUsers);
+            ws.on("client_disconnect", (userId) => {
+                console.log("user disconnected:", userId);
+                onlineUsers.delete(userId);
+                saveOnlineUsers(onlineUsers);
+                this.renderOnlineUsers?.([...onlineUsers]);
+            });
 
-    this.renderOnlineUsers?.([...onlineUsers]);
-});
-ws.on("client_connect", (userId) => {
-    console.log("user connected:", userId);
+            ws.on("new_post",(data)=>{
+                console.log(data)
+            });
 
-    onlineUsers.add(userId);
+            ws.on("new_message", (data) => {
+                console.log("new message:", data);
+                showToast(data.text, "success");
+            });
 
-    saveOnlineUsers(onlineUsers);
+            ws.on("typing", (data) => {
+                console.log("someone is typing:", data.userId);
+            });
+        }
 
-    this.renderOnlineUsers?.([...onlineUsers]);
-});
-ws.on("client_disconnect", (userId) => {
-    console.log("user disconnected:", userId);
+        await this.render({ nickname });
+        // Load the page-specific script
+        // await loadPageScript(window.location.pathname.slice(1)); // feed default
 
-    onlineUsers.delete(userId);
-
-    saveOnlineUsers(onlineUsers);
-
-    this.renderOnlineUsers?.([...onlineUsers]);
-});
-
-ws.on("new_post",(data)=>{
-    console.log(data)
-})
-ws.on("new_message", (data) => {
-    console.log("new message:", data);
-    showToast(data.text, "success");
-});
-
-
-ws.on("typing", (data) => {
-        console.log("someone is typing:", data.userId);
-});
-}
-
-    await this.render({ nickname });
-
-    const scriptName = location.pathname.split('/')[1] || 'feed';
-    await loadPageScript(scriptName);
-}
+        const scriptName = location.pathname.split('/')[1] || 'feed';
+        await loadPageScript(scriptName);
+        // loaded first time, must be :
+        // 1. chnaged depending on app state (first page) x
+        // 2. not loaded if already exists (same in navigate) -> is default behavior maybe !?
+    }
 };
 
 // ========================
@@ -178,8 +178,8 @@ const pageScripts = {
   feed: () => import('./specific/_feed.js'),
   login: () => import('./specific/_login.js'),
   register: () => import('./specific/_register.js'),
-  chat: () => import('./specific/_chat2.js'),
-  post: () => import('./specific/_post.js'), // ✅ ADD THIS
+  chat: () => import('./specific/_chat2.js'), // used temporarely
+  post: () => import('./specific/_post.js'),
 };
 
 function matchRoute(path) {

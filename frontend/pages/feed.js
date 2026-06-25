@@ -115,12 +115,12 @@ export async function render(data = {}) {
           </details>
         </aside>
 
-<section class="posts">
-  ${data.Posts && data.Posts.length > 0
-    ? data.Posts.map(post => Post(post)).join("")
-    : `<div class="no-post">No pstes...</div>`
-  }
-</section>
+        <section class="posts">
+          ${data.Posts && data.Posts.length > 0
+            ? data.Posts.map(post => Post(post)).join("")
+            : `<div class="no-post">No posts for now...</div>`
+          }
+        </section>
       </main>
     </div>
   `;

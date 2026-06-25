@@ -63,11 +63,7 @@ func enrichPost(p *models.Post, userId int) error {
 	// CATEGORIES
 	// =========================
 	p.Categories, err = GetCategoriesByPost(p.Id)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func enrichPostWithComments(p *models.Post, userId int) error {

@@ -50,11 +50,12 @@ func GetUsersById(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUsernameByToken(w http.ResponseWriter, r *http.Request) {
+	// errors not checked !!!
 	cookie, _ := r.Cookie("session_id")
 
 	var userId, nickname, lastSeen string
 
-	database.Database.QueryRow(
+	database.Database.QueryRow( // returns error
 		"SELECT user_id FROM sessions WHERE id = ?",
 		cookie.Value,
 	).Scan(&userId)

@@ -19,3 +19,12 @@ export function showToast(message, type = 'success', duration = 3000) {
         }, 300);
     }, duration);
 }
+
+// showToast('Message received!');
+// showToast('User connected', 'success');
+// showToast('Connection lost', 'error');
+// showToast('New notification', 'warning', 5000);
+
+// socket.onmessage = (event) => {
+//     showToast('New message received');
+// };
