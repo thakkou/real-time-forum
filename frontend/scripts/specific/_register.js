@@ -1,5 +1,4 @@
-const serverURI = env.serverUri;
-
+import { register } from "../../api/auth.js";
 import { showToast } from "../../services/toast.js";
 import { router } from "../router.js";
 
@@ -96,35 +95,13 @@ function setupRegisterPage() {
             router.navigate('/login');
         } catch (err) {
             errorBox.style.display = "block";
-            errorBox.textContent = "Registration failed"; // or err.message for debugging (but script is loaded !)
+            errorBox.textContent = err.message || "Registration failed"; // err.message for debugging (but script is loaded !)
         } finally {
             btn.disabled = false;
             btn.textContent = "Register";
         }
     });
 }
-
-const register = async (userData) => {
-    try {
-        const response = await fetch(`${serverURI}/register`, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userData),
-        });
-
-        const data = await response.json();
-        if (data.status_code !== 200) {
-            throw new Error(data.message || "Registration failed");
-        }
-        return data;
-    } catch (error) {
-        console.error("Register error:", error);
-        throw error;
-    }
-};
 
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupRegisterPage);

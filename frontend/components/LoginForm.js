@@ -24,7 +24,7 @@ export const LoginForm = () => (`
           autocomplete="current-password"
         />
       </div>
-      <button type="submit">Login</button>
+      <button id="login-btn" type="submit">Login</button>
     </form>
 
     <!-- start -->

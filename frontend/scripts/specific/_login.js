@@ -1,36 +1,40 @@
+import { login } from "../../api/auth.js";
+import { showToast } from "../../services/toast.js";
+import { router } from "../router.js";
 
-import {login} from "../../api/auth.js"
-
+// login not working and refreshes at the first time when redirected from register, but works after !!!
 const setupLoginPage = () => {
-  console.log("kisk");
+	const form = document.querySelector("form");
+	const errorBox = document.getElementById("login-error");
+	const btn = document.getElementById("login-btn");
+	if (!form) return;
 
-  const form = document.querySelector("form");
-  const errorBox = document.getElementById("login-error");
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
 
-  if (!form) return;
+		const identifier = form.identifier.value;
+		const password = form.password.value;
 
- form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+		btn.disabled = true;
+        btn.textContent = "Logging in...";
 
-  const identifier = form.identifier.value;
-  const password = form.password.value;
+		try {
+			const resp = await login({ identifier, password });
 
-  try {
-    const res = await login({ identifier, password });
+			console.log("login successful");
+			showToast('Login successful!', 'success');
+			router.navigate('/');
 
-    console.log("login success", res);
-
-    // Store user globally
-    window.user = res.data;
-
-    // Redirect to home
-    window.location.href = "/";
-
-  } catch (err) {
-    errorBox.style.display = "block";
-    errorBox.textContent = err.message || "Login failed";
-  }
-});
+			// Store user globally
+			window.user = resp.data; // ?!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		} catch (err) {
+			errorBox.style.display = "block";
+			errorBox.textContent = err.message || "Login failed"; // err.message for debugging
+		} finally {
+            btn.disabled = false;
+            btn.textContent = "Login";
+        }
+	});
 };
 
 if (document.readyState === 'loading') {
@@ -38,7 +42,3 @@ if (document.readyState === 'loading') {
 } else {
     setupLoginPage();
 }
-
-
-
-

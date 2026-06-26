@@ -1,58 +1,50 @@
 const serverURI = env.serverUri;
 
 export const login = async (credentials) => {
-  try {
-    console.log("login the api", credentials);
-    console.log(`${serverURI}/login`);
+	try {
+		const response = await fetch(`${serverURI}/login`, {
+			method: "POST",
+			credentials: "include",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				identifier: credentials.identifier,
+				password: credentials.password,
+			}),
+		});
 
-    const response = await fetch(`${serverURI}/login`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        identifier: credentials.identifier,
-        password: credentials.password,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Login failed");
-    }
-
-    console.log(data);
-    return data;
-  } catch (error) {
-    console.error("Login error:", error);
-    throw error;
-  }
+		const data = await response.json();
+		if (!response.ok) {
+			throw new Error(data.message || "Login failed");
+		}
+		return data;
+	} catch (error) {
+		console.error("Login error:", error);
+		throw error;
+	}
 };
 
-export const register = async ({ data }) => {
-  try {
-    const response = await fetch(`${serverURI}/register`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+export const register = async (userData) => {
+    try {
+        const response = await fetch(`${serverURI}/register`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userData),
+        });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || "Registration failed");
+        const data = await response.json();
+        if (data.status_code !== 200) {
+            throw new Error(data.message || "Registration failed");
+        }
+        return data;
+    } catch (error) {
+        console.error("Register error:", error);
+        throw error;
     }
-
-    return result;
-  } catch (error) {
-    console.error("Registration error:", error);
-    throw error;
-  }
 };
 
 export const logout = async () => {

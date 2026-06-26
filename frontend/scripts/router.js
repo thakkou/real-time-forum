@@ -180,7 +180,7 @@ const pageScripts = {
   feed: () => import('./specific/_feed.js'),
   login: () => import('./specific/_login.js'),
   register: () => import('./specific/_register.js'),
-  chat: () => import('./specific/_chat2.js'), // used temporarely
+  chat: () => import('./specific/_chat.js'), // used temporarely
   post: () => import('./specific/_post.js'),
 };
 
