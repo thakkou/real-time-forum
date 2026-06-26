@@ -1,22 +1,22 @@
 import { getPostByID, PostResolver } from "../../api/posts.js";
 import { CommentResolver, CreatComment } from "../../api/comments.js";
-import { Post } from "../../components/Post.js";
+// import { Post } from "../../components/Post.js";
 
 const setupPostPage = async () => {
   try {
-    const id = getPostIdFromURL();
+    // const id = getPostIdFromURL();
 
-    if (!id) {
-      console.error("No post id found in URL");
-      return;
-    }
+    // if (!id) {
+    //   console.error("No post id found in URL");
+    //   return;
+    // }
 
-    const response = await getPostByID({ id });
-    console.log(response)
+    // const response = await getPostByID({ id });
+    // console.log(response)
 
-    const container = document.getElementById("post-detaille");
+    // const container = document.getElementById("post-detail-wrapper");
 
-    container.innerHTML = Post(response.data, { withComments: true });
+    // container.innerHTML = Post(response.data, { withComments: true });
 
     setupEventListeners();
   } catch (err) {
@@ -159,7 +159,7 @@ function setupDeletePost() {
   });
 }
 
-function getPostIdFromURL() {
+export function getPostIdFromURL() {
   const parts = window.location.pathname.split("/");
   return parts[2];
 }

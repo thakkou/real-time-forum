@@ -1,6 +1,5 @@
 export const LoginForm = () => (`
   <div class="card">
-    <a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>
     <h1>Login</h1>
     <p class="subtitle">Welcome back</p>
     <div class="form-error" id="login-error" style="display:none;"></div>

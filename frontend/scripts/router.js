@@ -1,4 +1,5 @@
-import { showToast, ws } from '../services/websoket.js';
+import { ws } from '../services/websocket.js';
+import { showToast } from '../services/toast.js';
 import { saveOnlineUsers ,getOnlineUsers} from './main.js';
 export const routes = { // turn it to map !
     '/': {
@@ -159,6 +160,7 @@ export const router = {
             });
         }
 
+        // the page is fully rendered first, then the specific scripts are loded after !
         await this.render({ nickname });
         // Load the page-specific script
         // await loadPageScript(window.location.pathname.slice(1)); // feed default

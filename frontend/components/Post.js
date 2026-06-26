@@ -1,4 +1,5 @@
 export const Post = (post, options = { withComments: false }) => `
+  ${ options.withComments ? `<a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>` : '' }
   <article class="post ${ options.withComments ? 'detailed-post' : '' }" data-post-id="${post.Id}">
     <div class="post-header">
       <div class="delete-block">

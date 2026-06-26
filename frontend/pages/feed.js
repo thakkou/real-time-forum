@@ -16,19 +16,17 @@ import { PostCreationForm } from '../components/PostCreationForm.js';
 import { Post } from '../components/Post.js';
 
 export async function render(data = {}) {
-  const header = Header(data.nickname);
   const postCreationForm = PostCreationForm();
   return `
-    ${header}
+    ${Header(data.nickname)}
 
     <div class="container">
       <!-- FILTER SECTION (desktop sidebar) -->
       <aside class="sidebar">
         <h3>Filter Posts</h3>
 
-
-<form id="filter-form">     
-     <!-- My Posts / Liked Posts Buttons -->
+        <form id="filter-form">     
+          <!-- My Posts / Liked Posts Buttons -->
           <div class="filter-group registered-only">
             <button type="button" name="my-creat-postes" class="filter-btn">
               My Created Posts

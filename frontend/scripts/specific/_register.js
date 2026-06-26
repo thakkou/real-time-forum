@@ -1,7 +1,10 @@
+const serverURI = env.serverUri;
+
+import { showToast } from "../../services/toast.js";
+import { router } from "../router.js";
 
 function setupRegisterPage() {
-console.log("api loaded")
-  const form = document.querySelector("form");
+    const form = document.querySelector("form");
     if (!form) return;
 
     const btn = document.getElementById("register-btn");
@@ -9,7 +12,6 @@ console.log("api loaded")
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-
 
         const formData = e.target;
 
@@ -76,11 +78,9 @@ console.log("api loaded")
 
         btn.disabled = true;
         btn.textContent = "Registering...";
-        console.log(nickname)
-
 
         try {
-            const res = await register({
+            const resp = await register({
                 nickname,
                 first_name,
                 last_name,
@@ -91,18 +91,12 @@ console.log("api loaded")
                 confirm_password,
             });
 
-            console.log("registration success", res);
-
-            // Optional success message
-            alert("Registration successful! Please login.");
-
-            // Redirect to login page
-            window.location.href = "/login";
-
+            console.log("registration successful");
+            showToast('Registration successful!', 'success');
+            router.navigate('/login');
         } catch (err) {
             errorBox.style.display = "block";
-            errorBox.textContent =
-                err.message || "Registration failed";
+            errorBox.textContent = "Registration failed"; // or err.message for debugging (but script is loaded !)
         } finally {
             btn.disabled = false;
             btn.textContent = "Register";
@@ -110,42 +104,30 @@ console.log("api loaded")
     });
 }
 
+const register = async (userData) => {
+    try {
+        const response = await fetch(`${serverURI}/register`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userData),
+        });
+
+        const data = await response.json();
+        if (data.status_code !== 200) {
+            throw new Error(data.message || "Registration failed");
+        }
+        return data;
+    } catch (error) {
+        console.error("Register error:", error);
+        throw error;
+    }
+};
+
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupRegisterPage);
 } else {
     setupRegisterPage();
 }
-
-
-const serverURI = env.serverUri;
-
- const register = async (userData) => {
-
-
-console.log(userData)
-
-
-  try {
-    const response = await fetch(`${serverURI}/register`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
-    });
-
-    const data = await response.json();
-
-    console.log("register response", data);
-
-    if (data.status_code !== 200) {
-      throw new Error(data.message || "Registration failed");
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Register error:", error);
-    throw error;
-  }
-};

@@ -1,5 +1,3 @@
-import { Toast } from '../components/Toast.js';
-
 class WSService {
     constructor() {
         this.socket = null;
@@ -69,39 +67,6 @@ class WSService {
 
 
 export const ws = new WSService();
-
-// ===================================================
-
-export function showToast(message, type = 'success', duration = 3000) {
-    const container = document.getElementById('toast-container');
-
-    const toast = Toast(message, type);
-
-    container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-        toast.classList.add('show');
-    });
-
-    setTimeout(() => {
-        toast.classList.remove('show');
-
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-    }, duration);
-}
-
-// showToast('Message received!');
-// showToast('User connected', 'success');
-// showToast('Connection lost', 'error');
-// showToast('New notification', 'warning', 5000);
-
-// socket.onmessage = (event) => {
-//     showToast('New message received');
-// };
-
-// ===========================================================
 
 
 // CORE

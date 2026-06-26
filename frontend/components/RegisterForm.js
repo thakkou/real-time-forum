@@ -1,6 +1,5 @@
 export const RegisterForm = () => (`
   <div class="card">
-    <a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>
     <h1>Register</h1>
     <p class="subtitle">Create your account</p>
     <pre class="form-error" id="register-error" style="display:none;"></pre>
