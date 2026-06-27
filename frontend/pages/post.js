@@ -1,6 +1,6 @@
 import { Header } from '../components/Header.js';
 import { getPostByID } from "../../api/posts.js";
-import { getPostIdFromURL } from "../scripts/specific/_post.js";
+import { getPostIdFromURL } from "../scripts/_post.js";
 import { Post } from "../../components/Post.js";
 
 export async function render(data = {}) {

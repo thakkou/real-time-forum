@@ -1,23 +1,8 @@
-import { getPostByID, PostResolver } from "../../api/posts.js";
-import { CommentResolver, CreatComment } from "../../api/comments.js";
-// import { Post } from "../../components/Post.js";
+import { getPostByID, PostResolver } from "../api/posts.js";
+import { CommentResolver, CreatComment } from "../api/comments.js";
 
-const setupPostPage = async () => {
+export async function setup() {
   try {
-    // const id = getPostIdFromURL();
-
-    // if (!id) {
-    //   console.error("No post id found in URL");
-    //   return;
-    // }
-
-    // const response = await getPostByID({ id });
-    // console.log(response)
-
-    // const container = document.getElementById("post-detail-wrapper");
-
-    // container.innerHTML = Post(response.data, { withComments: true });
-
     setupEventListeners();
   } catch (err) {
     console.error("Failed to load post:", err.message);
@@ -162,10 +147,4 @@ function setupDeletePost() {
 export function getPostIdFromURL() {
   const parts = window.location.pathname.split("/");
   return parts[2];
-}
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", setupPostPage);
-} else {
-  setupPostPage();
 }

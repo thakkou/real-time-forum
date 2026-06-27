@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 // import { fileURLToPath } from 'url';
 
-// import { routes } from './scripts/router.js'; // causes error: document is not defined !!!
+// import { routes } from './services/router.js'; // causes error: document is not defined !!!
 // import { socket } from './core/websocket.js';
 
 const PORT = 3000;

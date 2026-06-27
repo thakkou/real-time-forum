@@ -1,16 +1,25 @@
-import { CommentResolver, CreatComment } from "../../api/comments.js";
-import { logout } from "../../api/auth.js";
-import { getPosts, PostResolver,CreatePost } from "../../api/posts.js";
-import { Post } from "../../components/Post.js";
+import { CommentResolver, CreatComment } from "../api/comments.js";
+import { logout } from "../api/auth.js";
+import { getPosts, PostResolver,CreatePost } from "../api/posts.js";
+import { Post } from "../components/Post.js";
 
 /* ======================
    STATE
 ====================== */
 const state = {
+  posts: [],
   offset: 0,
   loading: false,
-  hasMore: true,
 };
+
+/* ======================
+   INIT
+====================== */
+export function setup() {
+  fetchPosts();
+  // setTimeout(fetchPosts, 50); // safety double fetch ?!!!!
+  setupEvents();
+}
 
 /* ======================
    UTILS
@@ -27,7 +36,6 @@ function throttle(fn, delay = 200) {
 
 function resetFeed() {
   state.offset = 0;
-  state.hasMore = true;
   document.querySelector(".posts").innerHTML = "";
 }
 
@@ -35,7 +43,7 @@ function resetFeed() {
    API ACTIONS
 ====================== */
 async function fetchPosts() {
-  if (state.loading || !state.hasMore) return;
+  if (state.loading) return;
 
   state.loading = true;
 
@@ -56,13 +64,13 @@ async function fetchPosts() {
 
     const posts = res.data;
     console.log("posts",posts)
-    if (!posts?.length) {
-      state.hasMore = false;
-      return;
+    if (posts?.length) {
+      state.posts.push(...posts);
+      console.log('state.posts', state.posts)
+      state.offset += posts.length;
     }
+    renderPosts(state.posts); // posts
 
-    renderPosts(posts);
-    state.offset += posts.length;
   } catch (err) {
     console.error("Failed to load posts:", err);
   } finally {
@@ -160,88 +168,88 @@ async function handleLogout() {
    EVENTS
 ====================== */
 function setupEvents() {
-  /* Scroll */
-  window.addEventListener(
-    "scroll",
-    throttle(() => {
-      const scrollTop = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const docHeight = document.documentElement.scrollHeight;
+	/* Scroll */
+	window.addEventListener(
+		"scroll",
+		throttle(() => {
+		const scrollTop = window.scrollY;
+		const windowHeight = window.innerHeight;
+		const docHeight = document.documentElement.scrollHeight;
 
-      if (scrollTop + windowHeight >= docHeight - 200) {
-        fetchPosts();
-      }
-    }, 200)
-  );
+		if (scrollTop + windowHeight >= docHeight - 200) {
+			fetchPosts();
+		}
+		}, 200)
+	);
 
-  /*creat a post */
-  const createPostForm = document.getElementById("create-post-form");
+	/*creat a post */
+	const createPostForm = document.getElementById("create-post-form");
 
-if (createPostForm) {
-  createPostForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    handleCreatePost(e.target);
-  });
-}
+	if (createPostForm) {
+	createPostForm.addEventListener("submit", (e) => {
+		e.preventDefault();
+		handleCreatePost(e.target);
+	});
+	}
 
-/* click the buttons */
-document.addEventListener("click", (e) => {
-  const post = e.target.closest(".post");
+	/* click the buttons */
+	document.addEventListener("click", (e) => {
+	const post = e.target.closest(".post");
 
-  if (!post) return;
+	if (!post) return;
 
-  if (
-    e.target.closest("button") ||
-    e.target.closest(".like-btn") ||
-    e.target.closest(".dislike-btn") ||
-    e.target.closest(".comment-btn") ||
-    e.target.closest(".send-comment")
-  ) {
-    return;
-  }
+	if (
+		e.target.closest("button") ||
+		e.target.closest(".like-btn") ||
+		e.target.closest(".dislike-btn") ||
+		e.target.closest(".comment-btn") ||
+		e.target.closest(".send-comment")
+	) {
+		return;
+	}
 
-  navigate(`/post/${post.dataset.postId}`);
-});
+	navigate(`/post/${post.dataset.postId}`);
+	});
 
-  /* Click delegation */
-  document.addEventListener("click", async (e) => {
-    const likeBtn = e.target.closest(".like-btn");
-    const dislikeBtn = e.target.closest(".dislike-btn");
-    const deleteBtn = e.target.closest(".delete-btn");
-    const commentBtn = e.target.closest(".comment-btn");
-    const sendCommentBtn = e.target.closest(".send-comment");
+	/* Click delegation */
+	document.addEventListener("click", async (e) => {
+		const likeBtn = e.target.closest(".like-btn");
+		const dislikeBtn = e.target.closest(".dislike-btn");
+		const deleteBtn = e.target.closest(".delete-btn");
+		const commentBtn = e.target.closest(".comment-btn");
+		const sendCommentBtn = e.target.closest(".send-comment");
 
-    const createdBtn = e.target.closest("[name='my-creat-postes']");
-    const likedBtn = e.target.closest("[name='my-liked-post']");
-    const logoutBtn = e.target.closest("#logout-btn");
+		const createdBtn = e.target.closest("[name='my-creat-postes']");
+		const likedBtn = e.target.closest("[name='my-liked-post']");
+		const logoutBtn = e.target.closest("#logout-btn");
 
-    if (createdBtn) return toggleFilter("my-creat-postes", createdBtn);
-    if (likedBtn) return toggleFilter("my-liked-post", likedBtn);
-    if (logoutBtn) return handleLogout();
+		if (createdBtn) return toggleFilter("my-creat-postes", createdBtn);
+		if (likedBtn) return toggleFilter("my-liked-post", likedBtn);
+		if (logoutBtn) return handleLogout();
 
-if (likeBtn) {
-  const res = await handleAction(likeBtn.dataset.id, "like");
+	if (likeBtn) {
+	const res = await handleAction(likeBtn.dataset.id, "like");
 
-  if (res?.message === "liked") {
-    updatePostUI(likeBtn.dataset.id, "like", res.data);
-  }
-}
+	if (res?.message === "liked") {
+		updatePostUI(likeBtn.dataset.id, "like", res.data);
+	}
+	}
 
-if (dislikeBtn) {
-  const res = await handleAction(dislikeBtn.dataset.id, "dislike");
+	if (dislikeBtn) {
+	const res = await handleAction(dislikeBtn.dataset.id, "dislike");
 
-  if (res?.message === "disliked") {
-    updatePostUI(dislikeBtn.dataset.id, "dislike", res.data);
-  }
-}
+	if (res?.message === "disliked") {
+		updatePostUI(dislikeBtn.dataset.id, "dislike", res.data);
+	}
+	}
 
-if (deleteBtn) {
-  const res = await handleAction(deleteBtn.dataset.id, "delete");
+	if (deleteBtn) {
+	const res = await handleAction(deleteBtn.dataset.id, "delete");
 
-  if (res?.message === "deleted") {
-    updatePostUI(deleteBtn.dataset.id, "delete");
-  }
-}
+	if (res?.message === "deleted") {
+		updatePostUI(deleteBtn.dataset.id, "delete");
+	}
+	}
     if (commentBtn) {
       const box = document.getElementById(`comments-${commentBtn.dataset.id}`);
       box.style.display = box.style.display === "none" ? "block" : "none";
@@ -273,22 +281,6 @@ if (deleteBtn) {
       fetchPosts();
     });
 }
-
-/* ======================
-   INIT
-====================== */
-function setupHomePage() {
-  fetchPosts();
-  setTimeout(fetchPosts, 50); // safety double fetch
-  setupEvents();
-}
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", setupHomePage);
-} else {
-  setupHomePage();
-}
-
 
 function updatePostUI(postId, action, data) {
   const post = document.querySelector(`.post[data-post-id="${postId}"]`);

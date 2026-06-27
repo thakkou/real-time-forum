@@ -1,9 +1,9 @@
-import { login } from "../../api/auth.js";
-import { showToast } from "../../services/toast.js";
-import { router } from "../router.js";
+import { login } from "../api/auth.js";
+import { showToast } from "../services/toast.js";
+import { router } from "../services/router.js";
 
 // login not working and refreshes at the first time when redirected from register, but works after !!!
-const setupLoginPage = () => {
+export function setup() {
 	const form = document.querySelector("form");
 	const errorBox = document.getElementById("login-error");
 	const btn = document.getElementById("login-btn");
@@ -36,9 +36,3 @@ const setupLoginPage = () => {
         }
 	});
 };
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupLoginPage);
-} else {
-    setupLoginPage();
-}

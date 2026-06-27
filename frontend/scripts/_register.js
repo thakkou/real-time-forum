@@ -1,8 +1,8 @@
-import { register } from "../../api/auth.js";
-import { showToast } from "../../services/toast.js";
-import { router } from "../router.js";
+import { register } from "../api/auth.js";
+import { showToast } from "../services/toast.js";
+import { router } from "../services/router.js";
 
-function setupRegisterPage() {
+export function setup() {
     const form = document.querySelector("form");
     if (!form) return;
 
@@ -101,10 +101,4 @@ function setupRegisterPage() {
             btn.textContent = "Register";
         }
     });
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupRegisterPage);
-} else {
-    setupRegisterPage();
 }

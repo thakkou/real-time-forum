@@ -1,6 +1,7 @@
-import { ws } from '../services/websocket.js';
-import { showToast } from '../services/toast.js';
-import { saveOnlineUsers ,getOnlineUsers} from './main.js';
+import { ws } from './websocket.js';
+import { showToast } from './toast.js';
+import { saveOnlineUsers ,getOnlineUsers} from '../scripts/main.js';
+
 export const routes = { // turn it to map !
     '/': {
         method: 'GET',
@@ -177,11 +178,11 @@ export const router = {
 // PAGE-SPECIFIC SCRIPTS
 // ========================
 const pageScripts = {
-  feed: () => import('./specific/_feed.js'),
-  login: () => import('./specific/_login.js'),
-  register: () => import('./specific/_register.js'),
-  chat: () => import('./specific/_chat.js'), // used temporarely
-  post: () => import('./specific/_post.js'),
+  feed: () => import('../scripts/_feed.js'),
+  login: () => import('../scripts/_login.js'),
+  register: () => import('../scripts/_register.js'),
+  chat: () => import('../scripts/_chat.js'), // used temporarely
+  post: () => import('../scripts/_post.js'),
 };
 
 function matchRoute(path) {
@@ -210,12 +211,13 @@ function matchRoute(path) {
 }
 
 async function loadPageScript(pageName) {
-  if (window.currentPageScript && typeof window.currentPageScript.cleanup === 'function') {
-    window.currentPageScript.cleanup();
-  } // ?!
+//   if (window.currentPageScript && typeof window.currentPageScript.cleanup === 'function') {
+//     window.currentPageScript.cleanup();
+//   } // ?!
   
   if (pageScripts[pageName]) {
     const script = await pageScripts[pageName]();
-    window.currentPage = pageName;
+    await script.setup();
+    window.currentPage = pageName; // need to be done before !!!
   }
 }
