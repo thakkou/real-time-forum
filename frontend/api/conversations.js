@@ -1,4 +1,4 @@
-const serverURI = env.serverUri;
+const serverURI = window.env.serverUri;
 
 export const getConversations = async ({
   offset = 0,

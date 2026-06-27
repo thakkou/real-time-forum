@@ -1,6 +1,8 @@
+import { isAuthenticated } from '../services/auth.js';
 import { ws } from './websocket.js';
 import { showToast } from './toast.js';
-import { saveOnlineUsers ,getOnlineUsers} from '../scripts/main.js';
+import { reRender } from '../scripts/_chat.js';
+export const onlineUsers = new Set()
 
 export const routes = { // turn it to map !
     '/': {
@@ -74,7 +76,6 @@ async function guard(path) {
     return me.nickname;
 }
 
-import { isAuthenticated } from '../services/auth.js';
 
 export const router = {
     async navigate(path) {
@@ -124,27 +125,23 @@ export const router = {
         if (nickname) {
             ws.connect();
 
-            const onlineUsers = getOnlineUsers();
 
             ws.on("init", (data) => {
                 console.log("init users:", data);
                 data.forEach(id => onlineUsers.add(id));
-                saveOnlineUsers(onlineUsers);
-                this.renderOnlineUsers?.([...onlineUsers]);
+           
             });
 
             ws.on("client_connect", (userId) => {
                 console.log("user connected:", userId);
                 onlineUsers.add(userId);
-                saveOnlineUsers(onlineUsers);
-                this.renderOnlineUsers?.([...onlineUsers]);
+                reRender("connect",userId)
             });
 
             ws.on("client_disconnect", (userId) => {
                 console.log("user disconnected:", userId);
                 onlineUsers.delete(userId);
-                saveOnlineUsers(onlineUsers);
-                this.renderOnlineUsers?.([...onlineUsers]);
+    reRender("disconnect",userId)
             });
 
             ws.on("new_post",(data)=>{

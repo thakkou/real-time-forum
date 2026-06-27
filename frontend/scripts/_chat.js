@@ -2,48 +2,118 @@ import { formatTime } from './helpers.js';
 
 import { getConversations, getConversationById } from "../api/conversations.js";
 import { createMessage } from "../api/messages.js";
-import { getOnlineUsers } from "./main.js";
+import { onlineUsers } from "../services/router.js";
 import { Conversation } from "../components/Conversation.js";
 
 
 let currentConversationId = null;
 let currentReceiverId = null;
 
-const usersList = document.getElementById("usersList");
-const chatMessages = document.getElementById("chatMessages");
-const chatHeaderName = document.getElementById("chatHeaderName");
-const chatHeaderStatus = document.getElementById("chatHeaderStatus");
-const messageInput = document.getElementById("messageInput");
-const sendBtn = document.getElementById("sendBtn");
-const chatEmpty = document.getElementById("chatEmpty");
-const chatView = document.getElementById("chatView");
+let usersList;
+let chatMessages;
+let chatHeaderName;
+let chatHeaderStatus;
+let messageInput;
+let sendBtn;
+let chatEmpty;
+let chatView;
 
 export async function setup() {
-  try {
-		const resp = await getConversations();
-		const data = resp.data || [];
+  usersList = document.getElementById("usersList");
+  chatMessages = document.getElementById("chatMessages");
+  chatHeaderName = document.getElementById("chatHeaderName");
+  chatHeaderStatus = document.getElementById("chatHeaderStatus");
+  messageInput = document.getElementById("messageInput");
+  sendBtn = document.getElementById("sendBtn");
+  chatEmpty = document.getElementById("chatEmpty");
+  chatView = document.getElementById("chatView");
 
-		renderUsers(data);
+  if (!usersList) {
+    console.error("Chat DOM not found — page not rendered yet");
+    return;
+  }
 
-		if (data.length > 0) {
-			const first = data[0];
-			if (first.conversation.conversationId) {
-				openConversation(first);
-			}
-		} else {
-			showEmptyState();
-		}
+  const resp = await getConversations();
+  const data = resp.data || [];
 
-		setupSendMessage();
-	} catch (err) {
-		console.error("chat init error:", err);
-	}
+  renderUsers(data);
+
+  if (data.length > 0) {
+    openConversation(data[0]);
+  } else {
+    showEmptyState();
+  }
+
+  setupSendMessage();
+}
+
+export const reRender = (type, userId) => {
+  console.log("Start UI-only rerender:", type, userId);
+  
+  const targetId = String(userId);
+  const isOnline = type === "connect" || type === "register";
+
+  // 1. Sync the router's online tracking set
+  if (isOnline) {
+    onlineUsers.add(targetId);
+  } else if (type === "disconnect") {
+    onlineUsers.delete(targetId);
+  }
+
+  // 2. Find the user item in the DOM list
+  // We look for all elements inside usersList to find the one matching our user ID
+  const usersList = document.getElementById("usersList");
+  if (!usersList) return;
+
+  // Assumes your Conversation component attaches a data attribute or you can find it. 
+  // If your Conversation component doesn't have an ID, we'll look through them.
+  let targetUserItem = null;
+  const conversationItems = usersList.querySelectorAll(".conversation-item, [data-user-id]"); 
+  
+  // Find the existing DOM element for this user
+  for (let item of conversationItems) {
+    // Adjust this line if your Conversation component uses a different way to store the ID
+    if (item.getAttribute("data-user-id") === targetId || item.dataset.userId === targetId) {
+      targetUserItem = item;
+      break;
+    }
+  }
+
+  // 3. Move the element to the correct section if found
+  if (targetUserItem) {
+    // Find our Section Dividers inside the list
+    const dividers = Array.from(usersList.querySelectorAll(".section-divider"));
+    const onlineHeader = dividers.find(d => d.textContent === "Online");
+    const offlineHeader = dividers.find(d => d.textContent === "Offline");
+
+    if (isOnline && onlineHeader) {
+      // Insert right after the Online header
+      onlineHeader.insertAdjacentElement("afterend", targetUserItem);
+    } else if (!isOnline && offlineHeader) {
+      // Insert right after the Offline header
+      offlineHeader.insertAdjacentElement("afterend", targetUserItem);
+    }
+  }
+
+  // 4. Update Header status immediately if this is the currently open conversation
+  if (currentReceiverId && String(currentReceiverId) === targetId) {
+    const chatHeaderStatus = document.getElementById("chatHeaderStatus");
+    const chatStatusDot = document.getElementById("chatStatusDot");
+
+    if (chatHeaderStatus) {
+      chatHeaderStatus.textContent = isOnline ? "● Online" : "● Offline";
+      chatHeaderStatus.className = `chat-header-status ${isOnline ? "online" : "offline"}`;
+    }
+    
+    if (chatStatusDot) {
+      chatStatusDot.className = `online-dot ${isOnline ? "online" : "offline"}`;
+    }
+  }
 };
-
 ////////////////////////////////////
 
 function renderUsers(items) {
-	const onlineUsers = getOnlineUsers();
+
 	const online = [], offline = [];
 	
 	usersList.innerHTML = "";
