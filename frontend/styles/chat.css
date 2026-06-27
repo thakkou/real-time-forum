@@ -200,12 +200,21 @@
       }
  
       /* ── Chat Panel ──────────────────────────────────────────────── */
-      .chat-panel {
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        background: var(--bg);
-      }
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Must contain its children strictly */
+  overflow: hidden; 
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto; /* ⭐ CRITICAL: This exact class must contain the scrollbar! */
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
  
       /* Empty state */
       .chat-empty {
@@ -588,3 +597,34 @@
           gap: 0.35rem;
         }
       }
+/* 🟢 When the user is ONLINE */
+
+
+.user-item.is-online-user .online-dot {
+  background: #4ade80 !important; /* Green circle dot */
+}
+
+/* ⚪ When the user is OFFLINE */
+.user-item.is-offline-user .user-name {
+  color: var(--text-dim) !important; /* Muted gray text */
+}
+.user-item.is-offline-user .user-preview {
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+.user-item.is-offline-user .online-dot {
+  background: var(--text-dim) !important; /* Gray circle dot */
+}
+@media (max-width: 768px) {
+  .users-panel.mobile-open {
+    display: flex !important;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999; /* Forces side-bar to stack fully on top */
+    height: calc(100vh - 60px);
+    background: var(--surface);
+  }
+}

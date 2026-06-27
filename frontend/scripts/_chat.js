@@ -1,50 +1,137 @@
-import { formatTime } from './helpers.js';
 
+import { formatTime } from './helpers.js';
 import { getConversations, getConversationById } from "../api/conversations.js";
 import { createMessage } from "../api/messages.js";
 import { onlineUsers } from "../services/router.js";
 import { Conversation } from "../components/Conversation.js";
 
+/* =========================
+   STATE MANAGEMENT
+========================= */
+const state = {
+  currentConversationId: null,
+  currentReceiverId: null,
+  // 🔄 Pagination States
+  isLoadingOlder: false,
+  hasMoreMessages: true,
+  limit: 10,
+  offset: 0,
+};
 
-let currentConversationId = null;
-let currentReceiverId = null;
+/* =========================
+   DOM ELEMENTS CACHE
+========================= */
+const dom = {
+  usersList: null,
+  chatMessages: null,
+  chatHeaderName: null,
+  chatHeaderStatus: null,
+  messageInput: null,
+  sendBtn: null,
+  chatEmpty: null,
+  chatView: null,
+};
 
-let usersList;
-let chatMessages;
-let chatHeaderName;
-let chatHeaderStatus;
-let messageInput;
-let sendBtn;
-let chatEmpty;
-let chatView;
+const HTML_CHARS = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
 
+/* =========================
+   INITIALIZATION
+========================= */
 export async function setup() {
-  usersList = document.getElementById("usersList");
-  chatMessages = document.getElementById("chatMessages");
-  chatHeaderName = document.getElementById("chatHeaderName");
-  chatHeaderStatus = document.getElementById("chatHeaderStatus");
-  messageInput = document.getElementById("messageInput");
-  sendBtn = document.getElementById("sendBtn");
-  chatEmpty = document.getElementById("chatEmpty");
-  chatView = document.getElementById("chatView");
+  cacheDom();
 
-  if (!usersList) {
+  if (!dom.usersList) {
     console.error("Chat DOM not found — page not rendered yet");
     return;
   }
 
-  const resp = await getConversations();
-  const data = resp.data || [];
+  setupMobileUI();
+  setupSendMessage();
+  setupScrollPagination(); // Hooks up the scroll listener
 
-  renderUsers(data);
+  try {
+    const resp = await getConversations();
+    const data = resp.data || [];
+    renderUsers(data);
 
-  if (data.length > 0) {
-    openConversation(data[0]);
-  } else {
+    if (data.length > 0) {
+      openConversation(data[0]);
+    } else {
+      showEmptyState();
+    }
+  } catch (err) {
+    console.error("Failed to initialize conversation list:", err);
     showEmptyState();
   }
+}
 
-  setupSendMessage();
+function cacheDom() {
+  dom.usersList = document.getElementById("usersList");
+  dom.chatMessages = document.getElementById("chatMessages");
+  dom.chatHeaderName = document.getElementById("chatHeaderName");
+  dom.chatHeaderStatus = document.getElementById("chatHeaderStatus");
+  dom.messageInput = document.getElementById("messageInput");
+  dom.sendBtn = document.getElementById("sendBtn");
+  dom.chatEmpty = document.getElementById("chatEmpty");
+  dom.chatView = document.getElementById("chatView");
+}
+
+/* =========================
+   MOBILE RESPONSIVENESS
+========================= */
+function setupMobileUI() {
+  const usersPanel = document.getElementById("usersPanel");
+  const mobileUsersToggle = document.getElementById("mobileUsersToggle");
+  const backBtn = document.getElementById("backBtn");
+
+  mobileUsersToggle?.addEventListener("click", () => usersPanel?.classList.add("mobile-open"));
+  backBtn?.addEventListener("click", () => usersPanel?.classList.remove("mobile-open"));
+}
+
+/* =========================
+   USER ROSTER RENDERING
+========================= */
+function renderUsers(items) {
+  const online = [];
+  const offline = [];
+
+  dom.usersList.innerHTML = ""; 
+
+  items.forEach((item) => {
+    const userId = String(item.profile.id);
+    onlineUsers.has(userId) ? online.push(item) : offline.push(item);
+  });
+
+  dom.usersList.appendChild(createSectionTitle("Online"));
+  online.forEach(renderUserItem);
+
+  dom.usersList.appendChild(createSectionTitle("Offline"));
+  offline.forEach(renderUserItem);
+
+  updateOnlineCountText();
+}
+
+function createSectionTitle(text) {
+  const div = document.createElement("div");
+  div.className = "section-divider";
+  div.textContent = text;
+  return div;
+}
+
+function renderUserItem(item) {
+  const el = Conversation(item);
+  const userId = String(item.profile.id);
+  const isOnline = onlineUsers.has(userId);
+
+  el.classList.toggle("is-online-user", isOnline);
+  el.classList.toggle("is-offline-user", !isOnline);
+
+  el.addEventListener("click", () => {
+    openConversation(item);
+    document.getElementById("usersPanel")?.classList.remove("mobile-open");
+  });
+
+  dom.usersList.appendChild(el);
 }
 
 export const reRender = (type, userId) => {
@@ -53,56 +140,48 @@ export const reRender = (type, userId) => {
   const targetId = String(userId);
   const isOnline = type === "connect" || type === "register";
 
-  // 1. Sync the router's online tracking set
   if (isOnline) {
     onlineUsers.add(targetId);
   } else if (type === "disconnect") {
     onlineUsers.delete(targetId);
   }
 
-  // 2. Find the user item in the DOM list
-  // We look for all elements inside usersList to find the one matching our user ID
-  const usersList = document.getElementById("usersList");
-  if (!usersList) return;
+  if (!dom.usersList) return;
 
-  // Assumes your Conversation component attaches a data attribute or you can find it. 
-  // If your Conversation component doesn't have an ID, we'll look through them.
   let targetUserItem = null;
-  const conversationItems = usersList.querySelectorAll(".conversation-item, [data-user-id]"); 
+  const conversationItems = dom.usersList.querySelectorAll(".conversation-item, [data-user-id]"); 
   
-  // Find the existing DOM element for this user
   for (let item of conversationItems) {
-    // Adjust this line if your Conversation component uses a different way to store the ID
     if (item.getAttribute("data-user-id") === targetId || item.dataset.userId === targetId) {
       targetUserItem = item;
       break;
     }
   }
 
-  // 3. Move the element to the correct section if found
   if (targetUserItem) {
-    // Find our Section Dividers inside the list
-    const dividers = Array.from(usersList.querySelectorAll(".section-divider"));
+    const dividers = Array.from(dom.usersList.querySelectorAll(".section-divider"));
     const onlineHeader = dividers.find(d => d.textContent === "Online");
     const offlineHeader = dividers.find(d => d.textContent === "Offline");
 
     if (isOnline && onlineHeader) {
-      // Insert right after the Online header
       onlineHeader.insertAdjacentElement("afterend", targetUserItem);
+      targetUserItem.classList.add("is-online-user");
+      targetUserItem.classList.remove("is-offline-user");
     } else if (!isOnline && offlineHeader) {
-      // Insert right after the Offline header
       offlineHeader.insertAdjacentElement("afterend", targetUserItem);
+      targetUserItem.classList.add("is-offline-user");
+      targetUserItem.classList.remove("is-online-user");
     }
   }
 
-  // 4. Update Header status immediately if this is the currently open conversation
-  if (currentReceiverId && String(currentReceiverId) === targetId) {
-    const chatHeaderStatus = document.getElementById("chatHeaderStatus");
+  updateOnlineCountText();
+
+  if (state.currentReceiverId && String(state.currentReceiverId) === targetId) {
     const chatStatusDot = document.getElementById("chatStatusDot");
 
-    if (chatHeaderStatus) {
-      chatHeaderStatus.textContent = isOnline ? "● Online" : "● Offline";
-      chatHeaderStatus.className = `chat-header-status ${isOnline ? "online" : "offline"}`;
+    if (dom.chatHeaderStatus) {
+      dom.chatHeaderStatus.textContent = isOnline ? "● Online" : "● Offline";
+      dom.chatHeaderStatus.className = `chat-header-status ${isOnline ? "online" : "offline"}`;
     }
     
     if (chatStatusDot) {
@@ -110,101 +189,178 @@ export const reRender = (type, userId) => {
     }
   }
 };
-////////////////////////////////////
 
-function renderUsers(items) {
-
-	const online = [], offline = [];
-	
-	usersList.innerHTML = "";
-	items.forEach((item) => {
-		const userId = String(item.profile.id); // force string
-		onlineUsers.has(userId) ? online.push(item) : offline.push(item);
-	});
-
-	usersList.appendChild(sectionTitle("Online"));
-	online.forEach(renderUserItem);
-
-	usersList.appendChild(sectionTitle("Offline"));
-	offline.forEach(renderUserItem);
+function updateOnlineCountText() {
+  const countEl = document.getElementById("onlineCount");
+  if (countEl) {
+    countEl.textContent = `● ${onlineUsers.size} online`;
+  }
 }
 
-function sectionTitle(text) {
-	const div = document.createElement("div");
-	div.className = "section-divider";
-	div.textContent = text;
-	return div;
-}
-
-function renderUserItem(item) {
-	const conv = Conversation(item);
-	conv.addEventListener("click", () => openConversation(item));
-	usersList.appendChild(conv);
-}
-
-///////////////////////////////////////////
-
-function renderEmptyConversation(user) {
-  chatMessages.innerHTML = `
-    <div class="chat-empty-state" style="margin: auto; text-align: center;">
-      <div class="day-separator"><span>New chat with ${user.nickname}</span></div>
-      <p style="font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim);">
-        No messages yet — say hi 👋
-      </p>
-    </div>
-  `;
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
+/* =========================
+   CORE CHAT VIEW LOGIC
+========================= */
 async function openConversation(item) {
-	const u = item.profile;
-	const c = item.conversation;
+  const { profile: user, conversation: chat } = item;
 
-	currentReceiverId = u.id;
-	currentConversationId = c?.conversationId ?? null;
+  state.currentReceiverId = user.id;
+  state.currentConversationId = chat?.conversationId ?? null;
+  dom.chatHeaderName.textContent = user.nickname;
+  
+  // Reset pagination flags for the newly opened chat
+  state.offset = 0;
+  state.hasMoreMessages = true;
+  state.isLoadingOlder = false;
 
-	// UI header updates
-	chatHeaderName.textContent = u.nickname;
-	
-	// Update Header Avatar Initials
-	const chatAvatarInitials = document.getElementById("chatAvatarInitials");
-	if (chatAvatarInitials) {
-		chatAvatarInitials.textContent = u.nickname.slice(0, 2);
-	}
+  const chatAvatarInitials = document.getElementById("chatAvatarInitials");
+  if (chatAvatarInitials) {
+    chatAvatarInitials.textContent = user.nickname.slice(0, 2);
+  }
 
-	// Update Status and Dots matching CSS definitions
-	const chatStatusDot = document.getElementById("chatStatusDot");
-	if (c?.lastSeen) {
-		chatHeaderStatus.textContent = "● Offline";
-		chatHeaderStatus.className = "chat-header-status offline";
-		if (chatStatusDot) chatStatusDot.className = "online-dot offline";
-	} else {
-		chatHeaderStatus.textContent = "● Online";
-		chatHeaderStatus.className = "chat-header-status online";
-		if (chatStatusDot) chatStatusDot.className = "online-dot online";
-	}
+  const chatStatusDot = document.getElementById("chatStatusDot");
+  if (chat?.lastSeen) {
+    dom.chatHeaderStatus.textContent = "● Offline";
+    dom.chatHeaderStatus.className = "chat-header-status offline";
+    if (chatStatusDot) chatStatusDot.className = "online-dot offline";
+  } else {
+    dom.chatHeaderStatus.textContent = "● Online";
+    dom.chatHeaderStatus.className = "chat-header-status online";
+    if (chatStatusDot) chatStatusDot.className = "online-dot online";
+  }
 
-	chatView.style.display = "flex";
-	chatEmpty.style.display = "none";
+  dom.chatView.style.display = "flex";
+  dom.chatEmpty.style.display = "none";
+  dom.chatMessages.innerHTML = "";
 
-	chatMessages.innerHTML = "";
+  if (!state.currentConversationId) {
+    renderEmptyConversation(user);
+    return;
+  }
 
-	// NO conversation yet → show empty chat state
-	if (!currentConversationId) {
-		renderEmptyConversation(u);
-		return;
-	}
-
-	const res = await getConversationById(currentConversationId);
-	const messages = res.data?.messages || [];
-
-	renderMessages(messages, u.id);
+  await loadInitialMessages(user.id);
 }
 
-function setupSendMessage() {
-  sendBtn.addEventListener("click", sendMessage);
+async function loadInitialMessages(receiverId) {
+  try {
+    // Pass current state values (offset is 0 here)
+    const res = await getConversationById(state.currentConversationId, {
+      limit: state.limit,
+      offset: state.offset
+    });
+    
+    const messages = res.data?.messages || [];
+    renderMessages(messages, receiverId);
+    
+    // Step forward for the next scroll action
+    state.offset += state.limit;
+  } catch (err) {
+    console.error("Error loading chat history:", err);
+  }
+}
 
-  messageInput.addEventListener("keydown", (e) => {
+function renderMessages(messages, receiverId) {
+  dom.chatMessages.innerHTML = "";
+  [...messages].reverse().forEach((m) => {
+    appendMessage(m, m.sender_id !== receiverId);
+  });
+  scrollChatToBottom();
+}
+
+function appendMessage(m, mine = false, prepend = false) {
+  const group = document.createElement("div");
+  group.className = `message-group ${mine ? "mine" : "theirs"}`;
+  group.innerHTML = `
+    <div class="message-sender">${mine ? "you" : "them"}</div>
+    <div class="message-row">
+      <div class="message-bubble">${escapeHTML(m.text)}</div>
+      <div class="message-meta">${formatTime(m.created_at)}</div>
+    </div>`;
+
+  if (prepend) {
+    dom.chatMessages.insertBefore(group, dom.chatMessages.firstChild);
+  } else {
+    dom.chatMessages.appendChild(group);
+    scrollChatToBottom();
+  }
+}
+
+function scrollChatToBottom() {
+  if (dom.chatMessages) {
+    dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+  }
+}
+
+/* =========================
+   SCROLL UP PAGINATION
+========================= */
+function setupScrollPagination() {
+  let throttleTimer = false;
+
+  if (!dom.chatMessages) return;
+
+  dom.chatMessages.addEventListener("scroll", () => {
+    if (throttleTimer) return;
+    
+    throttleTimer = true;
+    setTimeout(() => { throttleTimer = false; }, 250);
+
+    const pos = dom.chatMessages.scrollTop;
+    const maxScrollUp = dom.chatMessages.scrollHeight - dom.chatMessages.clientHeight;
+
+  
+    const isNearTop = pos <= 15 && pos >= 0;
+    const isNearTopReversed = Math.abs(pos) >= (maxScrollUp - 15) && pos < 0;
+
+    if (isNearTop || isNearTopReversed) {
+      console.log(`🎯 Top reached! Fetching -> Limit: ${state.limit}, Offset: ${state.offset}`);
+      loadMoreMessages();
+    }
+  });
+}
+
+async function loadMoreMessages() {
+  if (!state.currentConversationId || state.isLoadingOlder || !state.hasMoreMessages) return;
+
+  state.isLoadingOlder = true;
+  console.log(`📡 Fetching older data context -> Limit: ${state.limit}, Offset: ${state.offset}`);
+
+  try {
+    // Cache the previous scroll height to preserve the visual scroll position afterwards
+    const previousScrollHeight = dom.chatMessages.scrollHeight;
+
+    // TODO: Pass your updated `{ limit: state.limit, offset: state.offset }` properties to your API call if configured
+    const res = await getConversationById(state.currentConversationId,{offset:state.offset + state.limit,limit:state.limit});
+    state.offset=state.offset+state.limit
+    const olderMessages = res.data?.messages || [];
+
+    if (olderMessages.length === 0) {
+      state.hasMoreMessages = false;
+      console.log("🏁 No more historical messages left on the server.");
+    } else {
+      // Loop messages and prepend them to the top of the chat panel container
+      olderMessages.forEach((m) => {
+        appendMessage(m, m.sender_id !== state.currentReceiverId, true);
+      });
+
+      // Increment values for successive pagination requests
+      state.offset += state.limit;
+
+      // Adjust the scroll view so it stays locked onto the message the user was reading
+      dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight - previousScrollHeight;
+    }
+  } catch (err) {
+    console.error("Failed loading historical message pagination blocks:", err);
+  } finally {
+    state.isLoadingOlder = false;
+  }
+}
+
+/* =========================
+   MESSAGE DELIVERY & SEND
+========================= */
+function setupSendMessage() {
+  dom.sendBtn.addEventListener("click", sendMessage);
+  dom.messageInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -212,88 +368,64 @@ function setupSendMessage() {
   });
 }
 
-function renderMessages(messages, receiverId) {
-  chatMessages.innerHTML = "";
-
-  messages.reverse().forEach((m) => {
-    const isMine = m.sender_id !== receiverId;
-
-    const group = document.createElement("div");
-    group.className = `message-group ${isMine ? "mine" : "theirs"}`;
-
-    group.innerHTML = `
-      <div class="message-sender">${isMine ? "you" : "them"}</div>
-      <div class="message-row">
-        <div class="message-bubble">${escapeHTML(m.text)}</div>
-        <div class="message-meta">${formatTime(m.created_at)}</div>
-      </div>
-    `;
-
-    chatMessages.appendChild(group);
-  });
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function appendMessage(m, mine = false) {
-  const group = document.createElement("div");
-  group.className = `message-group ${mine ? "mine" : "theirs"}`;
-
-  group.innerHTML = `
-    <div class="message-sender">${mine ? "you" : "them"}</div>
-    <div class="message-row">
-      <div class="message-bubble">${escapeHTML(m.text)}</div>
-      <div class="message-meta">${formatTime(m.created_at)}</div>
-    </div>
-  `;
-
-  chatMessages.appendChild(group);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
 async function sendMessage() {
-  const text = messageInput.value.trim();
-  if (!text || !currentReceiverId) return;
+  const text = dom.messageInput.value.trim();
+  if (!text || !state.currentReceiverId) return;
 
-  messageInput.value = "";
-
-  // ✅ optimistic message (correct shape)
-  const tempMessage = {
-    sender_id: "me",
-    text,
-    created_at: new Date().toISOString(),
-  };
-
+  dom.messageInput.value = "";
+  const tempMessage = { sender_id: "me", text, created_at: new Date().toISOString() };
   appendMessage(tempMessage, true);
 
   try {
-    const res = await createMessage({
-      receiverId: currentReceiverId,
-      text,
-      conversationId: currentConversationId, // may be null
+    const res = await createMessage({ 
+      receiverId: state.currentReceiverId, 
+      text, 
+      conversationId: state.currentConversationId 
     });
-
-    // ✅ IMPORTANT: backend should return conversationId (if new)
-    if (!currentConversationId && res?.data?.conversationId) {
-      currentConversationId = res.data.conversationId;
+    if (!state.currentConversationId && res?.data?.conversationId) {
+      state.currentConversationId = res.data.conversationId;
     }
-
-  } catch (err) {
-    console.error("send failed", err);
+  } catch (err) { 
+    console.error("send failed", err); 
   }
 }
 
+/* =========================
+   REALTIME INTERCEPTORS
+========================= */
+export const reRenderMessages = (data) => {
+  const { conversation_id, sender_id, text, created_at } = data;
+  if (!dom.chatMessages) return;
+
+  if (String(state.currentConversationId) === String(conversation_id)) {
+    const incomingMsg = {
+      sender_id: sender_id,
+      text: text,
+      created_at: created_at || new Date().toISOString()
+    };
+    const isMine = String(sender_id) !== String(state.currentReceiverId); 
+    appendMessage(incomingMsg, isMine);
+  }
+};
+
+/* =========================
+   HELPERS & RENDER LAYOUTS
+========================= */
 function escapeHTML(str) {
-  return str.replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  }[m]));
+  return str.replace(/[&<>"']/g, (m) => HTML_CHARS[m] || m);
+}
+
+function renderEmptyConversation(user) {
+  dom.chatMessages.innerHTML = `
+    <div class="chat-empty-state" style="margin: auto; text-align: center;">
+      <div class="day-separator"><span>New chat with ${user.nickname}</span></div>
+      <p style="font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim);">No messages yet — say hi 👋</p>
+    </div>`;
+  scrollChatToBottom();
 }
 
 function showEmptyState() {
-  chatView.style.display = "none";
-  chatEmpty.style.display = "flex";
+  dom.chatView.style.display = "none";
+  dom.chatEmpty.style.display = "flex";
 }
+

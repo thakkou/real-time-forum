@@ -23,13 +23,14 @@ export const getConversations = async ({
 
 export const getConversationById = async (
   conversationId,
-  {
-    offset = 0,
-    limit = 10,
-  } = {}
+  pagination={
+    offset :0,
+    limit :10,
+  } 
 ) => {
+  
   const response = await fetch(
-    `${serverURI}/conversation/${conversationId}?offset=${offset}&limit=${limit}`,
+    `${serverURI}/conversation/${conversationId}?offset=${pagination.offset}&limit=${pagination.limit}`,
     {
       method: "GET",
       credentials: "include",

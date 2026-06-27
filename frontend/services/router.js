@@ -1,7 +1,7 @@
 import { isAuthenticated } from '../services/auth.js';
 import { ws } from './websocket.js';
 import { showToast } from './toast.js';
-import { reRender } from '../scripts/_chat.js';
+import { reRender, reRenderMessages } from '../scripts/_chat.js';
 export const onlineUsers = new Set()
 
 export const routes = { // turn it to map !
@@ -151,6 +151,7 @@ export const router = {
             ws.on("new_message", (data) => {
                 console.log("new message:", data);
                 showToast(data.text, "success");
+                reRenderMessages(data)
             });
 
             ws.on("typing", (data) => {
