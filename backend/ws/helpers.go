@@ -3,6 +3,7 @@ package ws
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -11,6 +12,11 @@ import (
 type WSMessage struct {
 	Type string          `json:"event_type"`
 	Data json.RawMessage `json:"data"`
+}
+type TypingData struct {
+	ConversationID int    `json:"conversationId"`
+	ReceiverID     int    `json:"receiverId"`
+	UserId         string `json:"userId"`
 }
 
 type Client struct {
@@ -90,11 +96,16 @@ func StoreClient(userID string, conn *websocket.Conn) *Client {
 }
 
 func HandleMessage(client *Client, raw []byte) {
-	var msg WSMessage
+	fmt.Println(string(raw))
 
+	var msg WSMessage
 	if err := json.Unmarshal(raw, &msg); err != nil {
+		fmt.Println(err)
 		return
 	}
+
+	fmt.Printf("Type: %s\n", msg.Type)
+	fmt.Printf("Data: %s\n", string(msg.Data))
 
 	switch msg.Type {
 	case "new_posts": // for all users exepts u
@@ -107,10 +118,16 @@ func HandleMessage(client *Client, raw []byte) {
 		fmt.Println("user a liked ur comments")
 	case "send_message": // for u
 		fmt.Println("message sent to user a")
-	case "typing": // for u
-		fmt.Println("typing")
-	case "":
+	case "typing:start", "typing:stop":
+		var data TypingData
 
+		if err := json.Unmarshal(msg.Data, &data); err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("data", data)
+
+		NotifyUser(strconv.Itoa(data.ReceiverID), msg.Type, data)
 	default:
 		fmt.Println("unknown event:", msg.Type)
 	}

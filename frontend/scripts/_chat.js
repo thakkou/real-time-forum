@@ -3,15 +3,22 @@ import { getConversations, getConversationById } from "../api/conversations.js";
 import { createMessage } from "../api/messages.js";
 import { onlineUsers } from "../services/router.js";
 import { Conversation } from "../components/Conversation.js";
+import { ws } from '../services/websocket.js';
 
 /* =========================
    STATE MANAGEMENT
 ========================= */
+
 const state = {
   currentConversationId: null,
   currentReceiverId: null,
-  isTyping: false,         // Tracks the actual underlying typing status
-  showTyping: true,        // 🌟 FORCE OVERRIDE: Set to true to see the animation all the time!
+  isTyping: false,         // Tracks if the counter-party is typing
+  showTyping: false,        // FORCE OVERRIDE: Set to true to see the animation all the time!
+  
+  // 🟢 NEW LOCAL TYPING TRACKERS
+  isSelfTyping: false,     // Tracks if YOU are currently typing
+  selfTypingTimeout: null, // References the debouncer timer instance
+  
   // 🔄 Pagination States
   isLoadingOlder: false,
   hasMoreMessages: true,
@@ -64,6 +71,51 @@ export async function setup() {
     console.error("Failed to initialize conversation list:", err);
     showEmptyState();
   }
+}
+
+/* =========================
+   LOCAL USER TYPING EMITTER
+========================= */
+function handleLocalTypingActivity() {
+  if (!state.currentReceiverId || !state.currentConversationId) return;
+
+  if (!state.isSelfTyping) {
+    state.isSelfTyping = true;
+console.log('start typing')
+console.log(window.profile)
+    ws.send({
+      event_type: "typing:start",
+      data: {
+        userId:window.profile.id,
+        conversationId: state.currentConversationId,
+        receiverId: state.currentReceiverId,
+      }
+    });
+  }
+
+  clearTimeout(state.selfTypingTimeout);
+
+  state.selfTypingTimeout = setTimeout(() => {
+    stopLocalTypingNotification();
+  }, 1500);
+}
+
+function stopLocalTypingNotification() {
+  if (!state.isSelfTyping) return;
+  state.isSelfTyping = false;
+
+  clearTimeout(state.selfTypingTimeout);
+  console.log('stop typing')
+
+  ws.send({
+    event_type: "typing:stop",
+    data: {
+              userId:window.profile.id,
+
+      conversationId: state.currentConversationId,
+      receiverId: state.currentReceiverId,
+    }
+  })
 }
 
 function cacheDom() {
@@ -203,6 +255,10 @@ function updateOnlineCountText() {
 ========================= */
 async function openConversation(item) {
   const { profile: user, conversation: chat } = item;
+//clear the msg
+  if (dom.messageInput) {
+    dom.messageInput.value = "";
+  }
 
   state.currentReceiverId = user.id;
   state.currentConversationId = chat?.conversationId ?? null;
@@ -359,19 +415,31 @@ async function loadMoreMessages() {
 /* =========================
    MESSAGE DELIVERY & SEND
 ========================= */
+/* =========================
+   MESSAGE DELIVERY & SEND
+========================= */
 function setupSendMessage() {
   dom.sendBtn.addEventListener("click", sendMessage);
+  
   dom.messageInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   });
+
+  // 🟢 Listens to input value shifts to capture backspaces, edits, and characters
+  dom.messageInput.addEventListener("input", () => {
+    handleLocalTypingActivity();
+  });
 }
 
 async function sendMessage() {
   const text = dom.messageInput.value.trim();
   if (!text || !state.currentReceiverId) return;
+
+  // 🟢 Stop your typing state immediately because the message has been dispatched
+  stopLocalTypingNotification();
 
   dom.messageInput.value = "";
   const tempMessage = { sender_id: "me", text, created_at: new Date().toISOString() };
@@ -390,6 +458,8 @@ async function sendMessage() {
     console.error("send failed", err); 
   }
 }
+
+
 
 /* =========================
    REALTIME INTERCEPTORS
@@ -469,10 +539,15 @@ function removeTypingIndicator() {
 }
 
 export const handleIncomingTypingEvent = (data) => {
-  const { conversation_id, user_id, is_typing } = data;
+  // 🟢 Extract the correct camelCase fields coming from your server logs
+  const { conversationId, userId, is_typing } = data;
+  
+  console.log("the data coming", data);
+  
+  // 🟢 Compare against the correct variable keys
   if (
-    String(state.currentConversationId) === String(conversation_id) &&
-    String(state.currentReceiverId) === String(user_id)
+    String(state.currentConversationId) === String(conversationId) &&
+    String(state.currentReceiverId) === String(userId)
   ) {
     const activeName = dom.chatHeaderName ? dom.chatHeaderName.textContent : "them";
     setPartnerTyping(is_typing, activeName);

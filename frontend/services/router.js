@@ -3,6 +3,7 @@ import { ws } from './websocket.js';
 import { showToast } from './toast.js';
 import { reRender, reRenderMessages } from '../scripts/_chat.js';
 import { Header } from '../components/Header.js';
+import { handleIncomingTypingEvent } from '../scripts/_chat.js';
 export const onlineUsers = new Set()
 
 export const routes = { // turn it to map !
@@ -155,16 +156,23 @@ export const router = {
                 reRenderMessages(data)
             });
 
-            ws.on("typing:start", (data) => {
-                console.log("someone is typing:", data.userId);
-                //do the animation typing in progress
-                //in here the user accept is typin message from x
-            });
+          ws.on("typing:start", (data) => {
+  console.log("someone is start typing:", data);
 
-            ws.on("typing:stop", (data) => {
-                console.log("someone is typing:", data.userId);
-                //in here the user accept is typin message from x
-            });
+  handleIncomingTypingEvent({
+    ...data,
+    is_typing: true
+  });
+});
+
+ws.on("typing:stop", (data) => {
+  console.log("someone is stop typing:", data);
+
+  handleIncomingTypingEvent({
+    ...data,
+    is_typing: false
+  });
+});
         }
 
         // the page is fully rendered first, then the specific scripts are loded after !
