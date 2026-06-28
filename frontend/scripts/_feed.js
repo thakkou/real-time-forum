@@ -9,6 +9,7 @@ import { Post } from "../components/Post.js";
 const state = {
   posts: [],
   offset: 0,
+  limite:15,
   loading: false,
 };
 
@@ -34,21 +35,21 @@ function throttle(fn, delay = 200) {
   };
 }
 
-function resetFeed() {
-  state.offset = 0;
-  document.querySelector(".posts").innerHTML = "";
-}
+
 
 /* ======================
    API ACTIONS
 ====================== */
+
+
+
+// Change 1: Only pass the freshly fetched posts to renderPosts
 async function fetchPosts() {
   if (state.loading) return;
 
   state.loading = true;
 
   const params = new URLSearchParams(window.location.search);
-
   const categories = params.getAll("categories");
   const isLiked = params.get("my-liked-post") === "true";
   const isCreatedByMe = params.get("my-creat-postes") === "true";
@@ -56,26 +57,34 @@ async function fetchPosts() {
   try {
     const res = await getPosts({
       offset: state.offset,
-      limit: 30,
+      limit: state.limite, // Note: You spelled this "limite" in state
       categories,
       isLiked,
       isCreatedByMe,
     });
 
     const posts = res.data;
-    console.log("posts",posts)
+    
     if (posts?.length) {
       state.posts.push(...posts);
-      console.log('state.posts', state.posts)
       state.offset += posts.length;
+      
+      // FIX: Only render the NEW batch of posts
+      renderPosts(posts); 
     }
-    renderPosts(state.posts); // posts
 
   } catch (err) {
     console.error("Failed to load posts:", err);
   } finally {
     state.loading = false;
   }
+}
+
+// Change 2: Ensure state is reset properly when clearing the feed
+function resetFeed() {
+  state.offset = 0;
+  state.posts = []; // FIX: Clear out the state array too!
+  document.querySelector(".posts").innerHTML = "";
 }
 
 async function handleAction(postId, type) {
@@ -316,273 +325,3 @@ function updatePostUI(postId, action, data) {
     post.remove();
   }
 }
-
-//=================================================================
-// old
-
-// function setupHomePage() {
-//     //get all posts 10 by 10
-
-//     document.querySelectorAll('.filter-btn').forEach((button) => {
-//     button.addEventListener('click', function() {
-//         this.classList.toggle('active');
-//         const hiddenInputs = {
-//         'my-creat-postes': document.getElementById('input-my-creat-postes'),
-//         'my-liked-post': document.getElementById('input-my-liked-post'),
-//         };
-//         Object.keys(hiddenInputs).forEach((name) => {
-//         if (hiddenInputs[name]) hiddenInputs[name].value = '';
-//         });
-//         const activeButtons = Array.from(document.querySelectorAll('.filter-btn.active'));
-//         activeButtons.forEach((btn) => {
-//         if (hiddenInputs[btn.name]) {
-//             hiddenInputs[btn.name].value = 'true';
-//         }
-//         });
-//     });
-//   })}
-
-
-// function reactToPost(postId, endpoint) {
-//   const url = `/api/posts/${postId}/${endpoint}`;
-//   return fetch(url, { method: 'POST' })
-//     .then(response => {
-//     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-//     window.location.reload();
-//     })
-//     .catch(error => console.error('Error sending reaction:', error));
-// }
-
-// function handlePostReactionsClick(event) {
-//   const button = event.target;
-//   const postContainer = button.closest('.post');
-//   const postId = postContainer?.getAttribute('data-post-id');
-//   if (!postId) return;
-//   let endpoint;
-//   if (button.classList.contains('like-btn')) endpoint = 'like';
-//   else if (button.classList.contains('dislike-btn')) endpoint = 'dislike';
-//   else return;
-//   reactToPost(postId, endpoint);
-// }
-
-// function reactToComment(commentId, endpoint) {
-//   const url = `/api/comments/${commentId}/${endpoint}`;
-//   return fetch(url, { method: 'POST' })
-//       .then(response => {
-//       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-//       window.location.reload();
-//       })
-//       .catch(error => console.error('Error sending reaction:', error));
-//   }
-
-// function handleCommentReactionsClick(event) {
-//   const button = event.target;
-//   const commentContainer = button.closest('.comment');
-//   const commentId = commentContainer?.getAttribute('data-comment-id');
-//   if (!commentId) return;
-//   let endpoint;
-//   if (button.classList.contains('comment-like-btn')) endpoint = 'like';
-//   else if (button.classList.contains('comment-dislike-btn')) endpoint = 'dislike';
-//   else return;
-//   reactToComment(commentId, endpoint);
-// }
-
-// document.querySelectorAll('.like-btn, .dislike-btn').forEach(button => {
-//   button.removeEventListener('click', handlePostReactionsClick);
-//   button.addEventListener('click', handlePostReactionsClick);
-// });
-
-// document.querySelectorAll('.comment-like-btn, .comment-dislike-btn').forEach(button => {
-//   button.removeEventListener('click', handleCommentReactionsClick);
-//   button.addEventListener('click', handleCommentReactionsClick);
-// });
-
-// if (document.readyState === 'loading') {
-//     document.addEventListener('DOMContentLoaded', setupHomePage);
-// } else {
-//     setupHomePage();
-// }
-
-//===========================
-// // old: for /public/script.js 
-// // ==========================
-
-// async function reactToPost(postId, endpoint) {
-//     const url = `/api/posts/${postId}/${endpoint}`;
-//     let method = endpoint === 'delete' ? 'DELETE' : 'POST';
-//     try {
-//         const response = await fetch(url, {
-//             method: method
-//         });
-
-//         if (!response.ok) {
-//             // Handle server errors (e.g., status 400, 500)
-//             throw new Error(`HTTP error! Status: ${response.status}`);
-//         }
-//     } catch (error) {
-//         console.error('Error sending reaction:', error);
-//     }
-// }
-
-// async function reactToComment(commentId, endpoint) {
-//     const url = `/api/comments/${commentId}/${endpoint}`;
-//     let method = endpoint === 'delete' ? 'DELETE' : 'POST';
-//     console.log(url, method)
-//     try {
-//         const response = await fetch(url, {
-//             method: method
-//         });
-
-//         if (!response.ok) {
-//             // Handle server errors (e.g., status 400, 500)
-//             throw new Error(`HTTP error! Status: ${response.status}`);
-//         }
-//     } catch (error) {
-//         console.error('Error sending reaction:', error);
-//     }
-// }
-
-// // Function to handle button clicks
-// function handlePostReactionsClick(event) {
-//     const button = event.target;
-//     const postContainer = button.closest('.post');
-//     const postId = postContainer.getAttribute('data-post-id');
-    
-//     if (!postId) return;
-
-//     let endpoint;
-//     if (button.classList.contains('like-btn')) {
-//         endpoint = 'like';
-//     } else if (button.classList.contains('dislike-btn')) {
-//         endpoint = 'dislike';
-//     } else if (button.classList.contains('delete-btn')) {
-//         endpoint = 'delete';
-//     } else {
-//         return;
-//     }
-
-//     reactToPost(postId, endpoint)
-//         .then(data => {
-//             // Update the UI with the new count and selection
-//             window.location.reload();
-//         })
-//         .catch(err => {});
-// }
-
-// // Function to handle button clicks
-// function handleCommentReactionsClick(event) {
-//     const button = event.target;
-//     const commentContainer = button.closest('.comment');
-//     const commentId = commentContainer.getAttribute('data-comment-id');
-
-//     if (!commentId) return;
-
-//     let endpoint;
-//     if (button.classList.contains('comment-like-btn')) {
-//         endpoint = 'like';
-//     } else if (button.classList.contains('comment-dislike-btn')) {
-//         endpoint = 'dislike';
-//     } else if (button.classList.contains('comment-delete-btn')) {
-//         endpoint = 'delete';
-//     } else {
-//         return;
-//     }
-
-//     reactToComment(commentId, endpoint)
-//         .then(data => {
-//             // Update the UI with the new count and selection
-//             window.location.reload();
-//         })
-//         .catch(err => {});
-// }
-
-// // Add event listeners to buttons
-// document.addEventListener('DOMContentLoaded', () => {
-//     // post reaction buttons
-//     document.querySelectorAll('.like-btn').forEach(button => {
-//         button.addEventListener('click', handlePostReactionsClick);
-//     });
-//     document.querySelectorAll('.dislike-btn').forEach(button => {
-//         button.addEventListener('click', handlePostReactionsClick);
-//     });
-//     document.querySelectorAll('.delete-btn').forEach(button => {
-//         button.addEventListener('click', handlePostReactionsClick);
-//     });
-
-//     // comment reaction buttons + delete
-//     document.querySelectorAll('.comment-like-btn').forEach(button => {
-//         button.addEventListener('click', handleCommentReactionsClick);
-//     });
-//     document.querySelectorAll('.comment-dislike-btn').forEach(button => {
-//         button.addEventListener('click', handleCommentReactionsClick);
-//     });
-//     document.querySelectorAll('.comment-delete-btn').forEach(button => {
-//         button.addEventListener('click', handleCommentReactionsClick);
-//     });
-// });
-
-// // ================== Filters event listener ======================
-
-// document.querySelectorAll('.filter-btn').forEach((button) => {
-//     button.addEventListener('click', function () {
-//         this.classList.toggle('active');
-
-//         const hiddenInputs = {
-//             'my-creat-postes': document.getElementById('input-my-creat-postes'),
-//             'my-liked-post': document.getElementById('input-my-liked-post'),
-//         };
-
-//         Object.keys(hiddenInputs).forEach((name) => {
-//             if (hiddenInputs[name]) hiddenInputs[name].value = '';
-//         });
-
-//         const activeButtons = Array.from(
-//             document.querySelectorAll('.filter-btn.active'),
-//         );
-//         activeButtons.forEach((btn) => {
-//             if (hiddenInputs[btn.name]) {
-//             hiddenInputs[btn.name].value = 'true';
-//             }
-//         });
-//     });
-// });
-
-// // Checks file size & and previews image
-// function previewImage(event) {
-//   const file = event.target.files[0];
-//   const preview = document.getElementById("imagePreview");
-//   const img = document.getElementById("previewImg");
-
-//   if (!file) return;
-
-//   // Size check (20MB)
-//   if (file.size > 20 * 1024 * 1024) {
-//     event.target.value = "";
-//     document.getElementById("image-error").style.display = "block";
-//     document.getElementById("image-error").textContent = "Max file size: 20Mb";
-//     return;
-//   } else {
-//     document.getElementById("image-error").style.display = "none";
-//   }
-
-//   // check Mime type (images only)
-//   // All standard image MIME types are under the image/ umbrella.
-//   // Caveats: some browsers (or drag & drop cases) may give empty file.type
-//   if (!file.type || !file.type.startsWith("image/")) {
-//     event.target.value = "";
-//     document.getElementById("image-error").style.display = "block";
-//     document.getElementById("image-error").textContent = "Image file types only";
-//     return;
-//   } else {
-//     document.getElementById("image-error").style.display = "none";
-//   }
-  
-//   // Preview
-//   const reader = new FileReader();
-//   reader.onload = function(e) {
-//     img.src = e.target.result;
-//     preview.classList.add("active");
-//   };
-
-//   reader.readAsDataURL(file);
-// }
