@@ -1,7 +1,7 @@
-import { CommentResolver, CreatComment } from "../api/comments.js";
 import { logout } from "../api/auth.js";
-import { getPosts, PostResolver,CreatePost } from "../api/posts.js";
+import { getPosts, PostResolver, CreatePost } from "../api/posts.js";
 import { Post } from "../components/Post.js";
+import { showToast } from "../services/toast.js";
 
 /* ======================
    STATE
@@ -9,7 +9,7 @@ import { Post } from "../components/Post.js";
 const state = {
   posts: [],
   offset: 0,
-  limite:15,
+  limite: 15,
   loading: false,
 };
 
@@ -18,7 +18,6 @@ const state = {
 ====================== */
 export function setup() {
   fetchPosts();
-  // setTimeout(fetchPosts, 50); // safety double fetch ?!!!!
   setupEvents();
 }
 
@@ -35,15 +34,10 @@ function throttle(fn, delay = 200) {
   };
 }
 
-
-
 /* ======================
    API ACTIONS
 ====================== */
 
-
-
-// Change 1: Only pass the freshly fetched posts to renderPosts
 async function fetchPosts() {
   if (state.loading) return;
 
@@ -57,22 +51,19 @@ async function fetchPosts() {
   try {
     const res = await getPosts({
       offset: state.offset,
-      limit: state.limite, // Note: You spelled this "limite" in state
+      limit: state.limite,
       categories,
       isLiked,
       isCreatedByMe,
     });
 
     const posts = res.data;
-    
+
     if (posts?.length) {
       state.posts.push(...posts);
       state.offset += posts.length;
-      
-      // FIX: Only render the NEW batch of posts
-      renderPosts(posts); 
+      renderPosts(posts);
     }
-
   } catch (err) {
     console.error("Failed to load posts:", err);
   } finally {
@@ -80,32 +71,33 @@ async function fetchPosts() {
   }
 }
 
-// Change 2: Ensure state is reset properly when clearing the feed
 function resetFeed() {
   state.offset = 0;
-  state.posts = []; // FIX: Clear out the state array too!
+  state.posts = [];
   document.querySelector(".posts").innerHTML = "";
 }
 
 async function handleAction(postId, type) {
   try {
-    const res = await PostResolver({ id: postId, type });
-    console.log(res)
-    return res; 
+    return await PostResolver({ id: postId, type });
   } catch (err) {
     console.error(err);
   }
 }
 
-async function handleComment(postId, text) {
-  try {
-    const res = await CreatComment(postId, text);
-    await res.json();
-  } catch (err) {
-    console.error(err);
-  }
+function prependPostToUI(post) {
+  const container = document.querySelector(".posts");
+  if (!container) return;
+
+  const empty = container.querySelector(".no-post");
+  if (empty) empty.remove();
+
+  container.insertAdjacentHTML("afterbegin", Post(post));
 }
 
+/* ======================
+   CREATE POST
+====================== */
 
 async function handleCreatePost(form) {
   const formData = new FormData(form);
@@ -113,17 +105,28 @@ async function handleCreatePost(form) {
   const data = {
     title: formData.get("title"),
     text: formData.get("text"),
-    categories: formData.getAll("categories"), // if checkbox/multi-select
+    categories: formData.getAll("categories"),
   };
 
   try {
     const result = await CreatePost({ data });
 
-    console.log("Post created:", result);
+    if (result && result.data) {
+      const newPost = result.data;
 
-    // reset feed and reload
-    resetFeed();
-    fetchPosts();
+      state.posts.unshift(newPost);
+      state.offset += 1;
+
+      const details = document.getElementById("create-post-details");
+      if (details) details.open = false;
+
+      showToast("Post added", "success");
+
+      prependPostToUI(newPost);
+    } else {
+      resetFeed();
+      fetchPosts();
+    }
 
     form.reset();
   } catch (err) {
@@ -134,21 +137,20 @@ async function handleCreatePost(form) {
 /* ======================
    UI RENDER
 ====================== */
+
 function renderPosts(posts) {
   const container = document.querySelector(".posts");
 
   const empty = container.querySelector(".no-post");
   if (empty) empty.remove();
 
-  container.insertAdjacentHTML(
-    "beforeend",
-    posts.map(Post).join("")
-  );
+  container.insertAdjacentHTML("beforeend", posts.map(Post).join(""));
 }
 
 /* ======================
    FILTERS
 ====================== */
+
 function toggleFilter(name, button) {
   const input = document.querySelector(`input[name='${name}']`);
   const isActive = button.classList.contains("active");
@@ -163,6 +165,7 @@ function toggleFilter(name, button) {
 /* ======================
    LOGOUT
 ====================== */
+
 async function handleLogout() {
   try {
     await logout();
@@ -176,109 +179,91 @@ async function handleLogout() {
 /* ======================
    EVENTS
 ====================== */
+
 function setupEvents() {
-	/* Scroll */
-	window.addEventListener(
-		"scroll",
-		throttle(() => {
-		const scrollTop = window.scrollY;
-		const windowHeight = window.innerHeight;
-		const docHeight = document.documentElement.scrollHeight;
+  const details = document.getElementById("create-post-details");
 
-		if (scrollTop + windowHeight >= docHeight - 200) {
-			fetchPosts();
-		}
-		}, 200)
-	);
+  details?.addEventListener("toggle", () => {
+    console.log(details.open ? "Form opened" : "Form closed");
+  });
 
-	/*creat a post */
-	const createPostForm = document.getElementById("create-post-form");
+  window.addEventListener(
+    "scroll",
+    throttle(() => {
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
 
-	if (createPostForm) {
-	createPostForm.addEventListener("submit", (e) => {
-		e.preventDefault();
-		handleCreatePost(e.target);
-	});
-	}
+      if (scrollTop + windowHeight >= docHeight - 200) {
+        fetchPosts();
+      }
+    }, 200)
+  );
 
-	/* click the buttons */
-	document.addEventListener("click", (e) => {
-	const post = e.target.closest(".post");
+  const createPostForm = document.getElementById("create-post-form");
 
-	if (!post) return;
+  createPostForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    handleCreatePost(e.target);
+  });
 
-	if (
-		e.target.closest("button") ||
-		e.target.closest(".like-btn") ||
-		e.target.closest(".dislike-btn") ||
-		e.target.closest(".comment-btn") ||
-		e.target.closest(".send-comment")
-	) {
-		return;
-	}
+  document.addEventListener("click", (e) => {
+    const post = e.target.closest(".post");
 
-	navigate(`/post/${post.dataset.postId}`);
-	});
+    if (!post) return;
 
-	/* Click delegation */
-	document.addEventListener("click", async (e) => {
-		const likeBtn = e.target.closest(".like-btn");
-		const dislikeBtn = e.target.closest(".dislike-btn");
-		const deleteBtn = e.target.closest(".delete-btn");
-		const commentBtn = e.target.closest(".comment-btn");
-		const sendCommentBtn = e.target.closest(".send-comment");
-
-		const createdBtn = e.target.closest("[name='my-creat-postes']");
-		const likedBtn = e.target.closest("[name='my-liked-post']");
-		const logoutBtn = e.target.closest("#logout-btn");
-
-		if (createdBtn) return toggleFilter("my-creat-postes", createdBtn);
-		if (likedBtn) return toggleFilter("my-liked-post", likedBtn);
-		if (logoutBtn) return handleLogout();
-
-	if (likeBtn) {
-	const res = await handleAction(likeBtn.dataset.id, "like");
-
-	if (res?.message === "liked") {
-		updatePostUI(likeBtn.dataset.id, "like", res.data);
-	}
-	}
-
-	if (dislikeBtn) {
-	const res = await handleAction(dislikeBtn.dataset.id, "dislike");
-
-	if (res?.message === "disliked") {
-		updatePostUI(dislikeBtn.dataset.id, "dislike", res.data);
-	}
-	}
-
-	if (deleteBtn) {
-	const res = await handleAction(deleteBtn.dataset.id, "delete");
-
-	if (res?.message === "deleted") {
-		updatePostUI(deleteBtn.dataset.id, "delete");
-	}
-	}
-    if (commentBtn) {
-      const box = document.getElementById(`comments-${commentBtn.dataset.id}`);
-      box.style.display = box.style.display === "none" ? "block" : "none";
+    if (
+      e.target.closest("button") ||
+      e.target.closest(".like-btn") ||
+      e.target.closest(".dislike-btn")
+    ) {
+      return;
     }
 
-    if (sendCommentBtn) {
-      const id = sendCommentBtn.dataset.id;
-      const input = document.querySelector(`#comments-${id} .comment-input`);
+    navigate(`/post/${post.dataset.postId}`);
+  });
 
-      if (input.value.trim()) {
-        await handleComment(id, input.value);
-        input.value = "";
+  document.addEventListener("click", async (e) => {
+    const likeBtn = e.target.closest(".like-btn");
+    const dislikeBtn = e.target.closest(".dislike-btn");
+    const deleteBtn = e.target.closest(".delete-btn");
+
+    const createdBtn = e.target.closest("[name='my-creat-postes']");
+    const likedBtn = e.target.closest("[name='my-liked-post']");
+    const logoutBtn = e.target.closest("#logout-btn");
+
+    if (createdBtn) return toggleFilter("my-creat-postes", createdBtn);
+    if (likedBtn) return toggleFilter("my-liked-post", likedBtn);
+    if (logoutBtn) return handleLogout();
+
+    if (likeBtn) {
+      const res = await handleAction(likeBtn.dataset.id, "like");
+      if (res?.message === "liked") {
+        updatePostUI(likeBtn.dataset.id, "like", res.data);
+        showToast("liked post", "success");
+      }
+    }
+
+    if (dislikeBtn) {
+      const res = await handleAction(dislikeBtn.dataset.id, "dislike");
+      if (res?.message === "disliked") {
+        updatePostUI(dislikeBtn.dataset.id, "dislike", res.data);
+        showToast("disliked post", "success");
+      }
+    }
+
+    if (deleteBtn) {
+      const res = await handleAction(deleteBtn.dataset.id, "delete");
+      if (res?.message === "deleted") {
+        updatePostUI(deleteBtn.dataset.id, "delete");
+        showToast("deleted post", "success");
       }
     }
   });
 
-  /* Filter form */
   document
     .getElementById("filter-form")
-    .addEventListener("submit", (e) => {
+    ?.addEventListener("submit", (e) => {
       e.preventDefault();
 
       const params = new URLSearchParams(new FormData(e.target));
@@ -290,6 +275,10 @@ function setupEvents() {
       fetchPosts();
     });
 }
+
+/* ======================
+   UPDATE UI
+====================== */
 
 function updatePostUI(postId, action, data) {
   const post = document.querySelector(`.post[data-post-id="${postId}"]`);

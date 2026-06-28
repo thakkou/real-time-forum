@@ -1,20 +1,17 @@
 import { Header } from '../components/Header.js';
-import { getPostByID } from "../../api/posts.js";
-import { getPostIdFromURL } from "../scripts/_post.js";
-import { Post } from "../../components/Post.js";
 
+/**
+ * Main Layout Renderer
+ * Simply sets up the shell structural wrappers.
+ * All data loading, success states, and 404 errors are managed by setup().
+ */
 export async function render(data = {}) {
-  const id = getPostIdFromURL();
-  if (!id) {
-    console.error("No post id found in URL");
-    return;
-  }
-
-  const response = await getPostByID({ id });
   return `
     ${Header(data.nickname)}
     <div class="post-detail-wrapper">
-      ${Post(response.data, { withComments: true })}
+      <div class="loading-state" style="font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); padding: 3rem 2rem; text-align: center;">
+        ▶ FETCHING_POST_INDEX...
+      </div>
     </div>
   `;
 }

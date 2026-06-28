@@ -2,13 +2,14 @@ import { Comment } from "./Comment.js";
 
 export const Post = (post, options = { withComments: false }) => `
 	${ options.withComments ? `<a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>` : '' }
+
 	<article class="post ${ options.withComments ? 'detailed-post' : '' }" data-post-id="${post.Id}">
 		<div class="post-header">
 			<div class="delete-block">
 				<h3>${post.Title}</h3>
 
 				${window.profile?.id == post.UserId ? `
-					<button class="delete-btn btn small danger" type="button">
+					<button data-id="${post.Id}" class="delete-btn btn small danger" type="button">
 					<i class="fa-solid fa-trash" style="color: rgb(255, 255, 255);"></i>
 					</button>
 				` : ""}

@@ -72,6 +72,11 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid or expired session", nil)
 		return
 	}
+	var nickname string
+	err = database.Database.QueryRow(
+		"SELECT nickname FROM users WHERE id = ?",
+		userId,
+	).Scan(&nickname)
 
 	result, err := database.Database.Exec(
 		"INSERT INTO comments (user_id, post_id, created_at, text) VALUES (?, ?, ?, ?)",
@@ -97,14 +102,15 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		PostID    int       `json:"postId"`
 		UserID    int       `json:"userId"`
 		CreatedAt time.Time `json:"createdAt"`
+		Nickname  string    `json:"nickname"`
 	}
-
 	res := Res{
 		ID:        commentID,
 		Text:      text,
 		PostID:    postIntId,
 		UserID:    userId,
 		CreatedAt: time.Now(),
+		Nickname:  nickname,
 	}
 
 	utilities.WriteJSON(w, http.StatusCreated, "message created successfully", res)
@@ -123,6 +129,11 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 	userId, err := utilities.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
 		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid session", nil)
+		return
+	}
+
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusInternalServerError, "Could not retrieve user", nil)
 		return
 	}
 

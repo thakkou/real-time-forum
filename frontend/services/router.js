@@ -2,6 +2,7 @@ import { isAuthenticated } from '../services/auth.js';
 import { ws } from './websocket.js';
 import { showToast } from './toast.js';
 import { reRender, reRenderMessages } from '../scripts/_chat.js';
+import { Header } from '../components/Header.js';
 export const onlineUsers = new Set()
 
 export const routes = { // turn it to map !
@@ -122,6 +123,7 @@ export const router = {
     
 
         const nickname = await guard(location.pathname);
+        //add the header to UI
         if (nickname) {
             ws.connect();
 
@@ -145,7 +147,6 @@ export const router = {
             });
 
             ws.on("new_post",(data)=>{
-                console.log(data)
             });
 
             ws.on("new_message", (data) => {
@@ -154,8 +155,15 @@ export const router = {
                 reRenderMessages(data)
             });
 
-            ws.on("typing", (data) => {
+            ws.on("typing:start", (data) => {
                 console.log("someone is typing:", data.userId);
+                //do the animation typing in progress
+                //in here the user accept is typin message from x
+            });
+
+            ws.on("typing:stop", (data) => {
+                console.log("someone is typing:", data.userId);
+                //in here the user accept is typin message from x
             });
         }
 

@@ -1,4 +1,3 @@
-
 import { formatTime } from './helpers.js';
 import { getConversations, getConversationById } from "../api/conversations.js";
 import { createMessage } from "../api/messages.js";
@@ -11,6 +10,8 @@ import { Conversation } from "../components/Conversation.js";
 const state = {
   currentConversationId: null,
   currentReceiverId: null,
+  isTyping: false,         // Tracks the actual underlying typing status
+  showTyping: true,        // 🌟 FORCE OVERRIDE: Set to true to see the animation all the time!
   // 🔄 Pagination States
   isLoadingOlder: false,
   hasMoreMessages: true,
@@ -47,7 +48,7 @@ export async function setup() {
 
   setupMobileUI();
   setupSendMessage();
-  setupScrollPagination(); // Hooks up the scroll listener
+  setupScrollPagination();
 
   try {
     const resp = await getConversations();
@@ -55,7 +56,7 @@ export async function setup() {
     renderUsers(data);
 
     if (data.length > 0) {
-      openConversation(data[0]);
+      await openConversation(data[0]);
     } else {
       showEmptyState();
     }
@@ -234,6 +235,8 @@ async function openConversation(item) {
 
   if (!state.currentConversationId) {
     renderEmptyConversation(user);
+    // Even if empty, trigger our rendering method to evaluate showTyping configuration
+    evaluateTypingIndicatorState();
     return;
   }
 
@@ -242,7 +245,6 @@ async function openConversation(item) {
 
 async function loadInitialMessages(receiverId) {
   try {
-    // Pass current state values (offset is 0 here)
     const res = await getConversationById(state.currentConversationId, {
       limit: state.limit,
       offset: state.offset
@@ -251,7 +253,6 @@ async function loadInitialMessages(receiverId) {
     const messages = res.data?.messages || [];
     renderMessages(messages, receiverId);
     
-    // Step forward for the next scroll action
     state.offset += state.limit;
   } catch (err) {
     console.error("Error loading chat history:", err);
@@ -263,7 +264,9 @@ function renderMessages(messages, receiverId) {
   [...messages].reverse().forEach((m) => {
     appendMessage(m, m.sender_id !== receiverId);
   });
-  scrollChatToBottom();
+  
+  // Apply our override/typing evaluation after historical list renders
+  evaluateTypingIndicatorState();
 }
 
 function appendMessage(m, mine = false, prepend = false) {
@@ -279,7 +282,12 @@ function appendMessage(m, mine = false, prepend = false) {
   if (prepend) {
     dom.chatMessages.insertBefore(group, dom.chatMessages.firstChild);
   } else {
-    dom.chatMessages.appendChild(group);
+    const typingIndicator = document.getElementById("typingIndicator");
+    if (typingIndicator) {
+      dom.chatMessages.insertBefore(group, typingIndicator);
+    } else {
+      dom.chatMessages.appendChild(group);
+    }
     scrollChatToBottom();
   }
 }
@@ -307,7 +315,6 @@ function setupScrollPagination() {
     const pos = dom.chatMessages.scrollTop;
     const maxScrollUp = dom.chatMessages.scrollHeight - dom.chatMessages.clientHeight;
 
-  
     const isNearTop = pos <= 15 && pos >= 0;
     const isNearTopReversed = Math.abs(pos) >= (maxScrollUp - 15) && pos < 0;
 
@@ -325,27 +332,21 @@ async function loadMoreMessages() {
   console.log(`📡 Fetching older data context -> Limit: ${state.limit}, Offset: ${state.offset}`);
 
   try {
-    // Cache the previous scroll height to preserve the visual scroll position afterwards
     const previousScrollHeight = dom.chatMessages.scrollHeight;
 
-    // TODO: Pass your updated `{ limit: state.limit, offset: state.offset }` properties to your API call if configured
     const res = await getConversationById(state.currentConversationId,{offset:state.offset + state.limit,limit:state.limit});
-    state.offset=state.offset+state.limit
+    state.offset = state.offset + state.limit;
     const olderMessages = res.data?.messages || [];
 
     if (olderMessages.length === 0) {
       state.hasMoreMessages = false;
       console.log("🏁 No more historical messages left on the server.");
     } else {
-      // Loop messages and prepend them to the top of the chat panel container
       olderMessages.forEach((m) => {
         appendMessage(m, m.sender_id !== state.currentReceiverId, true);
       });
 
-      // Increment values for successive pagination requests
       state.offset += state.limit;
-
-      // Adjust the scroll view so it stays locked onto the message the user was reading
       dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight - previousScrollHeight;
     }
   } catch (err) {
@@ -398,6 +399,10 @@ export const reRenderMessages = (data) => {
   if (!dom.chatMessages) return;
 
   if (String(state.currentConversationId) === String(conversation_id)) {
+    if (String(sender_id) === String(state.currentReceiverId)) {
+      setPartnerTyping(false);
+    }
+
     const incomingMsg = {
       sender_id: sender_id,
       text: text,
@@ -405,6 +410,72 @@ export const reRenderMessages = (data) => {
     };
     const isMine = String(sender_id) !== String(state.currentReceiverId); 
     appendMessage(incomingMsg, isMine);
+  }
+};
+
+/* =========================
+   TYPING INDICATOR CONTROL
+========================= */
+function evaluateTypingIndicatorState() {
+  const currentNickname = dom.chatHeaderName?.textContent || "them";
+  
+  // If showTyping is manually turned on, render it immediately
+  if (state.showTyping || state.isTyping) {
+    console.log(`💬 [Typing State]: Active (${state.showTyping ? 'Forced Overwrite' : 'Network Event'})`);
+    renderTypingIndicator(currentNickname);
+  } else {
+    console.log(`🚫 [Typing State]: Stopped / Hidden.`);
+    removeTypingIndicator();
+  }
+}
+
+export function setPartnerTyping(isTyping, nickname = "them") {
+  state.isTyping = isTyping;
+  evaluateTypingIndicatorState();
+}
+
+// Global hook so you can quickly switch state variables right out of your web console!
+export function toggleOverrideTyping(forceVisible) {
+  state.showTyping = forceVisible;
+  evaluateTypingIndicatorState();
+}
+
+function renderTypingIndicator(nickname) {
+  if (!dom.chatMessages) return;
+  if (document.getElementById("typingIndicator")) return;
+
+  const group = document.createElement("div");
+  group.className = "message-group theirs";
+  group.id = "typingIndicator";
+  group.innerHTML = `
+    <div class="message-sender">${escapeHTML(nickname)}</div>
+    <div class="message-row">
+      <div class="typing-indicator-container">
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>`;
+
+  dom.chatMessages.appendChild(group);
+  scrollChatToBottom();
+}
+
+function removeTypingIndicator() {
+  const indicator = document.getElementById("typingIndicator");
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+export const handleIncomingTypingEvent = (data) => {
+  const { conversation_id, user_id, is_typing } = data;
+  if (
+    String(state.currentConversationId) === String(conversation_id) &&
+    String(state.currentReceiverId) === String(user_id)
+  ) {
+    const activeName = dom.chatHeaderName ? dom.chatHeaderName.textContent : "them";
+    setPartnerTyping(is_typing, activeName);
   }
 };
 
@@ -428,4 +499,3 @@ function showEmptyState() {
   dom.chatView.style.display = "none";
   dom.chatEmpty.style.display = "flex";
 }
-

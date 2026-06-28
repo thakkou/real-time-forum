@@ -1,15 +1,3 @@
-//   <head>
-//     <meta charset="UTF-8" />
-//     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-//     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-//     <title>01 Forum</title>
-//     <link rel="stylesheet" href="/assets/style.css" />
-//     <script src="/assets/script.js" defer></script>
-//     <!-- Modern best practice: 
-//      1. Script downloads in parallel
-//      2. Executes after HTML is fully parsed
-//      3. Does NOT block rendering -->
-//   </head>
 
 import { Header } from '../components/Header.js';
 import { PostCreationForm } from '../components/PostCreationForm.js';
@@ -113,12 +101,13 @@ export async function render(data = {}) {
           </details>
         </aside>
 
-        <section class="posts">
-          ${data.Posts && data.Posts.length > 0
-            ? data.Posts.map(post => Post(post)).join("")
-            : `<div class="no-post">No posts for now...</div>`
-          }
-        </section>
+     <section class="posts">
+  ${
+    (data.posts || data.Posts) && (data.posts || data.Posts).length > 0
+      ? (data.posts || data.Posts).map(post => Post(post)).join("")
+      : `<div class="no-post">No posts for now...</div>`
+  }
+</section>
       </main>
     </div>
   `;

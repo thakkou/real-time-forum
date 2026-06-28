@@ -1,6 +1,6 @@
 export const PostCreationForm = () => (`
     <section class="create-post">
-        <details>
+        <details id="create-post-details">
             <summary>
                 <h2>Create New Post</h2>
             </summary>
