@@ -141,7 +141,7 @@ a:hover {
     font-size: 1rem;
 }
 
-.btn.chat::before {
+/* .btn.chat::before {
   content: attr(data-count);
   position: absolute;
   top: -0.25em;
@@ -155,7 +155,7 @@ a:hover {
   background-color: #ff0033;
   color: white;
   font-size: 0.7em;
-}
+} */
 
 .btn.register {
   background: var(--accent);

@@ -63,7 +63,7 @@ export async function setup() {
     renderUsers(data);
 
     if (data.length > 0) {
-      await openConversation(data[0]);
+      // await openConversation(data[0]);
     } else {
       showEmptyState();
     }
@@ -192,6 +192,10 @@ function renderUserItem(item) {
   el.classList.toggle("is-online-user", isOnline);
   el.classList.toggle("is-offline-user", !isOnline);
 
+  // if (item.conversation.unreadCount > 0) {
+  //   el.classList.add('unread');
+  // }
+
   el.addEventListener("click", () => {
     openConversation(item);
     document.getElementById("usersPanel")?.classList.remove("mobile-open");
@@ -285,7 +289,7 @@ function setActiveConversation(userId) {
 ========================= */
 async function openConversation(item) {
   const { profile: user, conversation: chat } = item;
-  console.log(user.id)
+  // console.log(user, chat)
   setActiveConversation(user.id)
 
   //clear the msg
