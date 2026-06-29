@@ -1,10 +1,10 @@
 import { Toast } from '../components/Toast.js';
 
-export function showToast(message, type = 'success', duration = 5000) {
+export function showToast(message, type = 'info',title="", duration = 5000) {
     // available types: success, error, warning...
     const container = document.getElementById('toast-container');
 
-    const toast = Toast(message, type);
+    const toast = Toast(message, type,title);
 
     // var doc = new DOMParser().parseFromString(toast, "text/xml");
     container.appendChild(toast);

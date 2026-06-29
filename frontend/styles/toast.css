@@ -18,11 +18,6 @@
 
   padding: 0.9rem 1rem;
 
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-
   transform: translateX(120%);
   opacity: 0;
 
@@ -32,6 +27,10 @@
     border-color 0.15s ease;
 
   box-shadow: 0 0 0 1px rgba(0,0,0,.2);
+  
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .toast.show {
@@ -39,43 +38,49 @@
   opacity: 1;
 }
 
-.toast::before {
+/* 🟢 Creates a small clean structural header row */
+.toast-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 🟢 A clean geometric status indicator square instead of text brackets */
+.toast-header::before {
+  content: "";
   display: inline-block;
-  margin-right: 0.6rem;
+  width: 6px;
+  height: 6px;
+  background: var(--text-muted);
+}
+
+.toast-title {
   font-weight: 700;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.toast.success {
-  border-color: var(--accent);
-}
-
-.toast.success::before {
-  content: "[OK]";
-  color: var(--accent);
-}
-
-.toast.error {
-  border-color: var(--red);
-}
-
-.toast.error::before {
-  content: "[ERR]";
-  color: var(--red);
-}
-
-.toast.warning {
-  border-color: var(--border-loud);
-}
-
-.toast.warning::before {
-  content: "[WARN]";
+.toast-message {
   color: var(--text-muted);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
-.toast.info::before {
-  content: "[INFO]";
-  color: var(--text-muted);
-}
+/* 🟩 SUCCESS STATE */
+.toast.success { border-color: var(--accent); }
+.toast.success .toast-header::before { background: var(--accent); }
+
+/* 🟥 WARNING STATE */
+.toast.warning { border-color: var(--red); }
+.toast.warning .toast-header::before { background: var(--red); }
+
+/* 🟧 ATTENTION STATE */
+.toast.attention { border-color: #ff9f43; }
+.toast.attention .toast-header::before { background: #ff9f43; }
 
 @media (max-width: 480px) {
   #toast-container {
