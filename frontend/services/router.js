@@ -6,6 +6,9 @@ import { Header } from '../components/Header.js';
 import { handleIncomingTypingEvent } from '../scripts/_chat.js';
 export const onlineUsers = new Set()
 
+// Store loaded scripts to avoid duplicates
+// const loadedScripts = new Map();
+
 export const routes = { // turn it to map !
     '/': {
         method: 'GET',
@@ -232,9 +235,14 @@ async function loadPageScript(pageName) {
 //     window.currentPageScript.cleanup();
 //   } // ?!
   
-  if (pageScripts[pageName]) {
-    const script = await pageScripts[pageName]();
-    await script.setup();
-    window.currentPage = pageName; // need to be done before !!!
-  }
+    if (pageName !== 'login' && pageName !== 'register') {
+        const globalScript = await import('../scripts/_global.js');
+        await globalScript.setup();
+    }
+
+    if (pageScripts[pageName]) {
+        const script = await pageScripts[pageName]();
+        await script.setup();
+        window.currentPage = pageName; // need to be done before !!!
+    }
 }

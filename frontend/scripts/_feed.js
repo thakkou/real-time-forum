@@ -1,4 +1,4 @@
-import { logout } from "../api/auth.js";
+// import { logout } from "../api/auth.js";
 import { getPosts, PostResolver, CreatePost } from "../api/posts.js";
 import { Post } from "../components/Post.js";
 import { showToast } from "../services/toast.js";
@@ -162,19 +162,7 @@ function toggleFilter(name, button) {
   fetchPosts();
 }
 
-/* ======================
-   LOGOUT
-====================== */
 
-async function handleLogout() {
-  try {
-    await logout();
-    localStorage.clear();
-    window.location.href = "/login";
-  } catch (err) {
-    console.error("Logout failed:", err);
-  }
-}
 
 /* ======================
    EVENTS
@@ -230,11 +218,11 @@ function setupEvents() {
 
     const createdBtn = e.target.closest("[name='my-creat-posts']");
     const likedBtn = e.target.closest("[name='my-liked-posts']");
-    const logoutBtn = e.target.closest("#logout-btn");
+    // const logoutBtn = e.target.closest("#logout-btn");
 
     if (createdBtn) return toggleFilter("my-creat-posts", createdBtn);
     if (likedBtn) return toggleFilter("my-liked-posts", likedBtn);
-    if (logoutBtn) return handleLogout();
+    // if (logoutBtn) return handleLogout();
 
     if (likeBtn) {
       const res = await handleAction(likeBtn.dataset.id, "like");
