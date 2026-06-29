@@ -105,6 +105,15 @@ export const RegisterForm = () => (`
       <button id="register-btn" type="submit">Register</button>
     </form>
 
+
+    <div class="link-row">
+      Already have an account? <a onclick="navigate('/login')"> Login</a>
+    </div>
+  </div>
+`);
+/**
+ * 
+ * 
     <!-- start -->
     <div class="social-auth">
       <div class="divider">
@@ -126,9 +135,7 @@ export const RegisterForm = () => (`
       </div>
     </div>
     <!-- end -->
-
-    <div class="link-row">
-      Already have an account? <a onclick="navigate('/login')"> Login</a>
-    </div>
-  </div>
-`);
+ * 
+ * 
+ * 
+ */
