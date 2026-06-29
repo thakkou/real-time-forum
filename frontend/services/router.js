@@ -231,10 +231,6 @@ function matchRoute(path) {
 }
 
 async function loadPageScript(pageName) {
-//   if (window.currentPageScript && typeof window.currentPageScript.cleanup === 'function') {
-//     window.currentPageScript.cleanup();
-//   } // ?!
-  
     if (pageName !== 'login' && pageName !== 'register') {
         const globalScript = await import('../scripts/_global.js');
         await globalScript.setup();

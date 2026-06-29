@@ -44,7 +44,7 @@ const wsDot         = document.getElementById('wsDot');
 const wsStatusText  = document.getElementById('wsStatusText');
 const usersList     = document.getElementById('usersList');
 const onlineCount   = document.getElementById('onlineCount');
-const userSearch    = document.getElementById('userSearch');
+// const userSearch    = document.getElementById('userSearch');
 const usersPanel    = document.getElementById('usersPanel');
 const mobileToggle  = document.getElementById('mobileUsersToggle');
 const backBtn       = document.getElementById('backBtn');
@@ -257,18 +257,19 @@ function loadOlderMessages() {
 }
 
 // ── User search / filter ───────────────────────────────────────
-let searchDebounceTimer = null;
+// IMPLEMENTED IN MAIN CHAT
+// let searchDebounceTimer = null;
 
-userSearch.addEventListener('input', () => {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-        const q = userSearch.value.trim().toLowerCase();
-        document.querySelectorAll('.user-item').forEach(item => {
-        const name = item.dataset.username.toLowerCase();
-        item.style.display = name.includes(q) || !q ? '' : 'none';
-        });
-    }, 200);
-});
+// userSearch.addEventListener('input', () => {
+//     clearTimeout(searchDebounceTimer);
+//     searchDebounceTimer = setTimeout(() => {
+//         const q = userSearch.value.trim().toLowerCase();
+//         document.querySelectorAll('.user-item').forEach(item => {
+//         const name = item.dataset.username.toLowerCase();
+//         item.style.display = name.includes(q) || !q ? '' : 'none';
+//         });
+//     }, 200);
+// });
 
 // ── Mobile panel toggle ────────────────────────────────────────
 mobileToggle.addEventListener('click', () => {

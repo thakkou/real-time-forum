@@ -67,6 +67,19 @@ export async function setup() {
     } else {
       showEmptyState();
     }
+
+    const userSearch = document.getElementById('userSearch');
+    let searchDebounceTimer = null;
+    userSearch.addEventListener('input', () => {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+          const q = userSearch.value.trim().toLowerCase();
+          document.querySelectorAll('.user-item').forEach(item => {
+          const name = item.querySelector('.user-name').textContent.toLowerCase(); // item.dataset.username.toLowerCase();
+          item.style.display = name.includes(q) || !q ? '' : 'none';
+          });
+      }, 200);
+    });
   } catch (err) {
     console.error("Failed to initialize conversation list:", err);
     showEmptyState();
@@ -246,8 +259,25 @@ export const reRender = (type, userId) => {
 function updateOnlineCountText() {
   const countEl = document.getElementById("onlineCount");
   if (countEl) {
-    countEl.textContent = `● ${onlineUsers.size} online`;
+    // console.log(onlineUsers)
+    countEl.textContent = `● ${onlineUsers.size - 1} online`;
   }
+}
+
+function setActiveConversation(userId) {
+    // Remove 'active' from all user-item elements
+    document.querySelectorAll('.user-item').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // Find the matching user-item and add 'active'
+    const activeItem = document.querySelector(
+        `.user-item[data-user-id="${userId}"]`
+    );
+
+    if (activeItem) {
+        activeItem.classList.add('active');
+    }
 }
 
 /* =========================
@@ -255,7 +285,10 @@ function updateOnlineCountText() {
 ========================= */
 async function openConversation(item) {
   const { profile: user, conversation: chat } = item;
-//clear the msg
+  console.log(user.id)
+  setActiveConversation(user.id)
+
+  //clear the msg
   if (dom.messageInput) {
     dom.messageInput.value = "";
   }
@@ -275,14 +308,15 @@ async function openConversation(item) {
   }
 
   const chatStatusDot = document.getElementById("chatStatusDot");
-  if (chat?.lastSeen) {
-    dom.chatHeaderStatus.textContent = "● Offline";
-    dom.chatHeaderStatus.className = "chat-header-status offline";
-    if (chatStatusDot) chatStatusDot.className = "online-dot offline";
-  } else {
+  // console.log(user.id)
+  if (onlineUsers.has(String(user.id))) { // chat?.lastSeen
     dom.chatHeaderStatus.textContent = "● Online";
     dom.chatHeaderStatus.className = "chat-header-status online";
     if (chatStatusDot) chatStatusDot.className = "online-dot online";
+  } else {
+    dom.chatHeaderStatus.textContent = "● Offline";
+    dom.chatHeaderStatus.className = "chat-header-status offline";
+    if (chatStatusDot) chatStatusDot.className = "online-dot offline";
   }
 
   dom.chatView.style.display = "flex";
