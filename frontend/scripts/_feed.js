@@ -45,8 +45,8 @@ async function fetchPosts() {
 
   const params = new URLSearchParams(window.location.search);
   const categories = params.getAll("categories");
-  const isLiked = params.get("my-liked-post") === "true";
-  const isCreatedByMe = params.get("my-creat-postes") === "true";
+  const isLiked = params.get("my-liked-posts") === "true";
+  const isCreatedByMe = params.get("my-creat-posts") === "true";
 
   try {
     const res = await getPosts({
@@ -62,8 +62,8 @@ async function fetchPosts() {
     if (posts?.length) {
       state.posts.push(...posts);
       state.offset += posts.length;
-      renderPosts(posts);
     }
+    renderPosts(state.posts);
   } catch (err) {
     console.error("Failed to load posts:", err);
   } finally {
@@ -228,12 +228,12 @@ function setupEvents() {
     const dislikeBtn = e.target.closest(".dislike-btn");
     const deleteBtn = e.target.closest(".delete-btn");
 
-    const createdBtn = e.target.closest("[name='my-creat-postes']");
-    const likedBtn = e.target.closest("[name='my-liked-post']");
+    const createdBtn = e.target.closest("[name='my-creat-posts']");
+    const likedBtn = e.target.closest("[name='my-liked-posts']");
     const logoutBtn = e.target.closest("#logout-btn");
 
-    if (createdBtn) return toggleFilter("my-creat-postes", createdBtn);
-    if (likedBtn) return toggleFilter("my-liked-post", likedBtn);
+    if (createdBtn) return toggleFilter("my-creat-posts", createdBtn);
+    if (likedBtn) return toggleFilter("my-liked-posts", likedBtn);
     if (logoutBtn) return handleLogout();
 
     if (likeBtn) {

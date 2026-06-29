@@ -87,7 +87,8 @@ export const router = {
         await this.render({ nickname: nickname });
 
         // Load the page-specific script
-        const scriptName = path.slice(1) || 'feed';
+        let scriptName = path.slice(1) || 'feed';
+        if (scriptName.includes('/')) scriptName = scriptName.slice(0, scriptName.indexOf('/'))
         await loadPageScript(scriptName);
     },
 
@@ -144,7 +145,7 @@ export const router = {
             ws.on("client_disconnect", (userId) => {
                 console.log("user disconnected:", userId);
                 onlineUsers.delete(userId);
-    reRender("disconnect",userId)
+                reRender("disconnect",userId)
             });
 
             ws.on("new_post",(data)=>{
@@ -156,23 +157,24 @@ export const router = {
                 reRenderMessages(data)
             });
 
-          ws.on("typing:start", (data) => {
-  console.log("someone is start typing:", data);
+            ws.on("typing:start", (data) => {
+                console.log("someone is start typing:", data);
 
-  handleIncomingTypingEvent({
-    ...data,
-    is_typing: true
-  });
-});
+                handleIncomingTypingEvent({
+                    ...data,
+                    is_typing: true
+                });
+            });
 
-ws.on("typing:stop", (data) => {
-  console.log("someone is stop typing:", data);
+            ws.on("typing:stop", (data) => {
+                console.log("someone is stop typing:", data);
 
-  handleIncomingTypingEvent({
-    ...data,
-    is_typing: false
-  });
-});
+                handleIncomingTypingEvent({
+                    ...data,
+                    is_typing: false
+                });
+            });
+
         }
 
         // the page is fully rendered first, then the specific scripts are loded after !
@@ -181,6 +183,7 @@ ws.on("typing:stop", (data) => {
         // await loadPageScript(window.location.pathname.slice(1)); // feed default
 
         const scriptName = location.pathname.split('/')[1] || 'feed';
+        console.log(2)
         await loadPageScript(scriptName);
         // loaded first time, must be :
         // 1. chnaged depending on app state (first page) x

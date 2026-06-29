@@ -16,11 +16,11 @@ export async function render(data = {}) {
         <form id="filter-form">     
           <!-- My Posts / Liked Posts Buttons -->
           <div class="filter-group registered-only">
-            <button type="button" name="my-creat-postes" class="filter-btn">
+            <button type="button" name="my-creat-posts" class="filter-btn">
               My Created Posts
             </button>
 
-            <button type="button" name="my-liked-post" class="filter-btn">
+            <button type="button" name="my-liked-posts" class="filter-btn">
               Posts I Liked
             </button>
           </div>
@@ -30,13 +30,13 @@ export async function render(data = {}) {
             <h4>By Category</h4>
             <input
               type="hidden"
-              name="my-creat-postes"
-              id="input-my-creat-postes"
+              name="my-creat-posts"
+              id="input-my-creat-posts"
             />
             <input
               type="hidden"
-              name="my-liked-post"
-              id="input-my-liked-post"
+              name="my-liked-posts"
+              id="input-my-liked-posts"
             />
 
             <label><input type="checkbox" name="categories" value="General" /> General</label>
@@ -72,13 +72,13 @@ export async function render(data = {}) {
             </summary>
             <form method="GET" action="/">
               <div class="filter-group registered-only">
-                <button type="button" name="my-creat-postes" class="filter-btn">My Created Posts</button>
-                <button type="button" name="my-liked-post" class="filter-btn">Posts I Liked</button>
+                <button type="button" name="my-creat-posts" class="filter-btn">My Created Posts</button>
+                <button type="button" name="my-liked-posts" class="filter-btn">Posts I Liked</button>
               </div>
               <div class="filter-group">
                 <h4>By Category</h4>
-                <input type="hidden" name="my-creat-postes" id="input-my-creat-postes-mobile" />
-                <input type="hidden" name="my-liked-post" id="input-my-liked-post-mobile" />
+                <input type="hidden" name="my-creat-posts" id="input-my-creat-postes-mobile" />
+                <input type="hidden" name="my-liked-posts" id="input-my-liked-post-mobile" />
                 <div class="mobile-categories-grid">
                   <label><input type="checkbox" name="categories" value="General" /> General</label>
                   <label><input type="checkbox" name="categories" value="Lifestyle" /> Lifestyle</label>

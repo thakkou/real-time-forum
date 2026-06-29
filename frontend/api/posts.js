@@ -17,11 +17,11 @@ export const getPosts = async ({
   categories.forEach((c) => params.append("categories", c));
 
   if (isLiked) {
-    params.append("my-liked-posts", "");
+    params.append("my-liked-posts", "true");
   }
 
   if (isCreatedByMe) {
-    params.append("my-creat-posts", "");
+    params.append("my-creat-posts", "true");
   }
 
   const response = await fetch(

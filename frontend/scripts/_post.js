@@ -12,9 +12,11 @@ import { CommentResolver, CreatComment } from "../api/comments.js";
    INITIALIZATION & RENDER LIEFOCYCLE
    ================================================================ */
 export async function setup() {
-  try {
+  console.log(1)
+  try {  
+      await setupPostPage(); 
+
     setupEventListeners();
-    await setupPostPage(); 
   } catch (err) {
     console.error("Failed to load page:", err.message);
   }

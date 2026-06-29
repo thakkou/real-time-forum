@@ -33,31 +33,31 @@ export const PostCreationForm = () => (`
                     <label><input type="checkbox" name="categories" value="News" /> News</label>
                 </div>
 
-                <!-- Image upload -->
-                <div class="image-upload">
-                    <label class="upload-label">
-                    <input 
-                        type="file" 
-                        name="image" 
-                        accept="image/*"
-                        onchange="previewImage(event)"
-                    />
-                    <!-- accept="image/*" only filter the file picker UI, but doesnt guarantee it is an image -->
-                    <span class="upload-span" >+ Add Image (max 20MB)</span>
-                    </label>
-
-                    <div id="image-error" class="form-error" style="display: none; width: 100%; text-align: center;"></div>
-
-                    <div class="post-image-container">
-                    <div class="image-preview" id="imagePreview">
-                        <span class="placeholder">No image selected</span>
-                        <img id="previewImg" />
-                    </div>
-                    </div>
-                </div>
-
                 <button type="submit" class="btn primary">Publish</button>
             </form>
         </details>
     </section>
 `);
+
+// <!-- Image upload -->
+// <div class="image-upload">
+//     <label class="upload-label">
+//     <input 
+//         type="file" 
+//         name="image" 
+//         accept="image/*"
+//         onchange="previewImage(event)"
+//     />
+//     <!-- accept="image/*" only filter the file picker UI, but doesnt guarantee it is an image -->
+//     <span class="upload-span" >+ Add Image (max 20MB)</span>
+//     </label>
+
+//     <div id="image-error" class="form-error" style="display: none; width: 100%; text-align: center;"></div>
+
+//     <div class="post-image-container">
+//     <div class="image-preview" id="imagePreview">
+//         <span class="placeholder">No image selected</span>
+//         <img id="previewImg" />
+//     </div>
+//     </div>
+// </div>
