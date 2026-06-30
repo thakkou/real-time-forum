@@ -67,6 +67,10 @@ export const logout = async () => {
   }
 };
 
+// if (localStorage.getItem('token')) {
+//     socket.connect();
+// }
+
 // const login = async (credentials) => {
 //     const {
 //         nickname,

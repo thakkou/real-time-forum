@@ -1,10 +1,6 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
-// import { fileURLToPath } from 'url';
-
-// import { routes } from './services/router.js'; // causes error: document is not defined !!!
-// import { socket } from './core/websocket.js';
 
 const PORT = 3000;
 
@@ -100,10 +96,6 @@ const server = http.createServer((req, res) => { // async
         // res.end(`500 — ${err.message}`);
     }
 });
-
-// if (localStorage.getItem('token')) {
-//     socket.connect();
-// }
 
 server.listen(PORT, () => {
     console.log(`Http server running at http://localhost:${PORT}`);

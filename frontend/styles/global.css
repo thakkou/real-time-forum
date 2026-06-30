@@ -23,6 +23,17 @@
   --sans: 'IBM Plex Sans', sans-serif;
 }
 
+/* ── NoScript ─────────────────────────────────────────────────── */
+
+.noscript {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  padding: 10px;
+}
+
 /* ── Reset ────────────────────────────────────────────────────── */
 *,
 *::before,
@@ -37,6 +48,7 @@
   width: 14px;
   height: 14px;
 }
+
 html {
   scroll-behavior: smooth;
 }
