@@ -37,6 +37,7 @@ const server = http.createServer((req, res) => { // async
             path.resolve(decodedPath).startsWith('/services/') ||
             path.resolve(decodedPath).startsWith('/scripts/') ||
             path.resolve(decodedPath).startsWith('/components/') ||
+            path.resolve(decodedPath).startsWith('/workers/') ||
             path.resolve(decodedPath).startsWith('/pages/');
 
         // let route = routes[decodedPath];

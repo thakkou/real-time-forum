@@ -94,8 +94,8 @@ function handleLocalTypingActivity() {
 
   if (!state.isSelfTyping) {
     state.isSelfTyping = true;
-console.log('start typing')
-console.log(window.profile)
+    console.log('start typing')
+    console.log(window.profile)
     ws.send({
       event_type: "typing:start",
       data: {
@@ -123,8 +123,7 @@ function stopLocalTypingNotification() {
   ws.send({
     event_type: "typing:stop",
     data: {
-              userId:window.profile.id,
-
+      userId:window.profile.id,
       conversationId: state.currentConversationId,
       receiverId: state.currentReceiverId,
     }

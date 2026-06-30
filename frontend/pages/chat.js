@@ -1,5 +1,3 @@
-// import { socket } from '../core/websocket.js';
-
 import { Header } from '../components/Header.js';
 
 export async function render(data = {}) {
