@@ -438,12 +438,11 @@ async function sendMessage() {
   const text = dom.messageInput.value.trim();
   if (!text || !state.currentReceiverId) return;
 
-  // 🟢 Stop your typing state immediately because the message has been dispatched
+  // Stop your typing state immediately
   stopLocalTypingNotification();
 
   dom.messageInput.value = "";
-  const tempMessage = { sender_id: "me", text, created_at: new Date().toISOString() };
-  appendMessage(tempMessage, true);
+  // 🟢 Removed the tempMessage and appendMessage from here completely!
 
   try {
     const res = await createMessage({ 
@@ -461,24 +460,37 @@ async function sendMessage() {
 
 
 
-/* =========================
-   REALTIME INTERCEPTORS
-========================= */
+
 export const reRenderMessages = (data) => {
-  const { conversation_id, sender_id, text, created_at } = data;
+  // 1. Add console logs to inspect exactly what keys and types are coming from the server
+  console.log("=== Realtime Message Received ===");
+  console.log("Full WS payload data:", data);
+  console.log("sender_id from server:", data.sender_id, "Type:", typeof data.sender_id);
+  console.log("Your profile ID:", window.profile?.id, "Type:", typeof window.profile?.id);
+
+  const { conversation_id, text, created_at } = data;
   if (!dom.chatMessages) return;
 
+  // 2. Safely extract sender ID handling both snake_case or camelCase properties just in case
+  const incomingSenderId = data.sender_id 
+  // 3. Force both to strings and compare cleanly
+  const isMine = String(incomingSenderId) === String(window.profile?.id);
+  console.log("Calculated isMine evaluation result:",incomingSenderId, isMine,window.profile.id);
+  console.log("=================================");
+
+  // 4. Only append if this belongs to your currently open chat screen
   if (String(state.currentConversationId) === String(conversation_id)) {
-    if (String(sender_id) === String(state.currentReceiverId)) {
+    
+    if (String(incomingSenderId) === String(state.currentReceiverId)) {
       setPartnerTyping(false);
     }
 
     const incomingMsg = {
-      sender_id: sender_id,
+      sender_id: incomingSenderId,
       text: text,
       created_at: created_at || new Date().toISOString()
     };
-    const isMine = String(sender_id) !== String(state.currentReceiverId); 
+    
     appendMessage(incomingMsg, isMine);
   }
 };

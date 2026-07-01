@@ -403,7 +403,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		map[string]interface{}{
 			"conversation_id": conversationID,
 			"message_id":      messageID,
-			"sender_id":       req.ReceiverID,
+			"sender_id":       senderID,
 			"text":            req.Text,
 		},
 	)

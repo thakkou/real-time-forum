@@ -6,12 +6,18 @@ import (
 
 func HandleClient(client *Client) {
 	defer func() {
-		// here if conction close i will send a event to front (disconect)
-		mu.Lock()
-		delete(Clients, client.id)
-		mu.Unlock()
+		// 1. Use your existing RemoveClient function instead of deleting the whole user map
+		RemoveClient(client.id, client)
 		client.conn.Close()
-		BroadcastExcept(client.id, "client_disconnect", client.id)
+
+		// 2. Only broadcast disconnect if the user has no more active tabs open
+		mu.RLock()
+		_, stillOnline := Clients[client.id]
+		mu.RUnlock()
+
+		if !stillOnline {
+			BroadcastExcept(client.id, "client_disconnect", client.id)
+		}
 	}()
 
 	for {

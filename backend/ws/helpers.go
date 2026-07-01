@@ -24,6 +24,15 @@ type Client struct {
 	isAuth bool
 	id     string
 }
+type TypingState struct {
+	ConversationID int
+	ReceiverID     int
+}
+
+var (
+	typingUsers = make(map[string]TypingState)
+	typingMu    sync.Mutex
+)
 
 var (
 	Clients = make(map[string]map[*Client]bool)
@@ -68,6 +77,23 @@ func NotifyUser(userID string, eventType string, data any) {
 }
 
 func RemoveClient(userID string, client *Client) {
+	typingMu.Lock()
+
+	if typing, ok := typingUsers[userID]; ok {
+		delete(typingUsers, userID)
+
+		NotifyUser(
+			strconv.Itoa(typing.ReceiverID),
+			"typing:stop",
+			map[string]any{
+				"conversationId": typing.ConversationID,
+				"userId":         userID,
+			},
+		)
+	}
+
+	typingMu.Unlock()
+
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -131,16 +157,34 @@ func HandleMessage(client *Client, raw []byte) {
 		fmt.Println("user a liked ur comments")
 	case "send_message": // for u
 		fmt.Println("message sent to user a")
-	case "typing:start", "typing:stop":
+	case "typing:start":
 		var data TypingData
 
 		if err := json.Unmarshal(msg.Data, &data); err != nil {
-			fmt.Println(err)
 			return
 		}
-		fmt.Println("data", data)
 
-		NotifyUser(strconv.Itoa(data.ReceiverID), msg.Type, data)
+		typingMu.Lock()
+		typingUsers[client.id] = TypingState{
+			ConversationID: data.ConversationID,
+			ReceiverID:     data.ReceiverID,
+		}
+		typingMu.Unlock()
+
+		NotifyUser(strconv.Itoa(data.ReceiverID), "typing:start", data)
+
+	case "typing:stop":
+		var data TypingData
+
+		if err := json.Unmarshal(msg.Data, &data); err != nil {
+			return
+		}
+
+		typingMu.Lock()
+		delete(typingUsers, client.id)
+		typingMu.Unlock()
+
+		NotifyUser(strconv.Itoa(data.ReceiverID), "typing:stop", data)
 	default:
 		fmt.Println("unknown event:", msg.Type)
 	}

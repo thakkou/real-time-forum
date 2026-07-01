@@ -152,12 +152,16 @@ export const router = {
             });
 
             ws.on("new_message", (data) => {
-                console.log("new message:", data);
-                if(me && data.sender_id==me.id){
-                        showToast(data.text, "success");
+                const isMe=data.sender_id!=me.id
 
-                }
-                reRenderMessages(data)
+                 console.log(data,isMe)
+                 if(!isMe){
+              showToast(data.text, "success");
+
+                 }
+
+
+                reRenderMessages(data,true)
             });
 
           ws.on("typing:start", (data) => {
