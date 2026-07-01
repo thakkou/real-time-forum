@@ -10,11 +10,20 @@ import (
 
 var Database *sql.DB
 
-func Init() error {
+func Init(refresh bool) error {
 	var err error
 
+	if refresh {
+		// Close existing connection if any
+		if Database != nil {
+			Database.Close()
+		}
+
+		// Delete the database
+		_ = os.Remove("./database/forum.db")
+	}
+
 	Database, err = sql.Open("sqlite3", "./database/forum.db?_foreign_keys=on")
-	// _foreign_keys: allows delete on cascade + prevent unrelated fields
 	if err != nil {
 		return fmt.Errorf("can't open/create forum.db: %v", err)
 	}
@@ -28,9 +37,14 @@ func Init() error {
 		return fmt.Errorf("can't read schema: %v", err)
 	}
 
-	_, err = Database.Exec(string(schema)) // seeder
-	if err != nil {
+	if _, err := Database.Exec(string(schema)); err != nil {
 		return fmt.Errorf("schema execution failed: %v", err)
+	}
+
+	if refresh {
+		if err := RefreshAndSeed(Database); err != nil {
+			return fmt.Errorf("seed failed: %v", err)
+		}
 	}
 
 	return nil

@@ -45,25 +45,23 @@ func main() {
 		log.Fatalf("Environ initialization failed: %v", err)
 	}
 
-	if err := database.Init(); err != nil {
+	// Check for refresh command
+	refresh := len(os.Args) > 1 && os.Args[1] == "refresh"
+
+	if err := database.Init(refresh); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
-	// this health check for server
 
 	http.HandleFunc("/health", healthHandler)
-
-	// this websokets
 	http.HandleFunc("/ws", handlers.HandlerWs)
-	// test ws
 	http.HandleFunc("/ws/test", handlers.TestBroadcast)
 	http.HandleFunc("/assets/", handlers.Static)
 	http.HandleFunc("/uploads/", handlers.Static)
 
-	// http.HandleFunc("/", handlers.Forum)
-
 	routes.RegisterRoutes()
 
 	log.Println("Server running on http://localhost:8080")
+
 	handler := corsMiddleware(http.DefaultServeMux)
 
 	if err := http.ListenAndServe(":8080", handler); err != nil {

@@ -26,33 +26,27 @@ type Client struct {
 }
 
 var (
-	Clients = make(map[string]*Client)
+	Clients = make(map[string]map[*Client]bool)
 	mu      sync.RWMutex
 )
 
 // this func send the notification and the data to all users exept u
 func BroadcastExcept(senderID string, eventType string, data any) {
-	fmt.Println("start broadcasting")
-
 	payload := map[string]any{
 		"event_type": eventType,
 		"data":       data,
 	}
 
 	mu.RLock()
-	clientsCopy := make([]*Client, 0, len(Clients))
+	defer mu.RUnlock()
 
-	for userID, client := range Clients {
+	for userID, clients := range Clients {
 		if userID == senderID {
 			continue
 		}
-		clientsCopy = append(clientsCopy, client)
-	}
-	mu.RUnlock()
 
-	for _, client := range clientsCopy {
-		if err := client.conn.WriteJSON(payload); err != nil {
-			fmt.Println("broadcast error:", err)
+		for client := range clients {
+			client.conn.WriteJSON(payload)
 		}
 	}
 }
@@ -60,19 +54,30 @@ func BroadcastExcept(senderID string, eventType string, data any) {
 // this function send the notification to a special user
 func NotifyUser(userID string, eventType string, data any) {
 	mu.RLock()
-	client, ok := Clients[userID]
+	clients := Clients[userID]
 	mu.RUnlock()
-
-	if !ok {
-		return
-	}
 
 	payload := map[string]any{
 		"event_type": eventType,
 		"data":       data,
 	}
 
-	client.conn.WriteJSON(payload)
+	for client := range clients {
+		client.conn.WriteJSON(payload)
+	}
+}
+
+func RemoveClient(userID string, client *Client) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if Clients[userID] != nil {
+		delete(Clients[userID], client)
+
+		if len(Clients[userID]) == 0 {
+			delete(Clients, userID)
+		}
+	}
 }
 
 func StoreClient(userID string, conn *websocket.Conn) *Client {
@@ -82,15 +87,23 @@ func StoreClient(userID string, conn *websocket.Conn) *Client {
 	}
 
 	mu.Lock()
-	Clients[userID] = client
-	// get Online users
-	online := make([]string, 0, len(Clients))
+
+	if Clients[userID] == nil {
+		Clients[userID] = make(map[*Client]bool)
+	}
+
+	Clients[userID][client] = true
+
+	// build online users list
+	online := make([]string, 0)
 	for id := range Clients {
 		online = append(online, id)
 	}
+
 	mu.Unlock()
-	NotifyUser(client.id, "init", online)
-	BroadcastExcept(client.id, "client_connect", client.id)
+
+	NotifyUser(userID, "init", online)
+	BroadcastExcept(userID, "client_connect", userID)
 
 	return client
 }

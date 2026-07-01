@@ -3,7 +3,8 @@
 # Start backend
 echo "Starting backend..."
 cd backend || exit
-go run . &
+
+go run . "$@" &
 BACKEND_PID=$!
 
 # Return to project root
@@ -12,6 +13,7 @@ cd ..
 # Start frontend
 echo "Starting frontend..."
 cd frontend || exit
+
 node server.js &
 FRONTEND_PID=$!
 

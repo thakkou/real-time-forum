@@ -394,6 +394,20 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			"text":            req.Text,
 		},
 	)
+	fmt.Println("send:", senderID)
+	fmt.Println("recive ID:", req.ReceiverID)
+
+	ws.NotifyUser(
+		strconv.Itoa(senderID),
+		"new_message",
+		map[string]interface{}{
+			"conversation_id": conversationID,
+			"message_id":      messageID,
+			"sender_id":       req.ReceiverID,
+			"text":            req.Text,
+		},
+	)
+
 	fmt.Println("========== SEND MESSAGE END ==========")
 
 	utilities.WriteJSON(

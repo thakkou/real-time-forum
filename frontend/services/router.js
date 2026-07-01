@@ -5,6 +5,7 @@ import { reRender, reRenderMessages } from '../scripts/_chat.js';
 import { Header } from '../components/Header.js';
 import { handleIncomingTypingEvent } from '../scripts/_chat.js';
 export const onlineUsers = new Set()
+let me = null;
 
 export const routes = { // turn it to map !
     '/': {
@@ -68,7 +69,7 @@ async function guard(path) {
 
     const requiresAuth = matched.route.auth;
 
-    const me = await isAuthenticated();
+     me = await isAuthenticated();
     if (requiresAuth && !me.authenticated) {
         path = '/login';
     } else if (!requiresAuth && me.authenticated) {
@@ -152,7 +153,10 @@ export const router = {
 
             ws.on("new_message", (data) => {
                 console.log("new message:", data);
-                showToast(data.text, "success");
+                if(me && data.sender_id==me.id){
+                        showToast(data.text, "success");
+
+                }
                 reRenderMessages(data)
             });
 
