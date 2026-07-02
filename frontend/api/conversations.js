@@ -1,5 +1,6 @@
 const serverURI = window.env.serverUri;
 
+// get conversations
 export const getConversations = async ({
   offset = 0,
   limit = 30,
@@ -21,6 +22,7 @@ export const getConversations = async ({
   return result;
 };
 
+// get messages of a single conversation
 export const getConversationById = async (
   conversationId,
   pagination={

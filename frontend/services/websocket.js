@@ -1,28 +1,26 @@
-class WSService {
+class SocketManager {
+    // console.log(window.SharedWorker);
 
     constructor() {
-
         this.handlers = {};
+        this.worker = new SharedWorker('/workers/ws-worker.js');
 
-        // console.log('Creating SharedWorker');
-        // console.log(window.SharedWorker);
-        try {
-            console.log("before");
-            // this.worker = new SharedWorker('/workers/ws-worker.js');
-            this.worker = new SharedWorker(
-                '/workers/ws-worker.js'//,
-                // {
-                //     type: 'module'
-                // }
-            );
-            console.log(this.worker);
-            console.log(this.worker.port);
-        } catch (err) {
-            console.error(err);
-        }
+        // try {
+        //     console.log("before");
+        //     this.worker = new SharedWorker(
+        //         '/workers/ws-worker.js'//,
+        //         // {
+        //         //     type: 'module'
+        //         // }
+        //     );
+        //     console.log(this.worker);
+        //     console.log(this.worker.port);
+        // } catch (err) {
+        //     console.error(err);
+        // }
         
         this.worker.port.start();
-        this.worker.port.postMessage('ping');
+        // this.worker.port.postMessage('ping');
 
         this.worker.port.onmessage = (e) => {
 
@@ -47,61 +45,6 @@ class WSService {
         };
 
     }
-
-    connect() {
-
-        this.worker.port.postMessage({
-            type: 'connect',
-            wsUri: window.env.wsUri
-        });
-
-    }
-
-    send(data) {
-
-        this.worker.port.postMessage({
-            type: 'send',
-            payload: data
-        });
-
-    }
-
-    on(eventType, callback) {
-        if (!this.handlers[eventType]) {
-            this.handlers[eventType] = [];
-        }
-
-        this.handlers[eventType].push(callback);
-
-    }
-
-    off(eventType, callback) {
-
-        if (!this.handlers[eventType]) {
-            return;
-        }
-
-        this.handlers[eventType] =
-            this.handlers[eventType]
-                .filter(cb => cb !== callback);
-
-    }
-
-    disconnect() {
-        // usually do nothing
-        // other tabs may still be using the socket
-    }
-
-}
-
-export const ws = new WSService();
-
-
-// class WSService {
-//     constructor() {
-//         this.socket = null;
-//         this.handlers = {}; // 👈 event registry
-//     }
 
 //     connect() {
 //         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -137,12 +80,28 @@ export const ws = new WSService();
 
 //         return this.socket;
 //     }
+    connect() {
+
+        this.worker.port.postMessage({
+            type: 'connect',
+            wsUri: window.env.wsUri
+        });
+
+    }
 
 //     send(data) {
 //         if (this.socket?.readyState === WebSocket.OPEN) {
 //             this.socket.send(JSON.stringify(data));
 //         }
 //     }
+    send(data) {
+
+        this.worker.port.postMessage({
+            type: 'send',
+            payload: data
+        });
+
+    }
 
 //     // 👇 register event listener
 //     on(eventType, callback) {
@@ -151,6 +110,14 @@ export const ws = new WSService();
 //         }
 //         this.handlers[eventType].push(callback);
 //     }
+    on(eventType, callback) {
+        if (!this.handlers[eventType]) {
+            this.handlers[eventType] = [];
+        }
+
+        this.handlers[eventType].push(callback);
+
+    }
 
 //     off(eventType, callback) {
 //         if (!this.handlers[eventType]) return;
@@ -158,46 +125,25 @@ export const ws = new WSService();
 //         this.handlers[eventType] = this.handlers[eventType]
 //             .filter(cb => cb !== callback);
 //     }
+    off(eventType, callback) {
 
-//     disconnect() {
-//         this.socket?.close();
-//     }
-// }
+        if (!this.handlers[eventType]) {
+            return;
+        }
 
-// export const ws = new WSService();
+        this.handlers[eventType] =
+            this.handlers[eventType]
+                .filter(cb => cb !== callback);
 
+    }
 
-// CORE
-// ====
+    disconnect() {
+        // usually do nothing
+        // other tabs may still be using the socket
 
-// Web socket manager
+        // if removing the last tab didnt close the socket !
+        // this.socket?.close();
+    }
+}
 
-// class SocketManager {
-//     #ws;
-
-//     connect() {
-//         this.#ws = new WebSocket('/ws');
-
-//         this.#ws.onmessage = (event) => {
-//             const msg = JSON.parse(event.data);
-
-//             document.dispatchEvent(
-//                 new CustomEvent(
-//                     `ws:${msg.type}`,
-//                     { detail: msg.payload }
-//                 )
-//             );
-//         };
-//     }
-
-//     send(type, payload) {
-//         this.#ws.send(
-//             JSON.stringify({
-//                 type,
-//                 payload
-//             })
-//         );
-//     }
-// }
-
-// export const socket = new SocketManager();
+export const ws = new SocketManager();

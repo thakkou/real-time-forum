@@ -1,7 +1,6 @@
-console.log('Shared worker loaded'); // runs in sepaRATE EXECUTION CONTEXT
+// Runs in sepaRATE EXECUTION CONTEXT
 
 const ports = [];
-
 let socket = null;
 
 function broadcast(message) {

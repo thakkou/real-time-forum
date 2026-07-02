@@ -1,6 +1,6 @@
 import { formatTime } from './helpers.js';
 import { getConversations, getConversationById } from "../api/conversations.js";
-import { createMessage } from "../api/messages.js";
+// import { createMessage } from "../api/messages.js";
 import { onlineUsers } from "../services/router.js";
 import { Conversation } from "../components/Conversation.js";
 import { ws } from '../services/websocket.js';
@@ -480,19 +480,33 @@ async function sendMessage() {
 
   dom.messageInput.value = "";
   const tempMessage = { sender_id: "me", text, created_at: new Date().toISOString() };
+
+  // to do after
   appendMessage(tempMessage, true);
 
   try {
-    const res = await createMessage({ 
-      receiverId: state.currentReceiverId, 
-      text, 
-      conversationId: state.currentConversationId 
+    // ************************
+    ws.send({
+      event_type: "create_message",
+      data: {
+        receiverId: state.currentReceiverId, 
+        text, 
+        conversationId: state.currentConversationId,
+      }
     });
-    if (!state.currentConversationId && res?.data?.conversationId) {
-      state.currentConversationId = res.data.conversationId;
-    }
+    // ************************
+
+
+    // const res = await createMessage({
+    //   receiverId: state.currentReceiverId,
+    //   text,
+    //   conversationId: state.currentConversationId 
+    // });
+    // if (!state.currentConversationId && res?.data?.conversationId) {
+    //   state.currentConversationId = res.data.conversationId;
+    // }
   } catch (err) { 
-    console.error("send failed", err); 
+    console.error("send failed", err);
   }
 }
 

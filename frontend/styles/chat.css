@@ -416,6 +416,8 @@
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
+
+  align-items: stretch;
 }
 
 .chat-input-wrapper {
@@ -448,6 +450,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  margin: 2px;
   padding: 0.65rem 1.1rem;
   font-family: var(--mono);
   font-size: 0.68rem;

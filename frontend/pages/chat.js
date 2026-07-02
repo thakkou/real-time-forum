@@ -150,10 +150,7 @@ export async function render(data = {}) {
               <button class="send-btn" id="sendBtn">Send ↵</button>
             </div>
 
-            <div class="ws-status">
-              <span class="ws-dot connected" id="wsDot"></span>
-              <span id="wsStatusText">Connected</span>
-            </div>
+            <!-- ws status -->
           </div>
 
         </div>
@@ -161,6 +158,11 @@ export async function render(data = {}) {
     </div>
   `;
 }
+
+{/* <div class="ws-status">
+  <span class="ws-dot connected" id="wsDot"></span>
+  <span id="wsStatusText">Connected</span>
+</div> */}
 
 
 // document.addEventListener(
