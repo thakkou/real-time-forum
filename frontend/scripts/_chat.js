@@ -208,6 +208,7 @@ export const reRender = (type, userId) => {
   
   const targetId = String(userId);
   const isOnline = type === "connect" || type === "register";
+  console.log("type: ", type)
 
   if (isOnline) {
     onlineUsers.add(targetId);
@@ -481,13 +482,13 @@ async function sendMessage() {
   dom.messageInput.value = "";
   const tempMessage = { sender_id: "me", text, created_at: new Date().toISOString() };
 
-  // to do after
+  // append to ui
   appendMessage(tempMessage, true);
 
   try {
     // ************************
     ws.send({
-      event_type: "create_message",
+      event_type: "new_message",
       data: {
         receiverId: state.currentReceiverId, 
         text, 
@@ -516,20 +517,22 @@ async function sendMessage() {
    REALTIME INTERCEPTORS
 ========================= */
 export const reRenderMessages = (data) => {
-  const { conversation_id, sender_id, text, created_at } = data;
+  console.log(data)
+  const { conversationId, senderId, text, created_at } = data; // created at not found
   if (!dom.chatMessages) return;
 
-  if (String(state.currentConversationId) === String(conversation_id)) {
-    if (String(sender_id) === String(state.currentReceiverId)) {
+  console.log(state.currentConversationId, String(conversationId))
+  if (String(state.currentConversationId) === String(conversationId)) {
+    if (String(senderId) === String(state.currentReceiverId)) { // why changing conversation_id to con..Id and also sender
       setPartnerTyping(false);
     }
 
     const incomingMsg = {
-      sender_id: sender_id,
+      sender_id: senderId,
       text: text,
       created_at: created_at || new Date().toISOString()
     };
-    const isMine = String(sender_id) !== String(state.currentReceiverId); 
+    const isMine = String(senderId) !== String(state.currentReceiverId); 
     appendMessage(incomingMsg, isMine);
   }
 };

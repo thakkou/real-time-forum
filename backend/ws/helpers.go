@@ -101,7 +101,7 @@ func StoreClient(userID string, conn *websocket.Conn) *Client {
 		online = append(online, id)
 	}
 	mu.Unlock()
-	NotifyUser(client.id, "init", online)
+	NotifyUser(client.id, "init", online) // what means ?!
 	BroadcastExcept(client.id, "client_connect", client.id)
 
 	return client
@@ -119,6 +119,7 @@ func HandleMessage(client *Client, raw []byte) {
 	fmt.Printf("Type: %s\n", msg.Type)
 	fmt.Printf("Data: %s\n", string(msg.Data))
 
+	fmt.Println("xxx" + msg.Type + "xxx")
 	switch msg.Type {
 	case "new_posts": // for all users exepts u
 		fmt.Println("new posts_notification")
@@ -130,7 +131,7 @@ func HandleMessage(client *Client, raw []byte) {
 		fmt.Println("user a liked ur comments")
 	case "send_message": // for u
 		fmt.Println("message sent to user a")
-	case "create_message": // for u
+	case "new_message": // for u
 		var data MessageCreationData
 
 		if err := json.Unmarshal(msg.Data, &data); err != nil {
@@ -143,7 +144,9 @@ func HandleMessage(client *Client, raw []byte) {
 		senderId, _ := strconv.Atoi(client.id)
 		handleMessageCreation(senderId, data)
 
-		// NotifyUser(strconv.Itoa(data.ReceiverID), msg.Type, data)
+		fmt.Println("beforeeeeeeeeeee")
+		NotifyUser(strconv.Itoa(data.ReceiverID), msg.Type, data)
+		fmt.Println("afterrrrrrrrrrrrrrr")
 	case "typing:start", "typing:stop":
 		var data TypingData
 
@@ -346,18 +349,18 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 		data.ReceiverID,
 	)
 
-	fmt.Println("========== send the socket events ==========")
-	NotifyUser(
-		strconv.Itoa(data.ReceiverID),
-		"new_message",
-		map[string]interface{}{
-			"conversation_id": conversationID,
-			"message_id":      messageID,
-			"sender_id":       senderID,
-			"text":            data.Text,
-		},
-	)
-	fmt.Println("========== CREATE MESSAGE END ==========")
+	// fmt.Println("========== send the socket events ==========")
+	// NotifyUser(
+	// 	strconv.Itoa(data.ReceiverID),
+	// 	"new_message",
+	// 	map[string]interface{}{
+	// 		"conversation_id": conversationID,
+	// 		"message_id":      messageID,
+	// 		"sender_id":       senderID,
+	// 		"text":            data.Text,
+	// 	},
+	// )
+	// fmt.Println("========== CREATE MESSAGE END ==========")
 
 	// Optionally, notify the sender's own connection too (e.g. to sync across their other devices/tabs):
 	// ws.NotifyUser(
