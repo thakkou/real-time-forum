@@ -1,3 +1,5 @@
+import { ws } from '../services/websocket.js';
+
 const serverURI = env.serverUri;
 
 export const login = async (credentials) => {
@@ -18,6 +20,7 @@ export const login = async (credentials) => {
 		if (!response.ok) {
 			throw new Error(data.message || "Login failed");
 		}
+    ws.connect();
 		return data;
 	} catch (error) {
 		console.error("Login error:", error);

@@ -7,7 +7,7 @@ export const Conversation = (item) => {
     const div = document.createElement("div");
 
     div.className = "user-item";
-    if (c.unreadCount > 0) div.classList.add("unread");
+    // if (c.unreadCount > 0) div.classList.add("unread"); // should be able to change unread property of message in db to != 0 to apply it
 
     div.dataset.userId = u.id;
     div.dataset.conversationId = c.conversationId;

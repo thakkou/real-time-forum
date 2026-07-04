@@ -32,14 +32,15 @@ const server = http.createServer((req, res) => { // async
         const isFileRequest = // what this variable mean ? what else can be ?!
             decodedPath.includes('.') || decodedPath === '/favicon.ico';
 
-        const isAllowed = path.resolve(decodedPath).startsWith('/styles/') ||
+        const isAllowed = path.resolve(decodedPath) === '/favicon.ico' ||
+            path.resolve(decodedPath).startsWith('/styles/') ||
             path.resolve(decodedPath).startsWith('/api/') ||
             path.resolve(decodedPath).startsWith('/services/') ||
             path.resolve(decodedPath).startsWith('/scripts/') ||
             path.resolve(decodedPath).startsWith('/components/') ||
             path.resolve(decodedPath).startsWith('/workers/') ||
             path.resolve(decodedPath).startsWith('/pages/');
-
+        
         // let route = routes[decodedPath];
         // if (!route || route.method !== req.method) route = null;
 

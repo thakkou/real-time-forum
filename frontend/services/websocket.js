@@ -1,3 +1,7 @@
+import { showToast } from './toast.js';
+import { reRender, reRenderMessages } from '../scripts/_chat.js';
+import { handleIncomingTypingEvent } from '../scripts/_chat.js';
+
 class SocketManager {
     // console.log(window.SharedWorker);
 
@@ -20,6 +24,7 @@ class SocketManager {
             const msg = workerMsg.payload;
             const type = msg.event_type;
             console.log('[page] dispatching type:', type); // <-- checkpoint 4
+            console.log(this.handlers)
             if (!this.handlers[type]) {
                 console.warn("Unhandled WS event:", type, msg);
                 return;
@@ -82,3 +87,48 @@ class SocketManager {
 }
 
 export const ws = new SocketManager();
+export const onlineUsers = new Set();
+
+ws.on("init", (data) => {
+    console.log("init users:", data);
+    data.forEach(id => onlineUsers.add(id));
+});
+
+ws.on("client_connect", (userId) => {
+    console.log("user connected:", userId);
+    onlineUsers.add(userId);
+    reRender("connect",userId)
+});
+
+ws.on("client_disconnect", (userId) => {
+    console.log("user disconnected:", userId);
+    onlineUsers.delete(userId);
+    reRender("disconnect",userId)
+});
+
+ws.on("new_post",(data)=>{
+});
+
+ws.on("new_message", (data) => {
+    console.log("new message:", data);
+    showToast(data.text, "success");
+    reRenderMessages(data)
+});
+
+ws.on("typing:start", (data) => {
+    console.log("someone is start typing:", data);
+
+    handleIncomingTypingEvent({
+        ...data,
+        is_typing: true
+    });
+});
+
+ws.on("typing:stop", (data) => {
+    console.log("someone is stop typing:", data);
+
+    handleIncomingTypingEvent({
+        ...data,
+        is_typing: false
+    });
+});

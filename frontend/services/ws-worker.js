@@ -80,16 +80,16 @@ onconnect = (event) => {
         const msg = e.data;
         switch (msg.type) {
             case 'connect':
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    console.log(socket)
-                    port.postMessage({ type: '__open' });
-                } else {
-                    console.log('connecting...')
-                    connect(msg.wsUri);
-                }
-                break;
-                // connect(msg.wsUri);
+                // if (socket && socket.readyState === WebSocket.OPEN) {
+                //     console.log(socket)
+                //     port.postMessage({ type: '__open' });
+                // } else {
+                //     console.log('connecting...')
+                //     connect(msg.wsUri);
+                // }
                 // break;
+                connect(msg.wsUri);
+                break;
             case 'send':
                 if (socket && socket.readyState === WebSocket.OPEN) {
                     socket.send(JSON.stringify(msg.payload));
