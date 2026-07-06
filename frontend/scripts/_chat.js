@@ -3,6 +3,7 @@ import { getConversations, getConversationById } from "../api/conversations.js";
 import { onlineUsers } from "../services/websocket.js";
 import { Conversation } from "../components/Conversation.js";
 import { ws } from '../services/websocket.js';
+import { sanitize } from './helpers.js';
 
 /* =========================
    STATE MANAGEMENT
@@ -370,7 +371,7 @@ function appendMessage(m, mine = false, prepend = false) {
   group.innerHTML = `
     <div class="message-sender">${mine ? "you" : "them"}</div>
     <div class="message-row">
-      <div class="message-bubble">${escapeHTML(m.text)}</div>
+      <div class="message-bubble">${sanitize(m.text)}</div>
       <div class="message-meta">${formatTime(m.created_at)}</div>
     </div>`;
 
@@ -573,7 +574,7 @@ function renderTypingIndicator(nickname) {
   group.className = "message-group theirs";
   group.id = "typingIndicator";
   group.innerHTML = `
-    <div class="message-sender">${escapeHTML(nickname)}</div>
+<div class="message-sender">${sanitize(nickname)}</div>
     <div class="message-row">
       <div class="typing-indicator-container">
         <div class="typing-dots">
@@ -625,9 +626,7 @@ export const handleIncomingTypingEvent = (data) => {
 /* =========================
    HELPERS & RENDER LAYOUTS
 ========================= */
-function escapeHTML(str) {
-  return str.replace(/[&<>"']/g, (m) => HTML_CHARS[m] || m);
-}
+
 
 function renderEmptyConversation(user) {
   dom.chatMessages.innerHTML = `

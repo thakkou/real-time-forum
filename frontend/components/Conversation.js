@@ -1,5 +1,5 @@
 import { formatTime } from '../scripts/helpers.js';
-
+import { sanitize } from '../scripts/helpers.js';
 export const Conversation = (item) => {
     const u = item.profile;
     const c = item.conversation;
@@ -25,8 +25,8 @@ export const Conversation = (item) => {
             </div>
 
             <div class="user-preview">
-                ${c.lastMessage || "No messages yet"}
-            </div>
+${sanitize(c.lastMessage) || "No messages yet"}    
+        </div>
         </div>
     `;
     return div;
