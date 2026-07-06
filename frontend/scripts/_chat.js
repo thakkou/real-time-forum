@@ -518,7 +518,6 @@ async function sendMessage() {
    REALTIME INTERCEPTORS
 ========================= */
 export const reRenderMessages = (data) => {
-  console.log(data)
   const { conversationId, senderId, text, created_at } = data; // created at not found
   if (!dom.chatMessages) return;
 
@@ -533,7 +532,8 @@ export const reRenderMessages = (data) => {
       text: text,
       created_at: created_at || new Date().toISOString()
     };
-    const isMine = String(senderId) === String(state.currentReceiverId); 
+    const isMine = String(senderId) !== String(state.currentReceiverId); 
+    console.log("is mine",isMine)
     appendMessage(incomingMsg, isMine);
   }
 };

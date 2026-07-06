@@ -27,8 +27,8 @@ class SocketManager {
 
             const msg = workerMsg.payload;
             const type = msg.event_type;
-            console.log('[page] dispatching type:', type); // <-- checkpoint 4
-            console.log(this.handlers)
+            // console.log('[page] dispatching type:', type); // <-- checkpoint 4
+            // console.log(this.handlers)
             if (!this.handlers[type]) {
                 console.warn("Unhandled WS event:", type, msg);
                 return;
@@ -68,7 +68,6 @@ class SocketManager {
     }
 
     send(data) {
-        console.log('[page] ws.send called with:', data);
         this.worker.port.postMessage({
             type: 'send',
             payload: data
@@ -114,18 +113,15 @@ export const ws = new SocketManager();
 export const onlineUsers = new Set();
 
 ws.on("init", (data) => {
-    console.log("init users:", data);
     data.forEach(id => onlineUsers.add(id));
 });
 
 ws.on("client_connect", (userId) => {
-    console.log("user connected:", userId);
     onlineUsers.add(userId);
     reRender("connect",userId)
 });
 
 ws.on("client_disconnect", (userId) => {
-    console.log("user disconnected:", userId);
     onlineUsers.delete(userId);
     reRender("disconnect",userId)
 });
@@ -135,22 +131,18 @@ ws.on("new_post",(data)=>{
 });
 
 ws.on("new_message", (data) => {
-    console.log("new message:", data);
     showToast(data.text, "success");
-    console.log(data)
     reRenderMessages(data)
 });
 
+
 ws.on("message_sent", (data) => {
+
     console.log("message sent from another tab:", data);
-    reRenderMessages({
-        ...data,
-        senderId: window.profile.id,
-    });
+    reRenderMessages({senderId:window.profile.id,...data});
 });
 
 ws.on("typing:start", (data) => {
-    console.log("someone is start typing:", data);
 
     handleIncomingTypingEvent({
         ...data,
@@ -159,7 +151,6 @@ ws.on("typing:start", (data) => {
 });
 
 ws.on("typing:stop", (data) => {
-    console.log("someone is stop typing:", data);
 
     handleIncomingTypingEvent({
         ...data,
