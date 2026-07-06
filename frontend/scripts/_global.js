@@ -1,4 +1,6 @@
 import { logout } from "../api/auth.js";
+// import { router } from "../services/router.js";
+// import { ws } from "../services/websocket.js";
 
 /* ======================
    LOGOUT
@@ -6,9 +8,13 @@ import { logout } from "../api/auth.js";
 
 async function handleLogout() {
   try {
+    // ws.close();
     await logout();
-    localStorage.clear();
-    window.location.href = "/login";
+    localStorage.clear(); // why ?!
+    // router.navigate('/login');
+    // not used because we need to remove all previous scripts !
+    // + some event listeners still work after that !
+    // window.location.href = "/login";
   } catch (err) {
     console.error("Logout failed:", err);
   }

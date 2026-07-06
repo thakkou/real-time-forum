@@ -6,21 +6,15 @@ import (
 
 func HandleClient(client *Client) {
 	defer func() {
-		// here if conction close i will send a event to front (disconect)
-		mu.Lock()
-		delete(Clients, client.id)
-		mu.Unlock()
+		RemoveClient(client)
 		client.conn.Close()
-		BroadcastExcept(client.id, "client_disconnect", client.id)
 	}()
-
 	for {
 		_, msg, err := client.conn.ReadMessage()
 		if err != nil {
 			fmt.Println("client disconnected:", client.id)
 			return
 		}
-
 		HandleMessage(client, msg)
 	}
 }

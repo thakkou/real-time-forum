@@ -6,7 +6,6 @@ export const isAuthenticated = async () => {
         "Content-Type": "application/json",
       },
     });
-
     const resp = await response.json();
 
     if (!response.ok || resp.status_code === 401) {

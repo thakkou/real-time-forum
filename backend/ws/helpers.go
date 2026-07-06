@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"forum/database"
 	// "forum/ws"
@@ -34,18 +35,18 @@ type TypingData struct {
 type Client struct {
 	conn   *websocket.Conn
 	isAuth bool
-	id     string
+	id     string // unique per-connection id (new)
+	userID string // the actual user this connection belongs to
 }
 
 var (
-	Clients = make(map[string]*Client)
+	Clients = make(map[string]map[string]*Client) // make(map[string]*Client)
 	mu      sync.RWMutex
 )
 
 // this func send the notification and the data to all users exept u
-func BroadcastExcept(senderID string, eventType string, data any) {
+func BroadcastExcept(senderUserID string, eventType string, data any) {
 	fmt.Println("start broadcasting")
-
 	payload := map[string]any{
 		"event_type": eventType,
 		"data":       data,
@@ -53,17 +54,18 @@ func BroadcastExcept(senderID string, eventType string, data any) {
 
 	mu.RLock()
 	clientsCopy := make([]*Client, 0, len(Clients))
-
-	for userID, client := range Clients {
-		if userID == senderID {
+	for userID, conns := range Clients {
+		if userID == senderUserID {
 			continue
 		}
-		clientsCopy = append(clientsCopy, client)
+		for _, c := range conns {
+			clientsCopy = append(clientsCopy, c)
+		}
 	}
 	mu.RUnlock()
 
-	for _, client := range clientsCopy {
-		if err := client.conn.WriteJSON(payload); err != nil {
+	for _, c := range clientsCopy {
+		if err := c.conn.WriteJSON(payload); err != nil {
 			fmt.Println("broadcast error:", err)
 		}
 	}
@@ -72,7 +74,15 @@ func BroadcastExcept(senderID string, eventType string, data any) {
 // this function send the notification to a special user
 func NotifyUser(userID string, eventType string, data any) {
 	mu.RLock()
-	client, ok := Clients[userID]
+	conns, ok := Clients[userID]
+	fmt.Printf("[DEBUG] NotifyUser userID=%s found=%v connCount=%d\n", userID, ok, len(conns))
+	var clientList []*Client
+	if ok {
+		clientList = make([]*Client, 0, len(conns))
+		for _, c := range conns {
+			clientList = append(clientList, c)
+		}
+	}
 	mu.RUnlock()
 
 	if !ok {
@@ -83,29 +93,62 @@ func NotifyUser(userID string, eventType string, data any) {
 		"event_type": eventType,
 		"data":       data,
 	}
-
-	client.conn.WriteJSON(payload)
+	for _, c := range clientList {
+		if err := c.conn.WriteJSON(payload); err != nil {
+			fmt.Println("notify error:", err)
+		}
+	}
 }
 
 func StoreClient(userID string, conn *websocket.Conn) *Client {
+	connID := strconv.FormatInt(time.Now().UnixNano(), 10) // or use github.com/google/uuid
+
 	client := &Client{
-		conn: conn,
-		id:   userID,
+		conn:   conn,
+		id:     connID,
+		userID: userID,
 	}
 
 	mu.Lock()
-	Clients[userID] = client
-	// get Online users
-	online := make([]string, 0, len(Clients))
-	for id := range Clients {
-		online = append(online, id)
+	if Clients[userID] == nil {
+		Clients[userID] = make(map[string]*Client)
 	}
-	mu.Unlock()
-	NotifyUser(client.id, "init", online)
+	wasOnline := len(Clients[userID]) > 0
+	Clients[userID][connID] = client
 
-	BroadcastExcept(client.id, "client_connect", client.id)
+	online := make([]string, 0, len(Clients))
+	for uid := range Clients {
+		online = append(online, uid)
+	}
+	fmt.Printf("[DEBUG] StoreClient userID=%s connID=%s totalConnsForUser=%d totalUsers=%d\n",
+		userID, connID, len(Clients[userID]), len(Clients))
+	mu.Unlock()
+
+	NotifyUser(userID, "init", online)
+
+	if !wasOnline {
+		BroadcastExcept(userID, "client_connect", userID)
+	}
 
 	return client
+}
+
+func RemoveClient(client *Client) {
+	fmt.Println("1")
+	mu.Lock()
+	nowEmpty := false
+	if conns, ok := Clients[client.userID]; ok {
+		delete(conns, client.id)
+		if len(conns) == 0 {
+			delete(Clients, client.userID)
+			nowEmpty = true
+		}
+	}
+	mu.Unlock()
+
+	if nowEmpty {
+		BroadcastExcept(client.userID, "client_disconnect", client.userID)
+	}
 }
 
 func HandleMessage(client *Client, raw []byte) {
@@ -142,7 +185,7 @@ func HandleMessage(client *Client, raw []byte) {
 		fmt.Println("data", data)
 
 		// handle create message with data like did in the route !
-		senderId, _ := strconv.Atoi(client.id)
+		senderId, _ := strconv.Atoi(client.userID)
 		handleMessageCreation(senderId, data)
 
 		fmt.Println("beforeeeeeeeeeee")

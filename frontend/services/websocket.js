@@ -39,7 +39,7 @@ class SocketManager {
             console.error('SharedWorker crashed:', e);
         };
 
-        // disconnect worker when closing the tab
+        // disconnect worker when closing the tab (does work)
         window.addEventListener('pagehide', () => {
             this.worker.port.postMessage({ type: 'disconnect' });
         });
@@ -78,16 +78,31 @@ class SocketManager {
     }
 
     disconnect() {
+        console.log('ws.disconnect')
+        // this.worker.port.postMessage({
+        //     type: 'disconnect',
+        //     wsUri: window.env.wsUri
+        // });
         // usually do nothing
         // other tabs may still be using the socket
 
         // if removing the last tab didnt close the socket !
         // this.socket?.close();
     }
+
+    // close() {
+    //     console.log('ws.close')
+    //     this.socket?.close();
+    //     console.log('ws.close after')
+    // }
 }
 
 export const ws = new SocketManager();
 export const onlineUsers = new Set();
+
+// setInterval(() => {
+//   console.log(onlineUsers.size);
+// }, 1000);
 
 ws.on("init", (data) => {
     console.log("init users:", data);

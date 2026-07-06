@@ -2,6 +2,7 @@
 
 const ports = []; // new Set(); -> must change methods and use [...x] to use it ! 
 let socket = null;
+let onlineUsersCache = []; // <-- new: worker-level source of truth
 
 function broadcast(message) {
     for (let i = ports.length - 1; i >= 0; i--) {
@@ -12,52 +13,27 @@ function broadcast(message) {
             ports.splice(i, 1);
         }
     }
-    // ports.forEach(port => {
-    //     port.postMessage(message);
-    // });
 }
 
 function connect(wsUri) {
-
-    if (
-        socket &&
-        (
-            socket.readyState === WebSocket.OPEN ||
-            socket.readyState === WebSocket.CONNECTING
-        )
-    ) {
-        console.log('ports')
+    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
         return;
     }
-
-    console.log('before creating socket')
     socket = new WebSocket(wsUri);
-    console.log('socket')
 
     socket.onopen = () => {
         console.log('Worker WS connected');
-
-        broadcast({
-            type: '__open'
-        });
+        broadcast({ type: '__open' });
     };
-
-    socket.onclose = () => {
-        console.log('Worker WS disconnected');
-
-        broadcast({
-            type: '__close'
-        });
-
+    socket.onclose = (event) => {
+        console.log('Worker WS disconnected — code:', event.code, 'reason:', event.reason);
+        broadcast({ type: '__close' });
         socket = null;
     };
-
     socket.onerror = (err) => {
         console.error(err);
     };
-
     socket.onmessage = (event) => {
-        console.log('[worker] raw frame:', event.data); // <-- checkpoint 1
         let msg;
         try {
             msg = JSON.parse(event.data);
@@ -65,7 +41,19 @@ function connect(wsUri) {
             console.error('Bad WS payload:', event.data);
             return;
         }
-        console.log('[worker] parsed, broadcasting to', ports.length, 'ports:', msg); // <-- checkpoint 2
+
+        // keep the cache in sync with server events (added part to handle new tabs)
+        if (msg.event_type === 'init') {
+            onlineUsersCache = msg.data;
+        } else if (msg.event_type === 'client_connect') {
+            if (!onlineUsersCache.includes(msg.data)) {
+                onlineUsersCache.push(msg.data);
+            }
+        } else if (msg.event_type === 'client_disconnect') {
+            onlineUsersCache = onlineUsersCache.filter(id => id !== msg.data);
+        }
+        // end
+
         broadcast({ type: '__message', payload: msg });
     };
 }
@@ -80,15 +68,18 @@ onconnect = (event) => {
         const msg = e.data;
         switch (msg.type) {
             case 'connect':
-                // if (socket && socket.readyState === WebSocket.OPEN) {
-                //     console.log(socket)
-                //     port.postMessage({ type: '__open' });
-                // } else {
-                //     console.log('connecting...')
-                //     connect(msg.wsUri);
-                // }
-                // break;
-                connect(msg.wsUri);
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    // socket already exists — this port missed the real "init"
+                    // event from the server, so replay our cached state to it (second added part)
+                    port.postMessage({ type: '__open' });
+                    port.postMessage({
+                        type: '__message',
+                        payload: { event_type: 'init', data: onlineUsersCache }
+                    });
+                    // end
+                } else {
+                    connect(msg.wsUri);
+                }
                 break;
             case 'send':
                 if (socket && socket.readyState === WebSocket.OPEN) {
@@ -97,8 +88,11 @@ onconnect = (event) => {
                 break;
             case 'disconnect':
                 const idx = ports.indexOf(port);
-                console.log(ports.splice)
                 if (idx !== -1) ports.splice(idx, 1);
+                if (ports.length === 0 && socket) {
+                    socket.close();
+                    socket = null;
+                }
                 break;
         }
     };

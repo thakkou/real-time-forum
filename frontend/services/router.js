@@ -1,6 +1,5 @@
 import { isAuthenticated } from '../services/auth.js';
 import { ws } from './websocket.js';
-import { Header } from '../components/Header.js';
 
 // Store loaded scripts to avoid duplicates
 // const loadedScripts = new Map();
@@ -49,13 +48,6 @@ export const routes = { // turn it to map !
         auth: true,
     }
 };
-
-// code that need to implement 'navigate' method: (form actions)
-// . logout form in Header
-// . login form in LoginForm
-// . post creation in PostCreationForm
-// . comment creation in Post
-// . register form in RegisterForm
 
 async function guard(path) {
     const matched = matchRoute(path);
@@ -116,22 +108,13 @@ export const router = {
     },
 
     async init() {
-
         window.addEventListener('popstate', async () => {
             const nickname = await guard(location.pathname);
             this.render({ nickname });
         });
-    
 
         const nickname = await guard(location.pathname);
-        //add the header to UI
-        if (nickname) {
-            ws.connect();
-
-
-            
-
-        }
+        if (nickname) ws.connect();
 
         // the page is fully rendered first, then the specific scripts are loded after !
         await this.render({ nickname });
@@ -139,7 +122,6 @@ export const router = {
         // await loadPageScript(window.location.pathname.slice(1)); // feed default
 
         const scriptName = location.pathname.split('/')[1] || 'feed';
-        console.log(2)
         await loadPageScript(scriptName);
         // loaded first time, must be :
         // 1. chnaged depending on app state (first page) x
