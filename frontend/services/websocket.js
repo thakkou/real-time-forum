@@ -17,6 +17,10 @@ class SocketManager {
             const workerMsg = e.data;
             console.log(workerMsg)
 
+            if (workerMsg.type === '__logged_out') {
+                window.location.href = '/login';
+                return;
+            }
             if (workerMsg.type !== '__message') {
                 return;
             }
@@ -41,7 +45,17 @@ class SocketManager {
 
         // disconnect worker when closing the tab (does work)
         window.addEventListener('pagehide', () => {
-            this.worker.port.postMessage({ type: 'disconnect' });
+            if (state.isSelfTyping) {
+                ws.send({
+                    event_type: "typing:stop",
+                    data: {
+                        userId: window.profile.id,
+                        conversationId: state.currentConversationId,
+                        receiverId: state.currentReceiverId,
+                    }
+                });
+            }
+            // this.worker.port.postMessage({ type: 'disconnect' }); // is handled by send !
         });
     }
 
@@ -77,7 +91,7 @@ class SocketManager {
                 .filter(cb => cb !== callback);
     }
 
-    disconnect() {
+    disconnect() { // don't know what is used for ?!
         console.log('ws.disconnect')
         // this.worker.port.postMessage({
         //     type: 'disconnect',
@@ -90,11 +104,9 @@ class SocketManager {
         // this.socket?.close();
     }
 
-    // close() {
-    //     console.log('ws.close')
-    //     this.socket?.close();
-    //     console.log('ws.close after')
-    // }
+    logout() {
+        this.worker.port.postMessage({ type: 'logout' });
+    }
 }
 
 export const ws = new SocketManager();

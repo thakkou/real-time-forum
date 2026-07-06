@@ -57,16 +57,17 @@ export const logout = async () => {
       credentials: "include",
     });
 
-    const data = await response.json();
+    // const data = await response.json();
 
+    // console.log(response)
     if (!response.ok) {
-      throw new Error(data.message || "Logout failed");
+      throw new Error("Logout failed"); // data.message to debug
     }
 
-    return data;
+    // return data;
   } catch (error) {
     console.error("Logout error:", error);
-    throw error;
+    // throw error;
   }
 };
 

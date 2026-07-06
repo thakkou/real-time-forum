@@ -13,7 +13,8 @@ const state = {
   currentReceiverId: null,
   isTyping: false,         // Tracks if the counter-party is typing
   showTyping: false,        // FORCE OVERRIDE: Set to true to see the animation all the time!
-  
+  partnerTypingTimeout: null,
+
   // 🟢 NEW LOCAL TYPING TRACKERS
   isSelfTyping: false,     // Tracks if YOU are currently typing
   selfTypingTimeout: null, // References the debouncer timer instance
@@ -288,6 +289,7 @@ function setActiveConversation(userId) {
 ========================= */
 async function openConversation(item) {
   const { profile: user, conversation: chat } = item;
+  clearTimeout(state.partnerTypingTimeout);
   // console.log(user, chat)
   setActiveConversation(user.id)
 
@@ -603,7 +605,20 @@ export const handleIncomingTypingEvent = (data) => {
     String(state.currentReceiverId) === String(userId)
   ) {
     const activeName = dom.chatHeaderName ? dom.chatHeaderName.textContent : "them";
-    setPartnerTyping(is_typing, activeName);
+
+
+    clearTimeout(state.partnerTypingTimeout);
+
+    if (is_typing) {
+      setPartnerTyping(true, activeName);
+      // safety net: force-clear if no further typing:start or a typing:stop arrives in time
+      state.partnerTypingTimeout = setTimeout(() => {
+        setPartnerTyping(false, activeName);
+      }, 3000); // slightly longer than the sender's own 1500ms debounce
+    } else {
+      setPartnerTyping(false, activeName);
+    }
+    // setPartnerTyping(is_typing, activeName);
   }
 };
 

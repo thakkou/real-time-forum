@@ -27,7 +27,7 @@ function connect(wsUri) {
     };
     socket.onclose = (event) => {
         console.log('Worker WS disconnected — code:', event.code, 'reason:', event.reason);
-        broadcast({ type: '__close' });
+        broadcast({ type: event.reason === 'logged out' ? '__logged_out' : '__close' });
         socket = null;
     };
     socket.onerror = (err) => {
@@ -85,6 +85,15 @@ onconnect = (event) => {
                 if (socket && socket.readyState === WebSocket.OPEN) {
                     socket.send(JSON.stringify(msg.payload));
                 }
+                break;
+            case 'logout':
+                console.log('[worker] logout requested, closing socket');
+                if (socket) {
+                    socket.close(1000, 'user logout');
+                    socket = null;
+                }
+                onlineUsersCache = [];
+                broadcast({ type: '__logged_out' }); // <-- distinct from __close
                 break;
             case 'disconnect':
                 const idx = ports.indexOf(port);

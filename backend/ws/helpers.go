@@ -151,6 +151,30 @@ func RemoveClient(client *Client) {
 	}
 }
 
+func CloseUser(userID string) {
+	mu.Lock()
+	conns, ok := Clients[userID]
+	if ok {
+		delete(Clients, userID)
+	}
+	mu.Unlock()
+
+	if !ok {
+		return
+	}
+
+	for _, c := range conns {
+		c.conn.WriteControl(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "logged out"),
+			time.Now().Add(time.Second),
+		)
+		c.conn.Close()
+	}
+
+	BroadcastExcept(userID, "client_disconnect", userID)
+}
+
 func HandleMessage(client *Client, raw []byte) {
 	fmt.Println(string(raw))
 
