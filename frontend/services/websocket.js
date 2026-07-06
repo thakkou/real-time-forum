@@ -68,6 +68,7 @@ class SocketManager {
     }
 
     send(data) {
+        console.log('[page] ws.send called with:', data);
         this.worker.port.postMessage({
             type: 'send',
             payload: data
@@ -112,10 +113,6 @@ class SocketManager {
 export const ws = new SocketManager();
 export const onlineUsers = new Set();
 
-// setInterval(() => {
-//   console.log(onlineUsers.size);
-// }, 1000);
-
 ws.on("init", (data) => {
     console.log("init users:", data);
     data.forEach(id => onlineUsers.add(id));
@@ -134,6 +131,7 @@ ws.on("client_disconnect", (userId) => {
 });
 
 ws.on("new_post",(data)=>{
+    //
 });
 
 ws.on("new_message", (data) => {
@@ -141,6 +139,14 @@ ws.on("new_message", (data) => {
     showToast(data.text, "success");
     console.log(data)
     reRenderMessages(data)
+});
+
+ws.on("message_sent", (data) => {
+    console.log("message sent from another tab:", data);
+    reRenderMessages({
+        ...data,
+        senderId: window.profile.id,
+    });
 });
 
 ws.on("typing:start", (data) => {

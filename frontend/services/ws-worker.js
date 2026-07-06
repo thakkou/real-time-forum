@@ -82,8 +82,27 @@ onconnect = (event) => {
                 }
                 break;
             case 'send':
+                console.log('[worker] port received message:', e.data);
                 if (socket && socket.readyState === WebSocket.OPEN) {
                     socket.send(JSON.stringify(msg.payload));
+                    // echo to this user's OTHER tabs immediately (no server round-trip)
+                    if (msg.payload.event_type === 'new_message') {
+                        console.log(12)
+                        ports.forEach(p => {
+                            if (p === port) return; // skip the sender's own tab
+                            try {
+                                p.postMessage({
+                                    type: '__message',
+                                    payload: {
+                                        event_type: 'message_sent',
+                                        data: msg.payload.data
+                                    }
+                                });
+                            } catch (err) {
+                                console.warn('Dead port during echo, will be pruned on next broadcast', err);
+                            }
+                        });
+                    }
                 }
                 break;
             case 'logout':

@@ -23,6 +23,7 @@ type WSMessage struct {
 type MessageCreationData struct {
 	ConversationID *int   `json:"conversationId"`
 	ReceiverID     int    `json:"receiverId"`
+	SenderID       int    `json:"senderId"`
 	Text           string `json:"text"`
 }
 
@@ -212,9 +213,8 @@ func HandleMessage(client *Client, raw []byte) {
 		senderId, _ := strconv.Atoi(client.userID)
 		handleMessageCreation(senderId, data)
 
-		fmt.Println("beforeeeeeeeeeee")
+		data.SenderID = senderId // add this field to MessageCreationData if not present
 		NotifyUser(strconv.Itoa(data.ReceiverID), msg.Type, data)
-		fmt.Println("afterrrrrrrrrrrrrrr")
 	case "typing:start", "typing:stop":
 		var data TypingData
 
