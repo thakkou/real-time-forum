@@ -71,7 +71,7 @@ func enrichPostWithComments(p *models.Post, userId int) error {
 		return err
 	}
 
-	comments, err := GetCommentsByPost(p.Id)
+	comments, err := GetCommentsByPost(p.Id, userId)
 	if err != nil {
 		return err
 	}
@@ -213,8 +213,15 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_ = ReactToPost(userId, postId, 1)
+		if err := ReactToPost(userId, postId, 1); err != nil {
+			if err.Error() == "post not found" {
+				utilities.WriteJSON(w, http.StatusNotFound, "post not found", nil)
+				return
+			}
 
+			utilities.WriteJSON(w, http.StatusInternalServerError, err.Error(), nil)
+			return
+		}
 		likes, dislikes, _ := GetReactionsByPost(postId)
 
 		utilities.WriteJSON(w, 200, "liked", map[string]any{
@@ -329,7 +336,7 @@ func GetPostById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comments, _ := GetCommentsByPost(id)
+	comments, _ := GetCommentsByPost(id, post.UserId)
 	post.Comments = comments
 
 	utilities.WriteJSON(w, 200, "ok", post)
