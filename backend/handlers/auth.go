@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	"forum/database"
 	"forum/models"
 	"forum/utilities"
-	"forum/ws"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -140,14 +138,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil { // http.ErrNoCookie
-		utilities.WriteJSON(w, http.StatusUnauthorized, "not authenticated", nil)
 		return
-	}
-
-	id, err := utilities.GetUserIDFromCookie(cookie.Value)
-	if err == nil {
-		userID := strconv.Itoa(id)
-		ws.CloseUser(userID) // <-- new function, closes all conns for this user
 	}
 
 	err = utilities.DeleteSession(cookie.Value)
@@ -162,7 +153,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 	})
-	utilities.WriteJSON(w, 201, `log out success`, nil)
+	utilities.WriteJSON(w, 201, `log out succes`, nil)
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {

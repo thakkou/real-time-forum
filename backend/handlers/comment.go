@@ -217,25 +217,6 @@ func GetCommentsByPost(postId int) ([]models.Comment, error) {
 			return nil, err
 		}
 
-		// =========================
-		// USER REACTION (IMPORTANT)
-		// =========================
-		var isLike int
-
-		err = database.Database.QueryRow(`
-			SELECT is_like
-			FROM COMMENT_REACTIONS
-			WHERE user_id = ? AND comment_id = ?
-		`, c.UserId, c.Id).Scan(&isLike)
-
-		if err == sql.ErrNoRows {
-			c.IsLiked = 0 // no reaction
-		} else if err != nil {
-			return nil, err
-		} else {
-			c.IsLiked = isLike // 1 or -1
-		}
-
 		comments = append(comments, c)
 	}
 
