@@ -279,8 +279,9 @@ function updatePostUI(postId, action, data) {
   const dislikeCount = post.querySelector(".dislike-count");
 
   if (action === "like") {
-    likeBtn?.classList.add("active");
     dislikeBtn?.classList.remove("active");
+    if (likeBtn?.classList.contains("active")) likeBtn?.classList.remove("active");
+    else likeBtn?.classList.add("active");
 
     if (data) {
       if (likeCount) likeCount.innerText = data.likes;
@@ -289,8 +290,9 @@ function updatePostUI(postId, action, data) {
   }
 
   if (action === "dislike") {
-    dislikeBtn?.classList.add("active");
     likeBtn?.classList.remove("active");
+    if (dislikeBtn?.classList.contains("active")) dislikeBtn?.classList.remove("active");
+    else dislikeBtn?.classList.add("active");
 
     if (data) {
       if (likeCount) likeCount.innerText = data.likes;

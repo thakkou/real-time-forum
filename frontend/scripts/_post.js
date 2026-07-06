@@ -71,10 +71,10 @@ function setupEventListeners() {
   document.addEventListener("click", async (e) => {
     const likeBtn = e.target.closest(".like-btn");
     const dislikeBtn = e.target.closest(".dislike-btn");
+    const deleteBtn = e.target.closest(".delete-btn");
     const commentLikeBtn = e.target.closest(".comment-like-btn");
     const commentDislikeBtn = e.target.closest(".comment-dislike-btn");
-    const commentDeleteBtn = e.target.closest(".comment-delete-btn"); 
-    const deleteBtn = e.target.closest(".delete-btn");
+    const commentDeleteBtn = e.target.closest(".comment-delete-btn");
 
     // Post Like/Dislike
     if (likeBtn || dislikeBtn) {
