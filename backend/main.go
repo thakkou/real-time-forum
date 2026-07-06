@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strings"
 
 	"forum/database"
 	"forum/handlers"
@@ -41,27 +39,29 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	if err := InitEnviron(); err != nil {
-		log.Fatalf("Environ initialization failed: %v", err)
-	}
+	// if err := InitEnviron(); err != nil {
+	// 	log.Fatalf("Environ initialization failed: %v", err)
+	// }
 
-	// Check for refresh command
-	refresh := len(os.Args) > 1 && os.Args[1] == "refresh"
-
-	if err := database.Init(refresh); err != nil {
+	if err := database.Init(); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
+	// this health check for server
 
 	http.HandleFunc("/health", healthHandler)
+
+	// this websokets
 	http.HandleFunc("/ws", handlers.HandlerWs)
+	// test ws
 	http.HandleFunc("/ws/test", handlers.TestBroadcast)
 	http.HandleFunc("/assets/", handlers.Static)
 	http.HandleFunc("/uploads/", handlers.Static)
 
+	// http.HandleFunc("/", handlers.Forum)
+
 	routes.RegisterRoutes()
 
 	log.Println("Server running on http://localhost:8080")
-
 	handler := corsMiddleware(http.DefaultServeMux)
 
 	if err := http.ListenAndServe(":8080", handler); err != nil {
@@ -69,31 +69,31 @@ func main() {
 	}
 }
 
-func InitEnviron() error {
-	bytes, err := os.ReadFile(".env")
-	if err != nil {
-		return err
-	}
-	lines := strings.Split(string(bytes), "\n")
-	for _, line := range lines {
-		if len(line) == 0 || strings.HasPrefix(line, "#") {
-			continue
-		}
+// func InitEnviron() error {
+// 	bytes, err := os.ReadFile(".env")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	lines := strings.Split(string(bytes), "\n")
+// 	for _, line := range lines {
+// 		if len(line) == 0 || strings.HasPrefix(line, "#") {
+// 			continue
+// 		}
 
-		// Split key and value
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
+// 		// Split key and value
+// 		parts := strings.SplitN(line, "=", 2)
+// 		if len(parts) != 2 {
+// 			continue
+// 		}
 
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-		os.Setenv(key, value)
-	}
+// 		key := strings.TrimSpace(parts[0])
+// 		value := strings.TrimSpace(parts[1])
+// 		os.Setenv(key, value)
+// 	}
 
-	handlers.GOOGLE_CLIENT_ID = os.Getenv("GOOGLE_CLIENT_ID")
-	handlers.GOOGLE_CLIENT_SECRET = os.Getenv("GOOGLE_CLIENT_SECRET")
-	handlers.GITHUB_CLIENT_ID = os.Getenv("GITHUB_CLIENT_ID")
-	handlers.GITHUB_CLIENT_SECRET = os.Getenv("GITHUB_CLIENT_SECRET")
-	return nil
-}
+// 	handlers.GOOGLE_CLIENT_ID = os.Getenv("GOOGLE_CLIENT_ID")
+// 	handlers.GOOGLE_CLIENT_SECRET = os.Getenv("GOOGLE_CLIENT_SECRET")
+// 	handlers.GITHUB_CLIENT_ID = os.Getenv("GITHUB_CLIENT_ID")
+// 	handlers.GITHUB_CLIENT_SECRET = os.Getenv("GITHUB_CLIENT_SECRET")
+// 	return nil
+// }

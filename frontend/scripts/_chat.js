@@ -533,7 +533,7 @@ export const reRenderMessages = (data) => {
       text: text,
       created_at: created_at || new Date().toISOString()
     };
-    const isMine = String(senderId) !== String(state.currentReceiverId); 
+    const isMine = String(senderId) === String(state.currentReceiverId); 
     appendMessage(incomingMsg, isMine);
   }
 };

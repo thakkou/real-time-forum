@@ -123,11 +123,8 @@ func RegisterRoutes() {
 		),
 	)
 	// conversation and message conversation
-	http.HandleFunc(
-		"/api/messages",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.SendMessage, true),
-			3*time.Second,
-		),
-	)
+	// http.HandleFunc(
+	// 	"/api/messages",
+	// middlewares.CheckSessionCookie(handlers.SendMessage, true),
+	// )
 }

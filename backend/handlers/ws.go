@@ -20,6 +20,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func HandlerWs(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("[DEBUG] HandlerWs invoked")
 	var userId string
 
 	cookie, err := r.Cookie("session_id")

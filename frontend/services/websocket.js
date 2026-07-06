@@ -139,6 +139,7 @@ ws.on("new_post",(data)=>{
 ws.on("new_message", (data) => {
     console.log("new message:", data);
     showToast(data.text, "success");
+    console.log(data)
     reRenderMessages(data)
 });
 

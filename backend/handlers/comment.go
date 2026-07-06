@@ -184,13 +184,10 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetCommentsByPost
-func GetCommentsByPost(postId, userId int) ([]models.Comment, error) {
+func GetCommentsByPost(postId int) ([]models.Comment, error) {
 	var comments []models.Comment
-
 	rows, err := database.Database.Query(
-		`SELECT id, user_id, created_at, text
-		 FROM comments
-		 WHERE post_id = ?`,
+		"SELECT id, user_id, created_at, text FROM Comments WHERE post_id = ?",
 		postId,
 	)
 	if err != nil {
@@ -200,46 +197,43 @@ func GetCommentsByPost(postId, userId int) ([]models.Comment, error) {
 
 	for rows.Next() {
 		var c models.Comment
-
 		if err := rows.Scan(&c.Id, &c.UserId, &c.Created_at, &c.Text); err != nil {
 			return nil, fmt.Errorf("getCommentsByPost scan error: %v", err)
 		}
 
-		// Get nickname
+		// get username
 		if err := database.Database.QueryRow(
-			`SELECT nickname
-			 FROM users
-			 WHERE id = ?`,
-			c.UserId,
+			"SELECT u.nickname FROM users u INNER JOIN comments c ON c.user_id = u.id WHERE c.id = ?",
+			c.Id,
 		).Scan(&c.Nickname); err != nil {
-			return nil, fmt.Errorf("getCommentsByPost nickname error: %v", err)
+			return nil, fmt.Errorf("getCommentsByPost username error: %v", err)
 		}
 
-		// Time ago
+		// get timeago
 		c.TimeAgo = utilities.TimeAgo(c.Created_at)
 
-		// Reaction counts
-		c.LikeCount, c.DislikeCount, err = GetReactionsByComment(c.Id)
-		if err != nil {
+		// get reactions
+		if c.LikeCount, c.DislikeCount, err = GetReactionsByComment(c.Id); err != nil {
 			return nil, err
 		}
 
-		// Current user's reaction
-		var reaction int
-		err = database.Database.QueryRow(
-			`SELECT is_like
-			 FROM comment_reactions
-			 WHERE user_id = ? AND comment_id = ?`,
-			userId,
-			c.Id,
-		).Scan(&reaction)
+		// =========================
+		// USER REACTION (IMPORTANT)
+		// =========================
+		var isLike int
+
+		err = database.Database.QueryRow(`
+			SELECT is_like
+			FROM COMMENT_REACTIONS
+			WHERE user_id = ? AND comment_id = ?
+		`, c.UserId, c.Id).Scan(&isLike)
 
 		if err == sql.ErrNoRows {
 			c.IsLiked = 0 // no reaction
 		} else if err != nil {
 			return nil, err
 		} else {
-			c.IsLiked = reaction // 1 = like, -1 = dislike
+			c.IsLiked = isLike // 1 or -1
 		}
 
 		comments = append(comments, c)
@@ -248,7 +242,6 @@ func GetCommentsByPost(postId, userId int) ([]models.Comment, error) {
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("getCommentsByPost rows error: %v", err)
 	}
-
 	return comments, nil
 }
 
