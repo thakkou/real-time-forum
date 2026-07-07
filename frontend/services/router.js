@@ -40,7 +40,12 @@ export const routes = { // turn it to map !
         auth: false,
     },
 
-    // 'error': () => import('../pages/error.js'),
+    // 'error': {
+    //     method: 'GET',
+    //     name:"error",
+    //     page: () => import('../pages/error.js'),
+    //     auth: false, // can be auth and not
+    // },
 
     '/chat': {
         method: 'GET',
@@ -50,15 +55,14 @@ export const routes = { // turn it to map !
 };
 
 async function guard(path) {
+    console.log(path)
     const matched = matchRoute(path);
 
-    // if (!matched) {
-    //     history.pushState({}, '', '/');
-    //     return null;
-    // }
+    if (!matched) {
+        return null;
+    }
 
     const requiresAuth = matched.route.auth;
-
     const me = await isAuthenticated();
     if (requiresAuth && !me.authenticated) {
         path = '/login';
@@ -71,32 +75,50 @@ async function guard(path) {
 
 
 export const router = {
+    async error(status, message) {
+        console.log('error')
+        const errorPage = await import('../pages/error.js');
+        document.querySelector('#app').innerHTML =
+            await errorPage.render({
+                status: status,
+                message: message,
+            });
+        return;
+    },
+
     async navigate(path) {
+        console.log('navigate')
         // check if auth (do also for init())
+        console.log(0)
         const nickname = await guard(path);
+        console.log(1)
 
         await this.render({ nickname: nickname });
+        console.log(2)
 
-        // Load the page-specific script
-        let scriptName = path.slice(1) || 'feed';
-        if (scriptName.includes('/')) scriptName = scriptName.slice(0, scriptName.indexOf('/'))
-        await loadPageScript(scriptName);
+        if (nickname || path === '/login' || path === '/register') {
+            // Load the page-specific script
+            let scriptName = path.slice(1) || 'feed';
+            if (scriptName.includes('/')) scriptName = scriptName.slice(0, scriptName.indexOf('/'))
+            await loadPageScript(scriptName);
+        }
     },
 
     async render(data = {}) {
+        console.log('render')
         const matched = matchRoute(location.pathname);
 
         if (!matched) {
-            document.body.innerHTML = '<h1>404</h1>';
+            this.error(404, "Page Not Found");
             return;
         }
 
         const loader = matched.route.page;
 
-        if (!loader) {
-            document.body.innerHTML = '<h1>404</h1>';
-            return;
-        }
+        // if (!loader) {
+        //     document.body.innerHTML = '<h1>404</h1>';
+        //     return;
+        // }
 
         const page = await loader();
 
@@ -108,24 +130,29 @@ export const router = {
     },
 
     async init() {
+        console.log('init')
+        const path = location.pathname;
         window.addEventListener('popstate', async () => {
-            const nickname = await guard(location.pathname);
+            const nickname = await guard(path);
             this.render({ nickname });
         });
 
-        const nickname = await guard(location.pathname);
-        if (nickname) ws.connect();
+        const nickname = await guard(path);
 
         // the page is fully rendered first, then the specific scripts are loded after !
         await this.render({ nickname });
         // Load the page-specific script
         // await loadPageScript(window.location.pathname.slice(1)); // feed default
 
-        const scriptName = location.pathname.split('/')[1] || 'feed';
-        await loadPageScript(scriptName);
-        // loaded first time, must be :
-        // 1. chnaged depending on app state (first page) x
-        // 2. not loaded if already exists (same in navigate) -> is default behavior maybe !?
+        if (nickname) ws.connect();
+
+        if (nickname || path === '/login' || path === '/register') {
+            const scriptName = path.split('/')[1] || 'feed';
+            await loadPageScript(scriptName);
+            // loaded first time, must be :
+            // 1. chnaged depending on app state (first page) x
+            // 2. not loaded if already exists (same in navigate) -> is default behavior maybe !?
+        }
     }
 };
 

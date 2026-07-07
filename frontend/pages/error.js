@@ -7,6 +7,6 @@
 
 import { Error } from '../components/Error.js';
 
-export async function render() {
-    return Error(200, "hello"); // just example !
+export async function render(data = {}) {
+    return Error(data.status, data.message);
 }

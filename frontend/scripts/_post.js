@@ -12,10 +12,8 @@ import { CommentResolver, CreatComment } from "../api/comments.js";
    INITIALIZATION & RENDER LIEFOCYCLE
    ================================================================ */
 export async function setup() {
-  console.log(1)
   try {  
-      await setupPostPage(); 
-
+    await setupPostPage(); 
     setupEventListeners();
   } catch (err) {
     console.error("Failed to load page:", err.message);
@@ -45,7 +43,7 @@ async function setupPostPage() {
   if (!wrapper) return;
 
   if (!postId) {
-    wrapper.innerHTML = PostNotFound();
+    wrapper.innerHTML = window.error(404, "Post Not Found"); // PostNotFound();
     return;
   }
 
@@ -55,11 +53,11 @@ async function setupPostPage() {
     if (res && res.data) {
       wrapper.innerHTML = Post(res.data, { withComments: true });
     } else {
-      wrapper.innerHTML = PostNotFound();
+      wrapper.innerHTML = window.error(404, "Post Not Found"); // PostNotFound();
     }
   } catch (err) {
-    console.error("Failed to synchronize layout view:", err);
-    wrapper.innerHTML = PostNotFound();
+    console.log("Post Not Found"); // err to debug
+    wrapper.innerHTML = window.error(404, "Post Not Found"); // PostNotFound();
   }
 }
 
