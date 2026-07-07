@@ -19,6 +19,7 @@ const state = {
   // 🟢 NEW LOCAL TYPING TRACKERS
   isSelfTyping: false,     // Tracks if YOU are currently typing
   selfTypingTimeout: null, // References the debouncer timer instance
+  selfTypingHeartbeat: null, // <-- new
   
   // 🔄 Pagination States
   isLoadingOlder: false,
@@ -95,16 +96,12 @@ function handleLocalTypingActivity() {
 
   if (!state.isSelfTyping) {
     state.isSelfTyping = true;
-    console.log('start typing')
-    console.log(window.profile)
-    ws.send({
-      event_type: "typing:start",
-      data: {
-        userId:window.profile.id,
-        conversationId: state.currentConversationId,
-        receiverId: state.currentReceiverId,
-      }
-    });
+    sendTypingStart();
+
+    // heartbeat: keep re-announcing "still typing" every 2s while active
+    state.selfTypingHeartbeat = setInterval(() => {
+      sendTypingStart();
+    }, 2000);
   }
 
   clearTimeout(state.selfTypingTimeout);
@@ -114,12 +111,24 @@ function handleLocalTypingActivity() {
   }, 1500);
 }
 
+function sendTypingStart() {
+  ws.send({
+    event_type: "typing:start",
+    data: {
+      userId:window.profile.id,
+      conversationId: state.currentConversationId,
+      receiverId: state.currentReceiverId,
+    }
+  });
+}
+
 function stopLocalTypingNotification() {
   if (!state.isSelfTyping) return;
   state.isSelfTyping = false;
 
   clearTimeout(state.selfTypingTimeout);
-  console.log('stop typing')
+  clearInterval(state.selfTypingHeartbeat); // <-- stop the heartbeat too
+  // console.log('stop typing')
 
   ws.send({
     event_type: "typing:stop",
@@ -616,6 +625,7 @@ export const handleIncomingTypingEvent = (data) => {
       state.partnerTypingTimeout = setTimeout(() => {
         setPartnerTyping(false, activeName);
       }, 3000); // slightly longer than the sender's own 1500ms debounce
+      // > 2000ms heartbeat interval, so a live typer never times out
     } else {
       setPartnerTyping(false, activeName);
     }
