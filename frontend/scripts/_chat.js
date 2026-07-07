@@ -1,4 +1,4 @@
-import { formatTime } from './helpers.js';
+import { formatTime,formatDate } from './helpers.js';
 import { getConversations, getConversationById } from "../api/conversations.js";
 import { onlineUsers } from "../services/websocket.js";
 import { Conversation } from "../components/Conversation.js";
@@ -372,7 +372,7 @@ function appendMessage(m, mine = false, prepend = false) {
     <div class="message-sender">${mine ? "you" : "them"}</div>
     <div class="message-row">
       <div class="message-bubble">${sanitize(m.text)}</div>
-      <div class="message-meta">${formatTime(m.created_at)}</div>
+      <div class="message-meta">${formatTime(m.created_at)},${formatDate(m.created_at)}</div>
     </div>`;
 
   if (prepend) {

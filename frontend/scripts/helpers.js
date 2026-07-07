@@ -17,3 +17,14 @@ export function sanitize(input) {
     .replace(/\u00A0/g, "&nbsp;") // non-breaking space
     .replace(/¢/g, "&cent;");
 }
+export function formatDate(date) {
+   date= new Date(date)
+  console.log(date)
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diff = (today - d) / 86400000;
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
