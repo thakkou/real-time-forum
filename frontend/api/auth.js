@@ -3,30 +3,37 @@ import { ws } from '../services/websocket.js';
 const serverURI = env.serverUri;
 
 export const login = async (credentials) => {
-	try {
-		const response = await fetch(`${serverURI}/login`, {
-			method: "POST",
-			credentials: "include",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				identifier: credentials.identifier,
-				password: credentials.password,
-			}),
-		});
-
+  try {
+    const response = await fetch(`${serverURI}/login`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        identifier: credentials.identifier,
+        password: credentials.password,
+      }),
+    });
 		const data = await response.json();
+    // if (response.status === 401) { // this checkin causes not catching error !
+    //   return {
+    //     authenticated: false,
+    //     id:            null,
+    //     nickname:      null,
+    //     last_seen:     null,
+    //   };
+    // }
 		if (!response.ok) {
 			throw new Error(data.message || "Login failed");
 		}
     ws.connect();
 		return data;
-	} catch (error) {
-		console.error("Login error:", error);
+  } catch (error) {
+		console.log("(Unauthorized): ", error);
 		throw error;
 	}
-};
+}
 
 export const register = async (userData) => {
     try {
