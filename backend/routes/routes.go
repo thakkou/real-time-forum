@@ -79,7 +79,10 @@ func RegisterRoutes() {
 	// this resolver for liking,disliking,delete
 	http.HandleFunc(
 		"/api/posts/{id}/{endpoint}",
-		middlewares.CheckSessionCookie(handlers.PostResolver, true),
+		middlewares.RateLimit(
+			middlewares.CheckSessionCookie(handlers.PostResolver, true),
+			500*time.Millisecond,
+		),
 	)
 
 	// comments

@@ -213,7 +213,10 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_ = ReactToPost(userId, postId, 1)
+		if err := ReactToPost(userId, postId, 1); err != nil {
+			utilities.WriteJSON(w, http.StatusInternalServerError, err.Error(), nil)
+			return
+		}
 
 		likes, dislikes, _ := GetReactionsByPost(postId)
 
@@ -233,8 +236,10 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_ = ReactToPost(userId, postId, -1)
-
+		if err := ReactToPost(userId, postId, -1); err != nil {
+			utilities.WriteJSON(w, http.StatusInternalServerError, err.Error(), nil)
+			return
+		}
 		likes, dislikes, _ := GetReactionsByPost(postId)
 
 		utilities.WriteJSON(w, 200, "disliked", map[string]any{

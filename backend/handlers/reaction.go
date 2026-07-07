@@ -7,36 +7,38 @@ import (
 )
 
 func ReactToPost(userId, postId int, isLikeInt int) error {
-	var isLikedInt int
+	// 1. Get the current reaction first to check if they are clicking the same button to remove it
+	var currentIsLike int
 	err := database.Database.QueryRow(
 		"SELECT is_like FROM post_reactions WHERE user_id = ? AND post_id = ?",
 		userId,
 		postId,
-	).Scan(&isLikedInt)
+	).Scan(&currentIsLike)
 
 	if err == nil {
-		// delete previous reaction
-		if _, err := database.Database.Exec(
-			"DELETE FROM post_reactions WHERE user_id = ? AND post_id = ?",
-			userId,
-			postId,
-		); err != nil {
-			return fmt.Errorf("ReactToPost delete error: %v", err)
+		// If the user clicks 'like' again when it's already liked, undo it (delete)
+		if currentIsLike == isLikeInt {
+			_, err := database.Database.Exec(
+				"DELETE FROM post_reactions WHERE user_id = ? AND post_id = ?",
+				userId,
+				postId,
+			)
+			return err
 		}
 	}
 
-	isLike := isLikeInt == 1
-	isLiked := isLikedInt == 1
-	if isLike && (err != nil || !isLiked) ||
-		!isLike && (err != nil || isLiked) {
-		if _, err := database.Database.Exec(
-			"INSERT INTO post_reactions (user_id, post_id, is_like) VALUES (?, ?, ?)",
-			userId,
-			postId,
-			isLikeInt,
-		); err != nil {
-			return fmt.Errorf("ReactToPost insert error: %v", err)
-		}
+	// 2. Otherwise, UPSERT (Insert new, or update existing if conflicting)
+	// Works perfectly in SQLite (3.24+) and MySQL
+	query := `
+        INSERT INTO post_reactions (user_id, post_id, is_like) 
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id, post_id) DO UPDATE SET is_like = excluded.is_like
+    `
+	// Note: If using MySQL instead of SQLite, swap the last line to: ON DUPLICATE KEY UPDATE is_like = VALUES(is_like)
+
+	_, err = database.Database.Exec(query, userId, postId, isLikeInt)
+	if err != nil {
+		return fmt.Errorf("ReactToPost upsert error: %v", err)
 	}
 
 	return nil

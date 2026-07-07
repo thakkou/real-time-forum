@@ -139,14 +139,14 @@ func RefreshAndSeed(db *sql.DB) error {
 	// --------------------------------------------------
 
 	_, err = tx.Exec(`
-	INSERT INTO POST_REACTIONS (user_id, post_id, is_like)
-	VALUES
-	(2,1,1),
-	(3,1,1),
-	(4,1,-1),
-	(1,2,1),
-	(5,3,1)
-	`)
+    INSERT OR IGNORE INTO POST_REACTIONS (user_id, post_id, is_like)
+    VALUES
+    (2,1,1),
+    (3,1,1),
+    (4,1,-1),
+    (1,2,1),
+    (5,3,1)
+    `)
 	if err != nil {
 		return err
 	}
