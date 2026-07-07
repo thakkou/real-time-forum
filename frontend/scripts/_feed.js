@@ -12,11 +12,23 @@ const state = {
   limite: 15,
   loading: false,
 };
+function resetState() {
+  state.offset = 0;
+  state.posts = [];
+  state.loading = false;
+  
+  // Clear the UI container so old HTML is gone
+  const container = document.querySelector(".posts");
+  if (container) {
+    container.innerHTML = "";
+  }
+}
 
 /* ======================
    INIT
 ====================== */
 export function setup() {
+   resetState();
   fetchPosts();
   setupEvents();
 }
@@ -58,12 +70,13 @@ async function fetchPosts() {
     });
 
     const posts = res.data;
-
+console.log("posts",state.posts,state.offset)
     if (posts?.length) {
       state.posts.push(...posts);
       state.offset += posts.length;
+          renderPosts(posts)
+
     }
-    renderPosts(state.posts);
   } catch (err) {
     console.error("Failed to load posts:", err);
   } finally {
