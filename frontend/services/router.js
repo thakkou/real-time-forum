@@ -106,6 +106,7 @@ export const router = {
 
     async render(data = {}) {
         console.log('render')
+
         const matched = matchRoute(location.pathname);
 
         if (!matched) {
@@ -127,6 +128,12 @@ export const router = {
                 ...data,
                 params: matched.params
             });
+
+            const path = location.pathname;
+        if (data.nickname || path === '/login' || path === '/register') {
+            const scriptName = path.split('/')[1] || 'feed';
+            await loadPageScript(scriptName);
+        }
     },
 
     async init() {

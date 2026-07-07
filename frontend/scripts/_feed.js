@@ -182,6 +182,7 @@ function toggleFilter(name, button) {
 ====================== */
 
 function setupEvents() {
+  
   const details = document.getElementById("create-post-details");
 
   details?.addEventListener("toggle", () => {
