@@ -496,6 +496,9 @@ async function sendMessage() {
   // append to ui
   appendMessage(tempMessage, true);
 
+  const receiverId = state.currentReceiverId;
+  const hadNoConversationYet = !state.currentConversationId;
+
   try {
     // ************************
     ws.send({
@@ -508,6 +511,10 @@ async function sendMessage() {
     });
     // ************************
 
+    if (hadNoConversationYet) {
+      // give the server a moment to create the conversation, then resolve it
+      setTimeout(() => resolveConversationIdIfNeeded(receiverId), 500);
+    }
 
     // const res = await createMessage({
     //   receiverId: state.currentReceiverId,
@@ -531,8 +538,24 @@ export const reRenderMessages = (data) => {
   const { conversationId, senderId, text, created_at } = data; // created at not found
   if (!dom.chatMessages) return;
 
-  console.log(state.currentConversationId, String(conversationId))
-  if (String(state.currentConversationId) === String(conversationId)) {
+  // added
+  const isFromMe = String(senderId) === String(window.profile.id);
+  const partnerId = isFromMe ? state.currentReceiverId : senderId;
+
+  const matchesOpenChat =
+    (state.currentConversationId && String(state.currentConversationId) === String(conversationId)) ||
+    String(partnerId) === String(state.currentReceiverId);
+
+  if (!matchesOpenChat) return;
+
+  // adopt the real id now that we know it
+  if (conversationId && !state.currentConversationId) {
+    state.currentConversationId = conversationId;
+  }
+  ///// end
+
+  // console.log(state.currentConversationId, String(conversationId))
+  // if (String(state.currentConversationId) === String(conversationId)) {
     if (String(senderId) === String(state.currentReceiverId)) { // why changing conversation_id to con..Id and also sender
       setPartnerTyping(false);
     }
@@ -542,11 +565,26 @@ export const reRenderMessages = (data) => {
       text: text,
       created_at: created_at || new Date().toISOString()
     };
-    const isMine = String(senderId) !== String(state.currentReceiverId); 
-    console.log("is mine",isMine)
-    appendMessage(incomingMsg, isMine);
-  }
+    // const isMine = String(senderId) === String(state.currentReceiverId); 
+    appendMessage(incomingMsg, isFromMe);
+  // }
 };
+
+async function resolveConversationIdIfNeeded(receiverId) {
+  if (state.currentConversationId) return; // already known, nothing to do
+
+  try {
+    const resp = await getConversations();
+    const items = resp.data || [];
+    const match = items.find(item => String(item.profile.id) === String(receiverId));
+
+    if (match?.conversation?.conversationId) {
+      state.currentConversationId = match.conversation.conversationId;
+    }
+  } catch (err) {
+    console.error("Failed to resolve conversation id:", err);
+  }
+}
 
 /* =========================
    TYPING INDICATOR CONTROL

@@ -3,6 +3,7 @@ package ws
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -211,9 +212,12 @@ func HandleMessage(client *Client, raw []byte) {
 
 		// handle create message with data like did in the route !
 		senderId, _ := strconv.Atoi(client.userID)
-		handleMessageCreation(senderId, data)
-
-		data.SenderID = senderId // add this field to MessageCreationData if not present
+		convID, _, err := handleMessageCreation(senderId, data) // msgID not used
+		if err != nil {
+			return
+		}
+		data.SenderID = senderId
+		data.ConversationID = &convID
 		NotifyUser(strconv.Itoa(data.ReceiverID), msg.Type, data)
 	case "typing:start", "typing:stop":
 		var data TypingData
@@ -230,7 +234,7 @@ func HandleMessage(client *Client, raw []byte) {
 	}
 }
 
-func handleMessageCreation(senderID int, data MessageCreationData) {
+func handleMessageCreation(senderID int, data MessageCreationData) (int, int64, error) { // returns conversationID, messageID, err
 	fmt.Println("========== CREATE MESSAGE START ==========")
 
 	fmt.Printf("[AUTH] sender=%d\n", senderID)
@@ -240,12 +244,12 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 	// -------------------------
 	if data.ReceiverID == 0 || data.Text == "" {
 		fmt.Println("[VALIDATION] missing fields")
-		return
+		return 0, 0, errors.New("missing fields")
 	}
 
 	if senderID == data.ReceiverID {
 		fmt.Println("[VALIDATION] user tried to message himself")
-		return
+		return 0, 0, errors.New("self messaging")
 	}
 
 	// -------------------------
@@ -266,7 +270,7 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 	tx, err := database.Database.Begin()
 	if err != nil {
 		fmt.Println("[DB] begin transaction error:", err)
-		return
+		return 0, 0, err
 	}
 	defer tx.Rollback()
 
@@ -296,7 +300,7 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 		).Scan(&exists)
 		if err != nil {
 			fmt.Println("[CONVERSATION] invalid conversation:", err)
-			return
+			return 0, 0, err
 		}
 
 		fmt.Printf("[CONVERSATION] validated id=%d\n", exists)
@@ -334,13 +338,13 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 			)
 			if err != nil {
 				fmt.Println("[CONVERSATION] create error:", err)
-				return
+				return 0, 0, err
 			}
 
 			id, err := res.LastInsertId()
 			if err != nil {
 				fmt.Println("[CONVERSATION] last insert id error:", err)
-				return
+				return 0, 0, err
 			}
 
 			conversationID = int(id)
@@ -349,7 +353,7 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 
 		} else if err != nil {
 			fmt.Println("[CONVERSATION] lookup error:", err)
-			return
+			return 0, 0, err
 		} else {
 			fmt.Printf("[CONVERSATION] found id=%d\n", conversationID)
 		}
@@ -374,7 +378,7 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 	)
 	if err != nil {
 		fmt.Println("[MESSAGE] insert error:", err)
-		return
+		return 0, 0, err
 	}
 
 	messageID, _ := result.LastInsertId()
@@ -398,7 +402,7 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 	)
 	if err != nil {
 		fmt.Println("[CONVERSATION] update preview error:", err)
-		return
+		return 0, 0, err
 	}
 
 	// -------------------------
@@ -406,7 +410,7 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 	// -------------------------
 	if err := tx.Commit(); err != nil {
 		fmt.Println("[DB] commit error:", err)
-		return
+		return 0, 0, err
 	}
 
 	fmt.Printf(
@@ -439,4 +443,7 @@ func handleMessageCreation(senderID int, data MessageCreationData) {
 	// 		"message_id":      messageID,
 	// 	},
 	// )
+
+	// at the end, after tx.Commit():
+	return conversationID, messageID, nil
 }
