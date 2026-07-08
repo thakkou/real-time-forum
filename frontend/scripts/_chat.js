@@ -9,7 +9,7 @@ import { sanitize } from './helpers.js';
    STATE MANAGEMENT
 ========================= */
 
-const state = {
+export const state = {
   currentConversationId: null,
   currentReceiverId: null,
   isTyping: false,         // Tracks if the counter-party is typing

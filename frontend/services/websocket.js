@@ -1,6 +1,5 @@
 import { showToast } from './toast.js';
-import { reRender, reRenderMessages } from '../scripts/_chat.js';
-import { handleIncomingTypingEvent } from '../scripts/_chat.js';
+import { state, reRender, reRenderMessages, handleIncomingTypingEvent } from '../scripts/_chat.js';
 
 class SocketManager {
     // console.log(window.SharedWorker);
@@ -55,7 +54,7 @@ class SocketManager {
                     }
                 });
             }
-            // this.worker.port.postMessage({ type: 'disconnect' }); // is handled by send !
+            this.worker.port.postMessage({ type: 'disconnect' }); // is handled by send !?
         });
     }
 
