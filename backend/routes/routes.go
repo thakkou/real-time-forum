@@ -79,7 +79,9 @@ func RegisterRoutes() {
 	// this resolver for liking,disliking,delete
 	http.HandleFunc(
 		"/api/posts/{id}/{endpoint}",
-		middlewares.CheckSessionCookie(handlers.PostResolver, true),
+		middlewares.RateLimit(
+
+			middlewares.CheckSessionCookie(handlers.PostResolver, true), 500*time.Millisecond),
 	)
 
 	// comments
@@ -95,7 +97,9 @@ func RegisterRoutes() {
 	// this resolver for liking,disliking,delete
 	http.HandleFunc(
 		"/api/comments/{id}/{endpoint}",
-		middlewares.CheckSessionCookie(handlers.CommentResolver, true),
+		middlewares.RateLimit(
+
+			middlewares.CheckSessionCookie(handlers.CommentResolver, true), 500*time.Millisecond),
 	)
 
 	// user routes
@@ -115,13 +119,13 @@ func RegisterRoutes() {
 		),
 	)
 
-	http.HandleFunc(
-		"/api/users/{id}",
-		middlewares.RateLimit(
-			middlewares.CheckSessionCookie(handlers.GetPostById, true),
-			3*time.Second,
-		),
-	)
+	// http.HandleFunc(
+	// 	"/api/users/{id}",
+	// 	middlewares.RateLimit(
+	// 		middlewares.CheckSessionCookie(handlers.GetPostById, true),
+	// 		3*time.Second,
+	// 	),
+	// )
 	// conversation and message conversation
 	http.HandleFunc(
 		"/api/messages",
