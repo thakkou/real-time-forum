@@ -114,15 +114,18 @@ function setupHeader(nickname) {
 }
 function extractPath(path) {
     const parts = path.split("/").filter(Boolean);
-
+console.log(parts)
     // no path => default page
     if (parts.length === 0) {
         return "feed";
     }
 
     // only /post/:id is allowed
-    if (parts.length !== 2 || parts[0] !== "post") {
-        return null;
+    if (parts.length === 2  &&  parts[0] === "post") {
+        return "post";
+    }
+    if(parts.length>=2){
+        return null
     }
 
     return parts[0]
@@ -140,6 +143,7 @@ export const router = {
         });
 },
   async navigate(path) {
+
     const nickname = await guard(path);
 
     if (nickname === null) {
@@ -151,7 +155,7 @@ export const router = {
     await this.render({ nickname });
 
     const scriptName = extractPath(path);
-
+console.log("start navigate to ",scriptName,"from path")
     await loadPageScript(scriptName);
 },
 

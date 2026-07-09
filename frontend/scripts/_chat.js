@@ -48,6 +48,7 @@ const HTML_CHARS = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'":
    INITIALIZATION
 ========================= */
 export async function setup() {
+  console.log("start setuping chat ")
   cacheDom();
 
   if (!dom.usersList) {
