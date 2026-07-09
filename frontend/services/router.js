@@ -63,20 +63,24 @@ export const routes = { // turn it to map !
 async function guard(path) {
     const matched = matchRoute(path);
 
-    // if (!matched) {
-    //     history.pushState({}, '', '/');
-    //     return null;
-    // }
+     if (!matched) {
+        await router.error(404, "page not found");
+        return null;
+    }
+   
 
     const requiresAuth = matched.route.auth;
 
-     me = await isAuthenticated();
+    me = await isAuthenticated();
+
     if (requiresAuth && !me.authenticated) {
-        path = '/login';
+        path = "/login";
     } else if (!requiresAuth && me.authenticated) {
-        path = '/';
+        path = "/";
     }
-    history.pushState({}, '', path);
+
+    history.pushState({}, "", path);
+
     return me.nickname;
 }
 async function handleLogout() {
@@ -125,23 +129,36 @@ function extractPath(path) {
 }
 
 export const router = {
-    async navigate(path) {
-        const nickname = await guard(path);
 
-        await this.render({ nickname: nickname });
+  async error(status, message) {
+    const errorPage = await import('../pages/error.js');
 
-        // Load the page-specific script
-        const scriptName =extractPath(path)
-                console.log("navigate to ",path,"script name",scriptName)
+    document.querySelector('#app').innerHTML =
+        await errorPage.render({
+            status,
+            message,
+        });
+},
+  async navigate(path) {
+    const nickname = await guard(path);
 
-        await loadPageScript(scriptName);
-    },
+    if (nickname === null) {
+        return;
+    }
+
+    setupHeader(nickname);
+
+    await this.render({ nickname });
+
+    const scriptName = extractPath(path);
+
+    await loadPageScript(scriptName);
+},
 
     async render(data = {}) {
         const matched = matchRoute(location.pathname);
 
         if (!matched) {
-            document.body.innerHTML = '<h1>404</h1>';
             return;
         }
 
