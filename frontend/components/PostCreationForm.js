@@ -34,7 +34,14 @@ export const PostCreationForm = () => (`
                 </div>
 
                 <!-- Image upload -->
-                <div class="image-upload">
+          
+
+                <button type="submit" class="btn primary">Publish</button>
+            </form>
+        </details>
+    </section>
+`);
+/*       <div class="image-upload">
                     <label class="upload-label">
                     <input 
                         type="file" 
@@ -54,10 +61,4 @@ export const PostCreationForm = () => (`
                         <img id="previewImg" />
                     </div>
                     </div>
-                </div>
-
-                <button type="submit" class="btn primary">Publish</button>
-            </form>
-        </details>
-    </section>
-`);
+                </div> */ 
