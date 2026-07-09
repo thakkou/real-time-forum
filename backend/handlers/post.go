@@ -213,15 +213,19 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_ = ReactToPost(userId, postId, 1)
+		if err := ReactToPost(userId, postId, 1); err != nil {
+			utilities.WriteJSON(w, 500, err.Error(), nil)
+			return
+		}
 
 		likes, dislikes, _ := GetReactionsByPost(postId)
+		reaction, _ := GetUserReaction(userId, postId)
 
 		utilities.WriteJSON(w, 200, "liked", map[string]any{
-			"postId":       postId,
-			"likes":        likes,
-			"dislikes":     dislikes,
-			"userReaction": "like",
+			"postId":   postId,
+			"likes":    likes,
+			"dislikes": dislikes,
+			"isLike":   reaction, // 1, 0, or -1
 		})
 
 	// =========================
@@ -233,15 +237,19 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_ = ReactToPost(userId, postId, -1)
+		if err := ReactToPost(userId, postId, -1); err != nil {
+			utilities.WriteJSON(w, 500, err.Error(), nil)
+			return
+		}
 
 		likes, dislikes, _ := GetReactionsByPost(postId)
+		reaction, _ := GetUserReaction(userId, postId)
 
 		utilities.WriteJSON(w, 200, "disliked", map[string]any{
-			"postId":       postId,
-			"likes":        likes,
-			"dislikes":     dislikes,
-			"userReaction": "dislike",
+			"postId":   postId,
+			"likes":    likes,
+			"dislikes": dislikes,
+			"isLike":   reaction, // 1, 0, or -1
 		})
 
 	// =========================

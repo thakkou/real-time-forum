@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"fmt"
 
 	"forum/database"
@@ -95,6 +96,30 @@ func GetReactionsByPost(postId int) (int, int, error) {
 		return 0, 0, fmt.Errorf("GetReactionsByPost dislikes error: %v", err)
 	}
 	return like_count, dislike_count, nil
+}
+
+func GetUserCommentReaction(userId, commentId int) (string, error) {
+	var isLike int
+
+	err := database.Database.QueryRow(`
+		SELECT is_like
+		FROM comment_reactions
+		WHERE user_id = ? AND comment_id = ?
+	`, userId, commentId).Scan(&isLike)
+
+	if err == sql.ErrNoRows {
+		return "none", nil
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	if isLike == 1 {
+		return "like", nil
+	}
+
+	return "dislike", nil
 }
 
 // GetReactionsByComment

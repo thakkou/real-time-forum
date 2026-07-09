@@ -1,16 +1,54 @@
-/* ================================================================
-   IMPORTS
-   ================================================================ */
+
 import { Header } from '../components/Header.js';
 import { Post } from "../components/Post.js";
 import { Comment } from "../components/Comment.js";
 import { PostNotFound } from "../components/PostNotFound.js";
 import { getPostByID, PostResolver } from "../api/posts.js";
 import { CommentResolver, CreatComment } from "../api/comments.js";
-
+import { updatePostUI } from './_feed.js';
 /* ================================================================
    INITIALIZATION & RENDER LIEFOCYCLE
    ================================================================ */
+
+
+
+
+   /* ================================================================
+   UI STATE
+================================================ */
+const ui = {
+  wrapper: null,
+  post: null,
+
+  likeBtn: null,
+  dislikeBtn: null,
+  deleteBtn: null,
+
+  likeCount: null,
+  dislikeCount: null,
+  commentCount: null,
+
+  commentsList: null,
+  commentForm: null,
+};
+
+function cacheUI() {
+  ui.post = document.querySelector(".post");
+
+  if (!ui.post) return;
+
+  ui.likeBtn = ui.post.querySelector(".like-btn");
+  ui.dislikeBtn = ui.post.querySelector(".dislike-btn");
+  ui.deleteBtn = ui.post.querySelector(".delete-btn");
+
+  ui.likeCount = ui.post.querySelector(".like-count");
+  ui.dislikeCount = ui.post.querySelector(".dislike-count");
+  ui.commentCount = ui.post.querySelector(".comment-count");
+
+  ui.commentsList = ui.post.querySelector(".comments-list");
+  ui.commentForm = ui.post.querySelector("#comment-form");
+}
+
 export async function setup() {
   console.log("setup post id")
   try {
@@ -51,8 +89,10 @@ async function setupPostPage() {
   try {
     const res = await getPostByID({ id: postId });
     
-    if (res && res.data) {
+    if (res?.data) {
       wrapper.innerHTML = Post(res.data, { withComments: true });
+       ui.wrapper = wrapper;
+    cacheUI();
     } else {
       wrapper.innerHTML = PostNotFound();
     }
@@ -75,14 +115,15 @@ function setupEventListeners() {
     const commentDeleteBtn = e.target.closest(".comment-delete-btn"); 
     const deleteBtn = e.target.closest(".delete-btn");
 
+
     // Post Like/Dislike
     if (likeBtn || dislikeBtn) {
       e.stopPropagation();
       const id = (likeBtn || dislikeBtn).dataset.id;
       const type = likeBtn ? "like" : "dislike";
       try {
-        await PostResolver({ id, type });
-        await setupPostPage();
+        const data =  await PostResolver({ id, type });
+        updatePostUI(id,type,data.data)
       } catch (err) {
         console.error(err);
       }
@@ -91,12 +132,14 @@ function setupEventListeners() {
 
     // Comment Like/Dislike
     if (commentLikeBtn || commentDislikeBtn) {
+
       const id = (commentLikeBtn || commentDislikeBtn).dataset.id;
       const type = commentLikeBtn ? "like" : "dislike";
       try {
-        await CommentResolver({ id, type });
-        await setupPostPage();
-      } catch (err) {
+        const data = await CommentResolver({ id, type });
+
+updateCommentUI(id,type,data.data) 
+     } catch (err) {
         console.error(err);
       }
       return;
@@ -214,3 +257,49 @@ export function getPostIdFromURL() {
   const parts = window.location.pathname.split("/");
   return parts[2];
 }
+const updateCommentUI = (id, type, data) => {
+  const comment = document.querySelector(`.comment[data-id="${id}"]`) 
+    || document.querySelector(`.comment[data-comment-id="${id}"]`);
+
+    console.log("update coment ui",data)
+  if (!comment) return;
+
+  // Delete case
+  if (type === "delete") {
+    comment.remove();
+    return;
+  }
+  console.log(comment)
+
+  const likeBtn = comment.querySelector(".comment-like-btn");
+  const dislikeBtn = comment.querySelector(".comment-dislike-btn");
+
+  const likeCount = comment.querySelector(".comment-like-count");
+  const dislikeCount = comment.querySelector(".comment-dislike-count");
+console.log(likeCount)
+console.log(dislikeCount)
+  // Update counters
+  if (likeCount) {
+    console.log("likes",data.likes)
+    likeCount.textContent = data.likes;
+  }
+
+  if (dislikeCount) {
+        console.log("dislikes",data.dislikes)
+
+    dislikeCount.textContent = data.dislikes;
+  }
+
+  // Remove old active state
+  likeBtn?.classList.remove("active");
+  dislikeBtn?.classList.remove("active");
+
+  // Set current reaction
+  if (data.userReaction === "like") {
+    likeBtn?.classList.add("active");
+  }
+
+  if (data.userReaction === "dislike") {
+    dislikeBtn?.classList.add("active");
+  }
+};

@@ -26,24 +26,24 @@ export const Comment = (comment) => (`
             ${comment.Text}
         </div>
 
-        <div class="comment-actions">
-            <button
-                class="comment-like-btn ${
-                comment.IsLiked === 1 ? "active" : ""
-                }"
-                data-id="${comment.Id}"
-            >
-                👍 ${comment.LikeCount}
-            </button>
+       <div class="comment-actions">
+    <button
+        class="comment-like-btn ${
+        comment.IsLiked === 1 ? "active" : ""
+        }"
+        data-id="${comment.Id}"
+    >
+        👍 <span class="comment-like-count">${comment.LikeCount}</span>
+    </button>
 
-            <button
-                class="comment-dislike-btn ${
-                comment.IsLiked === -1 ? "active" : ""
-                }"
-                data-id="${comment.Id}"
-            >
-                👎 ${comment.DislikeCount}
-            </button>
-        </div>
+    <button
+        class="comment-dislike-btn ${
+        comment.IsLiked === -1 ? "active" : ""
+        }"
+        data-id="${comment.Id}"
+    >
+        👎 <span class="comment-dislike-count">${comment.DislikeCount}</span>
+    </button>
+</div>
     </div>
 `);

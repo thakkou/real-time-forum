@@ -185,6 +185,7 @@ function setupEvents() {
     "scroll",
     throttle(() => {
       const scrollTop = window.scrollY;
+
       const windowHeight = window.innerHeight;
       const docHeight = document.documentElement.scrollHeight;
 
@@ -213,7 +214,6 @@ function setupEvents() {
     ) {
       return;
     }
-console.log('naigate',router)
     router.navigate(`/post/${post.dataset.postId}`);
   });
 
@@ -232,7 +232,6 @@ console.log('naigate',router)
       const res = await handleAction(likeBtn.dataset.id, "like");
       if (res?.message === "liked") {
         updatePostUI(likeBtn.dataset.id, "like", res.data);
-        showToast("liked post", "success");
       }
     }
 
@@ -240,7 +239,6 @@ console.log('naigate',router)
       const res = await handleAction(dislikeBtn.dataset.id, "dislike");
       if (res?.message === "disliked") {
         updatePostUI(dislikeBtn.dataset.id, "dislike", res.data);
-        showToast("disliked post", "success");
       }
     }
 
@@ -272,9 +270,16 @@ console.log('naigate',router)
    UPDATE UI
 ====================== */
 
-function updatePostUI(postId, action, data) {
+export function updatePostUI(postId, action, data) {
+  console.log("start update the post UI", postId, action, data);
+
   const post = document.querySelector(`.post[data-post-id="${postId}"]`);
   if (!post) return;
+
+  if (action === "delete") {
+    post.remove();
+    return;
+  }
 
   const likeBtn = post.querySelector(".like-btn");
   const dislikeBtn = post.querySelector(".dislike-btn");
@@ -282,27 +287,29 @@ function updatePostUI(postId, action, data) {
   const likeCount = post.querySelector(".like-count");
   const dislikeCount = post.querySelector(".dislike-count");
 
-  if (action === "like") {
-    likeBtn?.classList.add("active");
+  // Update counts
+  if (data) {
+    if (likeCount) likeCount.innerText = data.likes;
+    if (dislikeCount) dislikeCount.innerText = data.dislikes;
+
+    // Reset both buttons
+    likeBtn?.classList.remove("active");
     dislikeBtn?.classList.remove("active");
 
-    if (data) {
-      if (likeCount) likeCount.innerText = data.likes;
-      if (dislikeCount) dislikeCount.innerText = data.dislikes;
+    // Activate the correct one
+    switch (data.isLike) {
+      case 1:
+        likeBtn?.classList.add("active");
+        break;
+
+      case -1:
+        dislikeBtn?.classList.add("active");
+        break;
+
+      case 0:
+      default:
+        // Neither button is active
+        break;
     }
-  }
-
-  if (action === "dislike") {
-    dislikeBtn?.classList.add("active");
-    likeBtn?.classList.remove("active");
-
-    if (data) {
-      if (likeCount) likeCount.innerText = data.likes;
-      if (dislikeCount) dislikeCount.innerText = data.dislikes;
-    }
-  }
-
-  if (action === "delete") {
-    post.remove();
   }
 }

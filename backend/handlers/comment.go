@@ -153,8 +153,25 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 			utilities.WriteJSON(w, http.StatusInternalServerError, "Could not react to comment", nil)
 			return
 		}
-		utilities.WriteJSON(w, http.StatusOK, "Comment liked", nil)
 
+		likes, dislikes, err := GetReactionsByComment(commentId)
+		if err != nil {
+			utilities.WriteJSON(w, 500, "Could not get reactions", nil)
+			return
+		}
+
+		reaction, err := GetUserCommentReaction(userId, commentId)
+		if err != nil {
+			utilities.WriteJSON(w, 500, "Could not get user reaction", nil)
+			return
+		}
+
+		utilities.WriteJSON(w, http.StatusOK, "liked", map[string]any{
+			"commentId":    commentId,
+			"likes":        likes,
+			"dislikes":     dislikes,
+			"userReaction": reaction,
+		})
 	case "dislike":
 		if r.Method != http.MethodPost {
 			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
@@ -164,8 +181,24 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 			utilities.WriteJSON(w, http.StatusInternalServerError, "Could not react to comment", nil)
 			return
 		}
-		utilities.WriteJSON(w, http.StatusOK, "Comment disliked", nil)
+		likes, dislikes, err := GetReactionsByComment(commentId)
+		if err != nil {
+			utilities.WriteJSON(w, 500, "Could not get reactions", nil)
+			return
+		}
 
+		reaction, err := GetUserCommentReaction(userId, commentId)
+		if err != nil {
+			utilities.WriteJSON(w, 500, "Could not get user reaction", nil)
+			return
+		}
+
+		utilities.WriteJSON(w, http.StatusOK, "disliked", map[string]any{
+			"commentId":    commentId,
+			"likes":        likes,
+			"dislikes":     dislikes,
+			"userReaction": reaction,
+		})
 	case "delete":
 		if r.Method != http.MethodDelete {
 			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
