@@ -148,21 +148,22 @@ export const router = {
     reRender("disconnect",userId)
             });
 
+
             ws.on("new_post",(data)=>{
             });
 
             ws.on("new_message", (data) => {
-                const isMe=data.sender_id!=me.id
+                const isMe = data.isMine
 
-                 console.log(data,isMe)
+                 console.log("new message arrive from ws",data,isMe)
+
                  if(!isMe){
               showToast(data.text, "success");
-
+             reRenderMessages(data,false)
+                 }else{
+                    reRenderMessages(data,true)
                  }
-
-
-                reRenderMessages(data,true)
-            });
+ });
 
           ws.on("typing:start", (data) => {
   console.log("someone is start typing:", data);

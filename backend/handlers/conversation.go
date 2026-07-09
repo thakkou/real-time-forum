@@ -384,23 +384,26 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	)
 
 	fmt.Println("========== send the socket events ==========")
+
 	ws.NotifyUser(
 		strconv.Itoa(req.ReceiverID),
 		"new_message",
 		map[string]interface{}{
+			"isMine": false,
+
 			"conversation_id": conversationID,
 			"message_id":      messageID,
 			"sender_id":       senderID,
 			"text":            req.Text,
 		},
 	)
-	fmt.Println("send:", senderID)
-	fmt.Println("recive ID:", req.ReceiverID)
+	fmt.Println("notify user sender")
 
 	ws.NotifyUser(
 		strconv.Itoa(senderID),
 		"new_message",
 		map[string]interface{}{
+			"isMine":          true,
 			"conversation_id": conversationID,
 			"message_id":      messageID,
 			"sender_id":       senderID,

@@ -46,7 +46,7 @@ func main() {
 	}
 
 	// Check for refresh command
-	refresh := len(os.Args) > 1 && os.Args[1] == "refresh"
+	refresh := len(os.Args) > 1 && (os.Args[1] == "refresh" || os.Args[1] == "-r")
 
 	if err := database.Init(refresh); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)

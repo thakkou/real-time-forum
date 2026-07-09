@@ -131,7 +131,7 @@ func RegisterRoutes() {
 		"/api/messages",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.SendMessage, true),
-			3*time.Second,
+			100*time.Millisecond,
 		),
 	)
 }

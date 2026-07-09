@@ -303,13 +303,15 @@ async function loadInitialMessages(receiverId) {
   try {
     const res = await getConversationById(state.currentConversationId, {
       limit: state.limit,
-      offset: state.offset
+      offset: state.offset,
     });
-    
+
     const messages = res.data?.messages || [];
+
     renderMessages(messages, receiverId);
-    
-    state.offset += state.limit;
+
+    // Only increment once
+    state.offset += messages.length;
   } catch (err) {
     console.error("Error loading chat history:", err);
   }
@@ -326,6 +328,7 @@ function renderMessages(messages, receiverId) {
 }
 
 function appendMessage(m, mine = false, prepend = false) {
+
   const group = document.createElement("div");
   group.className = `message-group ${mine ? "mine" : "theirs"}`;
   group.innerHTML = `
@@ -335,6 +338,7 @@ function appendMessage(m, mine = false, prepend = false) {
       <div class="message-meta">${formatTime(m.created_at)}</div>
     </div>`;
 
+    state.offset++
   if (prepend) {
     dom.chatMessages.insertBefore(group, dom.chatMessages.firstChild);
   } else {
@@ -385,36 +389,48 @@ async function loadMoreMessages() {
   if (!state.currentConversationId || state.isLoadingOlder || !state.hasMoreMessages) return;
 
   state.isLoadingOlder = true;
-  console.log(`📡 Fetching older data context -> Limit: ${state.limit}, Offset: ${state.offset}`);
 
   try {
     const previousScrollHeight = dom.chatMessages.scrollHeight;
 
-    const res = await getConversationById(state.currentConversationId,{offset:state.offset + state.limit,limit:state.limit});
-    state.offset = state.offset + state.limit;
+    // ✅ Use the current offset, NOT offset + limit
+    const res = await getConversationById(state.currentConversationId, {
+      offset: state.offset,
+      limit: state.limit,
+    });
+
     const olderMessages = res.data?.messages || [];
 
     if (olderMessages.length === 0) {
       state.hasMoreMessages = false;
-      console.log("🏁 No more historical messages left on the server.");
     } else {
-      olderMessages.forEach((m) => {
-        appendMessage(m, m.sender_id !== state.currentReceiverId, true);
-      });
+      // If your initial render reverses the messages,
+      // keep the same order here.
+    olderMessages.forEach((m) => {
+    appendMessage(m, m.sender_id !== state.currentReceiverId, true);
+});
 
-      state.offset += state.limit;
-      dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight - previousScrollHeight;
+
+console.log(
+    "offset:",
+    state.offset,
+    "ids:",
+    olderMessages.map(m => m.id)
+);
+
+      state.offset += olderMessages.length;
+
+      dom.chatMessages.scrollTop =
+        dom.chatMessages.scrollHeight - previousScrollHeight;
     }
   } catch (err) {
-    console.error("Failed loading historical message pagination blocks:", err);
+    console.error("Failed loading historical messages:", err);
   } finally {
     state.isLoadingOlder = false;
   }
 }
 
-/* =========================
-   MESSAGE DELIVERY & SEND
-========================= */
+
 /* =========================
    MESSAGE DELIVERY & SEND
 ========================= */
