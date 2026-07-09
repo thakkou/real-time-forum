@@ -474,19 +474,22 @@ async function sendMessage() {
       receiverId: state.currentReceiverId, 
       text, 
       conversationId: state.currentConversationId 
-    });
-    if (!state.currentConversationId && res?.data?.conversationId) {
-      state.currentConversationId = res.data.conversationId;
+    });   
+    
+
+    if (!state.currentConversationId && res?.data?.conversation_id) {
+          console.log("start assign the new curent conv Id if not convid",state.currentConversationId , res?.data?.conversation_id)
+
+      state.currentConversationId = res.data.conversation_id;
     }
   } catch (err) { 
     console.error("send failed", err); 
   }
 }
 
-export const updateTheConv = (data) => {
-  if (!data.isNewConversation) return;
-
-  console.log("start get the data and update the conversations")
+export const updateTheConv = (data, isNew) => {
+  console.log("start get the data and update the conversations");
+     
   const otherUserId = data.isMine
     ? state.currentReceiverId
     : data.sender_id;
@@ -496,34 +499,42 @@ export const updateTheConv = (data) => {
   );
 
   if (conversation) {
-        console.log("start update the conv")
+    if (isNew) {
+      console.log("add conversation data");
 
-    conversation.conversation = {
-      ...(conversation.conversation || {}),
-      date: Date.now(),
-      lastMessage:data.text,
-      lastSender:otherUserId,
-      conversationId: data.conversation_id,
-    };
+      conversation.conversation = {
+        conversationId: data.conversation_id,
+        date: Date.now(),
+        lastMessage: data.text,
+        lastSender: otherUserId,
+      };
+    } else {
+      console.log("update existing conversation");
+
+      conversation.conversation = {
+        ...(conversation.conversation || {}),
+        date: Date.now(),
+        lastMessage: data.text,
+        lastSender: otherUserId,
+      };
+    }
+
+    console.log(conversation);
   }
-      console.log(conversation)
-
 
   renderUsers();
 };
 
-
 export const reRenderMessages = (data) => {
-  // 1. Add console logs to inspect exactly what keys and types are coming from the server
   console.log("=== Realtime Message Received ===");
-  console.log("Full WS payload data:", data);
-  console.log("sender_id from server:", data.sender_id, "Type:", typeof data.sender_id);
-  console.log("Your profile ID:", window.profile?.id, "Type:", typeof window.profile?.id);
 
   const { conversation_id, text, created_at } = data;
-  console.log("rerender messge qs")
-  if (!dom.chatMessages) return;
 
+
+  if (!dom.chatMessages) return;
+    if (!state.currentConversationId && conversation_id) {
+    state.currentConversationId = conversation_id;
+  }
   // 2. Safely extract sender ID handling both snake_case or camelCase properties just in case
   const incomingSenderId = data.sender_id 
   // 3. Force both to strings and compare cleanly
@@ -547,7 +558,7 @@ export const reRenderMessages = (data) => {
     appendMessage(incomingMsg, isMine);
     state.offset++
   }else{
-    console.log("new Conv")
+    console.log("new conv",state.currentConversationId,conversation_id)
   }
 };
 

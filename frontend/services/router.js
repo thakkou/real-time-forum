@@ -156,15 +156,18 @@ export const router = {
                 const isMe = data.isMine
                 const isNew=data.isNewConversation
                
-                
-                if(isNew){
-                    updateTheConv(data)
-                }
 
+                    updateTheConv(data,isNew)
+                
+console.log("append message ",data)
                  if(!isMe){
+                    console.log("append me ")
+
               showToast(data.text, "success");
              reRenderMessages(data,false)
                  }else{
+                    console.log("append him ")
+
                     reRenderMessages(data,true)
                  }
 
