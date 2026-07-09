@@ -1,11 +1,6 @@
-// import { socket } from '../core/websocket.js';
-
-import { Header } from '../components/Header.js';
 
 export async function render(data = {}) {
-  const header = Header(data.nickname);
   return `
-    ${header}
  
     <!-- MESSAGES LAYOUT -->
     <div class="messages-container">

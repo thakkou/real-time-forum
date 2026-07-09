@@ -4,6 +4,7 @@ import { showToast } from './toast.js';
 import { reRender, reRenderMessages, updateTheConv } from '../scripts/_chat.js';
 import { Header } from '../components/Header.js';
 import { handleIncomingTypingEvent } from '../scripts/_chat.js';
+import { logout } from '../api/auth.js';
 export const onlineUsers = new Set()
 let me = null;
 
@@ -78,7 +79,35 @@ async function guard(path) {
     history.pushState({}, '', path);
     return me.nickname;
 }
+async function handleLogout() {
+  try {
+    await logout();
+    localStorage.clear();
+    window.location.href = "/login";
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+}
 
+
+function setupHeader(nickname) {
+    const header = document.getElementById("header");
+
+    if (!header) return;
+
+    if (nickname) {
+        header.innerHTML = Header(nickname);
+
+        const logoutBtn = header.querySelector("#logout-btn");
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", handleLogout);
+        }
+
+    } else {
+        header.innerHTML = "";
+    }
+}
 
 export const router = {
     async navigate(path) {
@@ -125,8 +154,10 @@ export const router = {
     
 
         const nickname = await guard(location.pathname);
-        //add the header to UI
+        setupHeader(nickname);
+
         if (nickname) {
+            console.log("user connect and set the header ")
             ws.connect();
 
 
@@ -159,12 +190,14 @@ export const router = {
 
                     updateTheConv(data,isNew)
                 
-console.log("append message ",data)
+
                  if(!isMe){
                     console.log("append me ")
 
               showToast(data.text, "success");
+
              reRenderMessages(data,false)
+
                  }else{
                     console.log("append him ")
 

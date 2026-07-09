@@ -542,7 +542,6 @@ export const reRenderMessages = (data) => {
   console.log("Calculated isMine evaluation result:",incomingSenderId, isMine,window.profile.id);
   console.log("=================================");
 
-  // 4. Only append if this belongs to your currently open chat screen
   if (String(state.currentConversationId) === String(conversation_id)) {
     
     if (String(incomingSenderId) === String(state.currentReceiverId)) {

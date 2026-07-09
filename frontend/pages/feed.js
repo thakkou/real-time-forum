@@ -1,12 +1,10 @@
 
-import { Header } from '../components/Header.js';
 import { PostCreationForm } from '../components/PostCreationForm.js';
 import { Post } from '../components/Post.js';
 
 export async function render(data = {}) {
   const postCreationForm = PostCreationForm();
   return `
-    ${Header(data.nickname)}
 
     <div class="container">
       <!-- FILTER SECTION (desktop sidebar) -->
