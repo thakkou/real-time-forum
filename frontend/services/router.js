@@ -117,6 +117,7 @@ export const router = {
     },
 
     async init() {
+        console.log("init socket")
 
         window.addEventListener('popstate', async () => {
             const nickname = await guard(location.pathname);
@@ -155,7 +156,6 @@ export const router = {
             ws.on("new_message", (data) => {
                 const isMe = data.isMine
 
-                 console.log("new message arrive from ws",data,isMe)
 
                  if(!isMe){
               showToast(data.text, "success");

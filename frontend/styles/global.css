@@ -1211,3 +1211,33 @@ textarea {
     height: 100%;
   }
 }
+/* for test users in login */
+.test-users {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.test-users p {
+    margin-bottom: 0.75rem;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.test-user-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.test-user-btn {
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f7f7f7;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.test-user-btn:hover {
+    background: #ececec;
+}

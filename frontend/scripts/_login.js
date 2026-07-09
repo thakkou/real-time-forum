@@ -8,6 +8,15 @@ export function setup() {
 	const errorBox = document.getElementById("login-error");
 	const btn = document.getElementById("login-btn");
 	if (!form) return;
+	// Fill credentials for test users
+	const testButtons = document.querySelectorAll(".test-user-btn");
+testButtons.forEach((btn) => {
+	btn.addEventListener("click", () => {
+		form.identifier.value = btn.dataset.user;
+		form.password.value = "password123";
+		form.identifier.focus();
+	});
+});
 
 	form.addEventListener("submit", async (e) => {
 		e.preventDefault();

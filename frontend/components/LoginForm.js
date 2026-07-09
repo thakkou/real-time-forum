@@ -48,6 +48,23 @@ export const LoginForm = () => (`
       </div>
     </div>
     <!-- end -->
+    <div class="test-users">
+  <p>Test Users</p>
+  <div class="test-user-buttons">
+    <button type="button" class="test-user-btn" data-user="john_doe">
+      User 1
+    </button>
+    <button type="button" class="test-user-btn" data-user="john_doe1">
+      User 2
+    </button>
+    <button type="button" class="test-user-btn" data-user="john_doe2">
+      User 3
+    </button>
+    <button type="button" class="test-user-btn" data-user="john_doe3">
+      User 4
+    </button>
+  </div>
+</div>
 
     <div class="link-row">No account? <a onclick="navigate('/register')"> Register</a></div>
   </div>

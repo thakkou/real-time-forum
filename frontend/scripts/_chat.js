@@ -338,7 +338,6 @@ function appendMessage(m, mine = false, prepend = false) {
       <div class="message-meta">${formatTime(m.created_at)}</div>
     </div>`;
 
-    state.offset++
   if (prepend) {
     dom.chatMessages.insertBefore(group, dom.chatMessages.firstChild);
   } else {
@@ -508,6 +507,7 @@ export const reRenderMessages = (data) => {
     };
     
     appendMessage(incomingMsg, isMine);
+    state.offset++
   }
 };
 
