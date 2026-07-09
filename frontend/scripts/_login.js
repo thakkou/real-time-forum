@@ -1,6 +1,7 @@
 import { login } from "../api/auth.js";
 import { showToast } from "../services/toast.js";
 import { router } from "../services/router.js";
+import { ws } from "../services/websocket.js";
 
 // login not working and refreshes at the first time when redirected from register, but works after !!!
 export function setup() {
@@ -32,8 +33,8 @@ testButtons.forEach((btn) => {
 
 			console.log("login successful");
 			showToast('Login successful!', 'success');
-			router.navigate('/');
-
+			// router.navigate('/');
+              window.location.href = "/";
 			// Store user globally
 			window.user = resp.data; // ?!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		} catch (err) {

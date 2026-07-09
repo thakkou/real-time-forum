@@ -1,7 +1,7 @@
 import { isAuthenticated } from '../services/auth.js';
 import { ws } from './websocket.js';
 import { showToast } from './toast.js';
-import { reRender, reRenderMessages } from '../scripts/_chat.js';
+import { reRender, reRenderMessages, updateTheConv } from '../scripts/_chat.js';
 import { Header } from '../components/Header.js';
 import { handleIncomingTypingEvent } from '../scripts/_chat.js';
 export const onlineUsers = new Set()
@@ -117,7 +117,6 @@ export const router = {
     },
 
     async init() {
-        console.log("init socket")
 
         window.addEventListener('popstate', async () => {
             const nickname = await guard(location.pathname);
@@ -155,7 +154,12 @@ export const router = {
 
             ws.on("new_message", (data) => {
                 const isMe = data.isMine
-
+                const isNew=data.isNewConversation
+               
+                
+                if(isNew){
+                    updateTheConv(data)
+                }
 
                  if(!isMe){
               showToast(data.text, "success");
@@ -163,6 +167,8 @@ export const router = {
                  }else{
                     reRenderMessages(data,true)
                  }
+
+
  });
 
           ws.on("typing:start", (data) => {

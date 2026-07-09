@@ -136,7 +136,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	var conversationID int
-
+	isNewConversation := false
 	// -------------------------
 	// CASE 1:
 	// conversation_id provided
@@ -255,6 +255,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			}
 
 			conversationID = int(id)
+			isNewConversation = true
 
 			fmt.Printf(
 				"[CONVERSATION] created id=%d\n",
@@ -389,7 +390,8 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		strconv.Itoa(req.ReceiverID),
 		"new_message",
 		map[string]interface{}{
-			"isMine": false,
+			"isMine":            false,
+			"isNewConversation": isNewConversation,
 
 			"conversation_id": conversationID,
 			"message_id":      messageID,
@@ -403,7 +405,9 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		strconv.Itoa(senderID),
 		"new_message",
 		map[string]interface{}{
-			"isMine":          true,
+			"isMine":            true,
+			"isNewConversation": isNewConversation,
+
 			"conversation_id": conversationID,
 			"message_id":      messageID,
 			"sender_id":       senderID,

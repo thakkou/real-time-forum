@@ -10,6 +10,8 @@ import { ws } from '../services/websocket.js';
 ========================= */
 
 const state = {
+    conversations: [],
+
   currentConversationId: null,
   currentReceiverId: null,
   isTyping: false,         // Tracks if the counter-party is typing
@@ -58,13 +60,15 @@ export async function setup() {
   setupScrollPagination();
 
   try {
-    const resp = await getConversations();
-    const data = resp.data || [];
-    renderUsers(data);
+   const resp = await getConversations();
 
-    if (data.length > 0) {
-      await openConversation(data[0]);
-    } else {
+state.conversations = resp.data || [];
+
+renderUsers(state.conversations);
+
+if (state.conversations.length > 0) {
+  await openConversation(state.conversations[0]);
+}else {
       showEmptyState();
     }
   } catch (err) {
@@ -144,15 +148,21 @@ function setupMobileUI() {
 /* =========================
    USER ROSTER RENDERING
 ========================= */
-function renderUsers(items) {
+function renderUsers() {
   const online = [];
   const offline = [];
 
-  dom.usersList.innerHTML = ""; 
+  dom.usersList.innerHTML = "";
+console.log(state.conversations)
+  state.conversations.forEach((item) => {
 
-  items.forEach((item) => {
     const userId = String(item.profile.id);
-    onlineUsers.has(userId) ? online.push(item) : offline.push(item);
+
+    if (onlineUsers.has(userId)) {
+      online.push(item);
+    } else {
+      offline.push(item);
+    }
   });
 
   dom.usersList.appendChild(createSectionTitle("Online"));
@@ -163,7 +173,6 @@ function renderUsers(items) {
 
   updateOnlineCountText();
 }
-
 function createSectionTitle(text) {
   const div = document.createElement("div");
   div.className = "section-divider";
@@ -255,6 +264,7 @@ function updateOnlineCountText() {
 ========================= */
 async function openConversation(item) {
   const { profile: user, conversation: chat } = item;
+  console.log("conversation items",item)
 //clear the msg
   if (dom.messageInput) {
     dom.messageInput.value = "";
@@ -473,7 +483,34 @@ async function sendMessage() {
   }
 }
 
+export const updateTheConv = (data) => {
+  if (!data.isNewConversation) return;
 
+  console.log("start get the data and update the conversations")
+  const otherUserId = data.isMine
+    ? state.currentReceiverId
+    : data.sender_id;
+
+  const conversation = state.conversations.find(
+    c => String(c.profile.id) === String(otherUserId)
+  );
+
+  if (conversation) {
+        console.log("start update the conv")
+
+    conversation.conversation = {
+      ...(conversation.conversation || {}),
+      date: Date.now(),
+      lastMessage:data.text,
+      lastSender:otherUserId,
+      conversationId: data.conversation_id,
+    };
+  }
+      console.log(conversation)
+
+
+  renderUsers();
+};
 
 
 export const reRenderMessages = (data) => {
@@ -484,6 +521,7 @@ export const reRenderMessages = (data) => {
   console.log("Your profile ID:", window.profile?.id, "Type:", typeof window.profile?.id);
 
   const { conversation_id, text, created_at } = data;
+  console.log("rerender messge qs")
   if (!dom.chatMessages) return;
 
   // 2. Safely extract sender ID handling both snake_case or camelCase properties just in case
@@ -505,9 +543,11 @@ export const reRenderMessages = (data) => {
       text: text,
       created_at: created_at || new Date().toISOString()
     };
-    
+    console.log("append messages")
     appendMessage(incomingMsg, isMine);
     state.offset++
+  }else{
+    console.log("new Conv")
   }
 };
 
