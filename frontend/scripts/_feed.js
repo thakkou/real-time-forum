@@ -11,11 +11,17 @@ const state = {
   limite: 15,
   loading: false,
 };
+function resetState(){
+ state.posts = [];
+  state.offset = 0;
+  state.loading = false;
+}
 
 /* ======================
    INIT
 ====================== */
 export function setup() {
+resetState()
   fetchPosts();
   setupEvents();
 }

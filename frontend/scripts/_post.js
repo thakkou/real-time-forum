@@ -12,6 +12,7 @@ import { CommentResolver, CreatComment } from "../api/comments.js";
    INITIALIZATION & RENDER LIEFOCYCLE
    ================================================================ */
 export async function setup() {
+  console.log("setup post id")
   try {
     setupEventListeners();
     await setupPostPage(); 
