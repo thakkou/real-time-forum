@@ -1,7 +1,7 @@
 import { getPosts, PostResolver, CreatePost } from "../api/posts.js";
 import { Post } from "../components/Post.js";
 import { showToast } from "../services/toast.js";
-
+import { router } from "../services/router.js";
 /* ======================
    STATE
 ====================== */
@@ -213,8 +213,8 @@ function setupEvents() {
     ) {
       return;
     }
-
-    navigate(`/post/${post.dataset.postId}`);
+console.log('naigate',router)
+    router.navigate(`/post/${post.dataset.postId}`);
   });
 
   document.addEventListener("click", async (e) => {

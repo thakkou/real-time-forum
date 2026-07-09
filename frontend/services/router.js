@@ -108,16 +108,32 @@ function setupHeader(nickname) {
         header.innerHTML = "";
     }
 }
+function extractPath(path) {
+    const parts = path.split("/").filter(Boolean);
+
+    // no path => default page
+    if (parts.length === 0) {
+        return "feed";
+    }
+
+    // only /post/:id is allowed
+    if (parts.length !== 2 || parts[0] !== "post") {
+        return null;
+    }
+
+    return parts[0]
+}
 
 export const router = {
     async navigate(path) {
-        // check if auth (do also for init())
         const nickname = await guard(path);
 
         await this.render({ nickname: nickname });
 
         // Load the page-specific script
-        const scriptName = path.slice(1) || 'feed';
+        const scriptName =extractPath(path)
+                console.log("navigate to ",path,"script name",scriptName)
+
         await loadPageScript(scriptName);
     },
 
