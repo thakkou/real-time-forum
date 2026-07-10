@@ -24,7 +24,10 @@ export const isAuthenticated = async () => {
       nickname: resp.data.nickname,
     };
     
-    return resp.data;
+    return {
+      authenticated: true,
+      ...resp.data,
+    };
   } catch (err) {
 
     console.error(err);

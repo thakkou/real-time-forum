@@ -163,8 +163,8 @@ export const router = {
 
     await this.render({ nickname });
 
-    const scriptName = extractPath(path);
-console.log("start navigate to ",scriptName,"from path")
+    const scriptName = extractPath(location.pathname);
+    console.log("start navigate to ", scriptName, "from path", location.pathname);
     await loadPageScript(scriptName);
 },
 

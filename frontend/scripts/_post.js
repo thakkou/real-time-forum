@@ -6,6 +6,7 @@ import { PostNotFound } from "../components/PostNotFound.js";
 import { getPostByID, PostResolver } from "../api/posts.js";
 import { CommentResolver, CreatComment } from "../api/comments.js";
 import { updatePostUI } from './_feed.js';
+import { showToast } from '../services/toast.js';
 /* ================================================================
    INITIALIZATION & RENDER LIEFOCYCLE
    ================================================================ */
@@ -30,6 +31,15 @@ const ui = {
 
   commentsList: null,
   commentForm: null,
+  loadMoreBtn: null,
+};
+
+const state = {
+  postId: null,
+  commentLimit: 10,
+  commentLastId: null,
+  hasMoreComments: false,
+  isLoadingComments: false,
 };
 
 function cacheUI() {
@@ -86,16 +96,12 @@ async function setupPostPage() {
     return;
   }
 
+  state.postId = postId;
+  state.commentLastId = null;
+  state.hasMoreComments = true;
+
   try {
-    const res = await getPostByID({ id: postId });
-    
-    if (res?.data) {
-      wrapper.innerHTML = Post(res.data, { withComments: true });
-       ui.wrapper = wrapper;
-    cacheUI();
-    } else {
-      wrapper.innerHTML = PostNotFound();
-    }
+    await loadPostPage(postId, false);
   } catch (err) {
     console.error("Failed to synchronize layout view:", err);
     wrapper.innerHTML = PostNotFound();
@@ -109,6 +115,94 @@ function updateCommentCount(change) {
 
   const current = parseInt(countEl.textContent, 10) || 0;
   countEl.textContent = Math.max(0, current + change);
+}
+
+async function loadPostPage(postId, append = false) {
+  const res = await getPostByID({
+    id: postId,
+    commentLimit: state.commentLimit,
+    commentLastId: append ? state.commentLastId : null,
+  });
+
+  if (!res?.data) {
+    throw new Error("Failed to load post data");
+  }
+
+  if (!append) {
+    const wrapper = document.querySelector(".post-detail-wrapper");
+    wrapper.innerHTML = Post(res.data, { withComments: true });
+    ui.wrapper = wrapper;
+    cacheUI();
+    attachLoadMoreHandler();
+  }
+
+  const comments = res.data.Comments || [];
+  renderComments(comments, append);
+
+  if (comments.length > 0) {
+    const lastComment = comments[comments.length - 1];
+    state.commentLastId = lastComment.Id;
+    state.hasMoreComments = comments.length === state.commentLimit;
+  } else {
+    state.hasMoreComments = false;
+  }
+
+  updateLoadMoreButton();
+}
+
+function renderComments(comments, append = false) {
+  if (!ui.commentsList) return;
+
+  const html = comments.map(Comment).join("");
+
+  if (!append) {
+    ui.commentsList.innerHTML = html || `
+      <div class="comment">
+        <span class="comment-meta">No comments yet.</span>
+      </div>
+    `;
+    return;
+  }
+
+  const fallbackNode = ui.commentsList.querySelector(".comment-meta");
+  if (fallbackNode && fallbackNode.textContent.includes("No comments yet")) {
+    ui.commentsList.innerHTML = html;
+  } else {
+    ui.commentsList.insertAdjacentHTML("beforeend", html);
+  }
+}
+
+function attachLoadMoreHandler() {
+  ui.loadMoreBtn = ui.post.querySelector("#loadMoreCommentsBtn");
+  if (!ui.loadMoreBtn) return;
+
+  ui.loadMoreBtn.addEventListener("click", loadMoreComments);
+  updateLoadMoreButton();
+}
+
+function updateLoadMoreButton() {
+  if (!ui.loadMoreBtn) return;
+  ui.loadMoreBtn.style.display = state.hasMoreComments ? "block" : "none";
+}
+
+async function loadMoreComments() {
+  if (!state.hasMoreComments || state.isLoadingComments) return;
+
+  state.isLoadingComments = true;
+  if (ui.loadMoreBtn) {
+    ui.loadMoreBtn.disabled = true;
+  }
+
+  try {
+    await loadPostPage(state.postId, true);
+  } catch (err) {
+    console.error("Failed to load more comments:", err);
+  } finally {
+    state.isLoadingComments = false;
+    if (ui.loadMoreBtn) {
+      ui.loadMoreBtn.disabled = false;
+    }
+  }
 }
 
 /* ================================================================
@@ -137,6 +231,7 @@ function setupEventListeners() {
         }
       } catch (err) {
         console.error(err);
+        showToast(err.message || "Action failed", "error");
       }
       return;
     }
@@ -152,6 +247,7 @@ function setupEventListeners() {
 updateCommentUI(id,type,data.data) 
      } catch (err) {
         console.error(err);
+        showToast(err.message || "Action failed", "error");
       }
       return;
     }
@@ -171,7 +267,7 @@ updateCommentUI(id,type,data.data)
         await CommentResolver({ id, type: "delete" });
       } catch (err) {
         console.error("Server failed to delete comment:", err);
-        alert("Could not remove comment from server. Reloading feed...");
+        showToast(err.message || "Could not remove comment from server. Reloading feed...", "error");
         await setupPostPage(); 
       }
       return;
@@ -193,7 +289,7 @@ updateCommentUI(id,type,data.data)
         navigate("/"); 
       } catch (err) {
         console.error("Server failed to delete post:", err);
-        alert("Failed to delete post from database. Reloading...");
+        showToast(err.message || "Failed to delete post from database. Reloading...", "error");
         await setupPostPage(); 
       }
       return;
@@ -228,7 +324,7 @@ updateCommentUI(id,type,data.data)
 
     } catch (err) {
       console.error("Comment creation failed:", err);
-      alert("Failed to post comment. Please try again.");
+      showToast(err.message || "Failed to post comment. Please try again.", "error");
       await setupPostPage(); 
     }
   });
@@ -258,8 +354,9 @@ function appendCommentToUI(comment) {
   };
 
   const commentHTML = Comment(commentFormat);
-  commentsListContainer.insertAdjacentHTML("beforeend", commentHTML);
-    updateCommentCount(1);
+  const insertPosition = commentsListContainer.firstChild ? "afterbegin" : "beforeend";
+  commentsListContainer.insertAdjacentHTML(insertPosition, commentHTML);
+  updateCommentCount(1);
 }
 
 /* ================================================================

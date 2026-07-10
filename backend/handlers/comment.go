@@ -218,11 +218,28 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 
 // GetCommentsByPost
 func GetCommentsByPost(postId int) ([]models.Comment, error) {
+	return GetCommentsByPostWithPagination(postId, 0, 0)
+}
+
+func GetCommentsByPostWithPagination(postId, limit, lastID int) ([]models.Comment, error) {
 	var comments []models.Comment
-	rows, err := database.Database.Query(
-		"SELECT id, user_id, created_at, text FROM Comments WHERE post_id = ?",
-		postId,
-	)
+
+	if limit <= 0 {
+		limit = 10
+	}
+
+	query := `SELECT id, user_id, created_at, text FROM Comments WHERE post_id = ?`
+	args := []any{postId}
+
+	if lastID > 0 {
+		query += " AND id < ?"
+		args = append(args, lastID)
+	}
+
+	query += " ORDER BY id DESC LIMIT ?"
+	args = append(args, limit)
+
+	rows, err := database.Database.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("getCommentsByPost error: %v", err)
 	}

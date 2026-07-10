@@ -106,6 +106,26 @@ func RemoveClient(userID string, client *Client) {
 	}
 }
 
+func removeStaleUserClients(userID string, keep *Client) []*Client {
+	mu.Lock()
+	clients := Clients[userID]
+	var stale []*Client
+
+	for c := range clients {
+		if c != keep {
+			stale = append(stale, c)
+			delete(clients, c)
+		}
+	}
+
+	if len(clients) == 0 {
+		delete(Clients, userID)
+	}
+
+	mu.Unlock()
+	return stale
+}
+
 func StoreClient(userID string, conn *websocket.Conn) *Client {
 	client := &Client{
 		conn: conn,
@@ -128,6 +148,11 @@ func StoreClient(userID string, conn *websocket.Conn) *Client {
 
 	mu.Unlock()
 
+	staleClients := removeStaleUserClients(userID, client)
+	for _, stale := range staleClients {
+		stale.conn.Close()
+	}
+
 	NotifyUser(userID, "init", online)
 	BroadcastExcept(userID, "client_connect", userID)
 
@@ -147,13 +172,13 @@ func HandleMessage(client *Client, raw []byte) {
 	fmt.Printf("Data: %s\n", string(msg.Data))
 
 	switch msg.Type {
-	case "new_posts": // for all users exepts u
+	case "new_posts": // for all users except u
 		fmt.Println("new posts_notification")
 	case "like_posts": // for u
 		fmt.Println("user a liked ur posts")
 	case "new_comments": // for u
 		fmt.Println("new comments_notification")
-	case "like_commnets": // for u
+	case "like_comments": // for u
 		fmt.Println("user a liked ur comments")
 	case "send_message": // for u
 		fmt.Println("message sent to user a")

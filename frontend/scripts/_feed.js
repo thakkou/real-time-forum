@@ -141,6 +141,7 @@ async function handleCreatePost(form) {
     form.reset();
   } catch (err) {
     console.error("Create post failed:", err.message);
+    showToast(err.message || "Failed to create post", "error");
   }
 }
 

@@ -330,13 +330,27 @@ func GetPostById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := GetPost(id)
+	limit := 15
+	lastID := 0
+
+	if l := r.URL.Query().Get("commentLimit"); l != "" {
+		if v, err := strconv.Atoi(l); err == nil && v > 0 {
+			limit = v
+		}
+	}
+	if lid := r.URL.Query().Get("commentLastId"); lid != "" {
+		if v, err := strconv.Atoi(lid); err == nil && v > 0 {
+			lastID = v
+		}
+	}
+
+	post, err := GetPostBasic(id)
 	if err != nil {
 		utilities.WriteJSON(w, 404, "Not found", nil)
 		return
 	}
 
-	comments, _ := GetCommentsByPost(id)
+	comments, _ := GetCommentsByPostWithPagination(id, limit, lastID)
 	post.Comments = comments
 
 	utilities.WriteJSON(w, 200, "ok", post)
@@ -465,6 +479,25 @@ func GetPost(postID int) (models.Post, error) {
 	}
 
 	if err := enrichPostWithComments(&p, p.UserId); err != nil {
+		return p, err
+	}
+
+	return p, nil
+}
+
+func GetPostBasic(postID int) (models.Post, error) {
+	var p models.Post
+
+	err := database.Database.QueryRow(`
+		SELECT id, user_id, created_at, title, text
+		FROM posts
+		WHERE id = ?
+	`, postID).Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text)
+	if err != nil {
+		return p, err
+	}
+
+	if err := enrichPost(&p, p.UserId); err != nil {
 		return p, err
 	}
 

@@ -96,6 +96,7 @@ export function setup() {
         } catch (err) {
             errorBox.style.display = "block";
             errorBox.textContent = err.message || "Registration failed"; // err.message for debugging (but script is loaded !)
+            showToast(err.message || "Registration failed", "error");
         } finally {
             btn.disabled = false;
             btn.textContent = "Register";

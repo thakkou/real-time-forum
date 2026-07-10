@@ -40,6 +40,7 @@ testButtons.forEach((btn) => {
 		} catch (err) {
 			errorBox.style.display = "block";
 			errorBox.textContent = err.message || "Login failed"; // err.message for debugging
+			showToast(err.message || "Login failed", "error");
 		} finally {
             btn.disabled = false;
             btn.textContent = "Login";

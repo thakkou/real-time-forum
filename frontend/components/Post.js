@@ -63,6 +63,10 @@ export const Post = (post, options = { withComments: false }) => `
 					` }
 				</div>
 
+				<div class="load-more-comments">
+					<button type="button" id="loadMoreCommentsBtn" class="btn secondary small">Load more comments</button>
+				</div>
+
 				<div class="add-comment">
 					<form id="comment-form" data-post-id="${post.Id}">
 						<input

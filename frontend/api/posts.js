@@ -45,14 +45,21 @@ export const getPosts = async ({
   return data;
 };
 
-export const getPostByID = async ({ id }) => {
-  const response = await fetch(
-    `${serverURI}/posts/${id}`,
-    {
-      method: "GET",
-      credentials: "include",
-    }
-  );
+export const getPostByID = async ({ id, commentLimit = 10, commentLastId = null } = {}) => {
+  const params = new URLSearchParams();
+
+  if (commentLimit !== null) {
+    params.append("commentLimit", commentLimit);
+  }
+  if (commentLastId !== null) {
+    params.append("commentLastId", commentLastId);
+  }
+
+  const url = `${serverURI}/posts/${id}${params.toString() ? `?${params.toString()}` : ""}`;
+  const response = await fetch(url, {
+    method: "GET",
+    credentials: "include",
+  });
 
   if (handleAuthError(response)) return;
 
