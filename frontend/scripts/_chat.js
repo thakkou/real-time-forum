@@ -507,45 +507,41 @@ export const updateTheConv = (data, isNew) => {
 };
 
 export const reRenderMessages = (data) => {
-  const { conversation_id, text, created_at,isNewConversation } = data;
-console.log(data)
+  const { conversation_id, text, created_at, isNewConversation } = data;
+  console.log(data);
 
   if (!dom.chatMessages) return;
 
+  const incomingSenderId = data.sender_id;
+  const isMine = Boolean(data.isMine);
 
-  const incomingSenderId = data.sender_id 
-  console.log("incomming",incomingSenderId,state.currentReceiverId)
+  console.log("incoming", incomingSenderId, state.currentReceiverId);
 
-  if(isNewConversation && state.currentReceiverId===incomingSenderId){
-    console.log("is new")
-  let conv = state.conversations.find((c)=>c.conversation.conversationId==conversation_id)
-  
-     state.currentConversationId=conv.conversation.conversationId
-}
-
-  const isMine = String(incomingSenderId) === String(window.profile?.id);
-
+  if (isNewConversation && !state.currentConversationId) {
+    // For a brand new conversation, assign the conversation ID when the
+    // currently open chat belongs to the sender or receiver of this event.
+    if (isMine || String(incomingSenderId) === String(state.currentReceiverId)) {
+      state.currentConversationId = conversation_id;
+    }
+  }
 
   if (String(state.currentConversationId) === String(conversation_id)) {
-    
-    if (String(incomingSenderId) === String(state.currentReceiverId)
-) {
+    if (String(incomingSenderId) === String(state.currentReceiverId)) {
       setPartnerTyping(false);
     }
 
-console.log("new conv messages")
+    console.log("new conv messages");
 
     const incomingMsg = {
       sender_id: incomingSenderId,
       text: text,
-      created_at: created_at || new Date().toISOString()
+      created_at: created_at || new Date().toISOString(),
     };
 
     appendMessage(incomingMsg, isMine);
-    state.offset++
-  }else{
-    console.log("not new",state.currentConversationId,conversation_id)
-
+    state.offset++;
+  } else {
+    console.log("not new", state.currentConversationId, conversation_id);
   }
 };
 
