@@ -90,7 +90,7 @@ func RegisterRoutes() {
 		"/api/comments/create",
 		middlewares.RateLimit(
 			middlewares.CheckSessionCookie(handlers.CreateComment, true),
-			3*time.Second,
+			250*time.Millisecond,
 		),
 	)
 

@@ -292,17 +292,16 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	byMe := r.FormValue("my-creat-posts") == "true"
 
 	limit := 30
-	offset := 0
+	lastID := 0
 
 	if l := r.FormValue("limit"); l != "" {
 		if v, err := strconv.Atoi(l); err == nil && v > 0 {
 			limit = v
 		}
 	}
-
-	if o := r.FormValue("offset"); o != "" {
-		if v, err := strconv.Atoi(o); err == nil && v >= 0 {
-			offset = v
+	if id := r.FormValue("lastId"); id != "" {
+		if v, err := strconv.Atoi(id); err == nil && v > 0 {
+			lastID = v
 		}
 	}
 
@@ -311,7 +310,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		userID, _ = utilities.GetUserIDFromCookie(cookie.Value)
 	}
 
-	posts, err := GetFilteredPosts(userID, categories, liked, byMe, limit, offset)
+	posts, err := GetFilteredPosts(userID, categories, liked, byMe, limit, lastID)
 	if err != nil {
 		utilities.WriteJSON(w, 500, "error", nil)
 		return
@@ -352,14 +351,14 @@ func GetFilteredPosts(
 	categories []string,
 	likedByMe, postedByMe bool,
 	limit int,
-	offset int,
+	lastID int, // Replaced offset with lastID
 ) ([]models.Post, error) {
 	query := `
-		SELECT DISTINCT p.id, p.user_id, p.created_at, p.title, p.text
-		FROM posts p
-		LEFT JOIN post_category pc ON p.id = pc.post_id
-		LEFT JOIN category c ON pc.category_id = c.id
-	`
+        SELECT DISTINCT p.id, p.user_id, p.created_at, p.title, p.text
+        FROM posts p
+        LEFT JOIN post_category pc ON p.id = pc.post_id
+        LEFT JOIN category c ON pc.category_id = c.id
+    `
 
 	var cond []string
 	var args []any
@@ -384,12 +383,19 @@ func GetFilteredPosts(
 		args = append(args, userID)
 	}
 
+	// CRITICAL: Filter out posts we have already seen
+	if lastID > 0 {
+		cond = append(cond, "p.id < ?")
+		args = append(args, lastID)
+	}
+
 	if len(cond) > 0 {
 		query += " WHERE " + strings.Join(cond, " AND ")
 	}
 
-	query += " ORDER BY p.created_at DESC LIMIT ? OFFSET ?"
-	args = append(args, limit, offset)
+	// Removed OFFSET keyword entirely
+	query += " ORDER BY p.created_at DESC, p.id DESC LIMIT ?"
+	args = append(args, limit)
 
 	rows, err := database.Database.Query(query, args...)
 	if err != nil {
@@ -398,7 +404,6 @@ func GetFilteredPosts(
 	defer rows.Close()
 
 	var posts []models.Post
-
 	for rows.Next() {
 		p, err := scanPost(rows)
 		if err != nil {

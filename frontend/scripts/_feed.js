@@ -7,13 +7,13 @@ import { router } from "../services/router.js";
 ====================== */
 const state = {
   posts: [],
-  offset: 0,
-  limite: 15,
+lastId: null,
+  limite: 10,
   loading: false,
 };
 function resetState(){
  state.posts = [];
-  state.offset = 0;
+  state.lastId = null;
   state.loading = false;
 }
 
@@ -24,6 +24,12 @@ export function setup() {
 resetState()
   fetchPosts();
   setupEvents();
+}
+
+function resetFeed() {
+  state.lastId = null;
+  state.posts = [];
+  document.querySelector(".posts").innerHTML = "";
 }
 
 /* ======================
@@ -54,8 +60,9 @@ async function fetchPosts() {
   const isCreatedByMe = params.get("my-creat-postes") === "true";
 
   try {
+    console.log("getPosts",state.lastId)
     const res = await getPosts({
-      offset: state.offset,
+      lastId: state.lastId, // Pass lastId instead of offset
       limit: state.limite,
       categories,
       isLiked,
@@ -66,7 +73,10 @@ async function fetchPosts() {
 
     if (posts?.length) {
       state.posts.push(...posts);
-      state.offset += posts.length;
+      console.log(posts)
+      // The oldest post in this freshly fetched batch becomes our new anchor point
+      state.lastId = posts[posts.length - 1].Id; 
+      
       renderPosts(posts);
     }
   } catch (err) {
@@ -76,11 +86,6 @@ async function fetchPosts() {
   }
 }
 
-function resetFeed() {
-  state.offset = 0;
-  state.posts = [];
-  document.querySelector(".posts").innerHTML = "";
-}
 
 async function handleAction(postId, type) {
   try {

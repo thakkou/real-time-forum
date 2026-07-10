@@ -1,4 +1,6 @@
+
 const serverURI = env.serverUri;
+import { handleAuthError } from "./helperApi.js";
 
 export const createMessage = async ({
   receiverId,
@@ -20,6 +22,9 @@ export const createMessage = async ({
       }),
     }
   );
+
+  // Check for unauthorized access before parsing the response body
+  if (handleAuthError(response)) return;
 
   const result = await response.json();
 

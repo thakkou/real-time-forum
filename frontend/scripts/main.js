@@ -16,7 +16,3 @@ const loadedScripts = new Map();
 window.navigate = router.navigate.bind(router); // navigate
 
 router.init();
-
-
-
-

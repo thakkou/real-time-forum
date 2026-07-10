@@ -102,6 +102,15 @@ async function setupPostPage() {
   }
 }
 
+
+function updateCommentCount(change) {
+  const countEl = document.querySelector(".comment-count");
+  if (!countEl) return;
+
+  const current = parseInt(countEl.textContent, 10) || 0;
+  countEl.textContent = Math.max(0, current + change);
+}
+
 /* ================================================================
    EVENTS HANDLER (Delegation Mode)
    ================================================================ */
@@ -123,7 +132,9 @@ function setupEventListeners() {
       const type = likeBtn ? "like" : "dislike";
       try {
         const data =  await PostResolver({ id, type });
-        updatePostUI(id,type,data.data)
+        if(data){
+           updatePostUI(id,type,data.data)
+        }
       } catch (err) {
         console.error(err);
       }
@@ -154,7 +165,7 @@ updateCommentUI(id,type,data.data)
       const commentTarget = commentDeleteBtn.closest(".comment"); 
       if (commentTarget) {
         commentTarget.remove(); 
-      }
+        updateCommentCount(-1);      }
 
       try {
         await CommentResolver({ id, type: "delete" });
@@ -248,6 +259,7 @@ function appendCommentToUI(comment) {
 
   const commentHTML = Comment(commentFormat);
   commentsListContainer.insertAdjacentHTML("beforeend", commentHTML);
+    updateCommentCount(1);
 }
 
 /* ================================================================

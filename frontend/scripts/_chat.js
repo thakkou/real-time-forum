@@ -4,6 +4,7 @@ import { createMessage } from "../api/messages.js";
 import { onlineUsers } from "../services/router.js";
 import { Conversation } from "../components/Conversation.js";
 import { ws } from '../services/websocket.js';
+import { sanitize } from './helpers.js';
 
 /* =========================
    STATE MANAGEMENT
@@ -42,13 +43,11 @@ const dom = {
   chatView: null,
 };
 
-const HTML_CHARS = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
 
 /* =========================
    INITIALIZATION
 ========================= */
 export async function setup() {
-  console.log("start setuping chat ")
   cacheDom();
 
   if (!dom.usersList) {
@@ -86,8 +85,7 @@ function handleLocalTypingActivity() {
 
   if (!state.isSelfTyping) {
     state.isSelfTyping = true;
-console.log('start typing')
-console.log(window.profile)
+
     ws.send({
       event_type: "typing:start",
       data: {
@@ -110,7 +108,6 @@ function stopLocalTypingNotification() {
   state.isSelfTyping = false;
 
   clearTimeout(state.selfTypingTimeout);
-  console.log('stop typing')
 
   ws.send({
     event_type: "typing:stop",
@@ -154,7 +151,6 @@ function renderUsers() {
   const offline = [];
 
   dom.usersList.innerHTML = "";
-console.log(state.conversations)
   state.conversations.forEach((item) => {
 
     const userId = String(item.profile.id);
@@ -198,7 +194,6 @@ function renderUserItem(item) {
 }
 
 export const reRender = (type, userId) => {
-  console.log("Start UI-only rerender:", type, userId);
   
   const targetId = String(userId);
   const isOnline = type === "connect" || type === "register";
@@ -265,7 +260,6 @@ function updateOnlineCountText() {
 ========================= */
 async function openConversation(item) {
   const { profile: user, conversation: chat } = item;
-  console.log("conversation items",item)
 //clear the msg
   if (dom.messageInput) {
     dom.messageInput.value = "";
@@ -345,7 +339,7 @@ function appendMessage(m, mine = false, prepend = false) {
   group.innerHTML = `
     <div class="message-sender">${mine ? "you" : "them"}</div>
     <div class="message-row">
-      <div class="message-bubble">${escapeHTML(m.text)}</div>
+      <div class="message-bubble">${sanitize(m.text)}</div>
       <div class="message-meta">${formatTime(m.created_at)}</div>
     </div>`;
 
@@ -389,7 +383,6 @@ function setupScrollPagination() {
     const isNearTopReversed = Math.abs(pos) >= (maxScrollUp - 15) && pos < 0;
 
     if (isNearTop || isNearTopReversed) {
-      console.log(`🎯 Top reached! Fetching -> Limit: ${state.limit}, Offset: ${state.offset}`);
       loadMoreMessages();
     }
   });
@@ -421,12 +414,6 @@ async function loadMoreMessages() {
 });
 
 
-console.log(
-    "offset:",
-    state.offset,
-    "ids:",
-    olderMessages.map(m => m.id)
-);
 
       state.offset += olderMessages.length;
 
@@ -479,7 +466,6 @@ async function sendMessage() {
     
 
     if (!state.currentConversationId && res?.data?.conversation_id) {
-          console.log("start assign the new curent conv Id if not convid",state.currentConversationId , res?.data?.conversation_id)
 
       state.currentConversationId = res.data.conversation_id;
     }
@@ -489,76 +475,70 @@ async function sendMessage() {
 }
 
 export const updateTheConv = (data, isNew) => {
-  console.log("start get the data and update the conversations");
-     
   const otherUserId = data.isMine
     ? state.currentReceiverId
     : data.sender_id;
 
-  const conversation = state.conversations.find(
+  const index = state.conversations.findIndex(
     c => String(c.profile.id) === String(otherUserId)
   );
 
-  if (conversation) {
-    if (isNew) {
-      console.log("add conversation data");
+  if (index === -1) return;
 
-      conversation.conversation = {
-        conversationId: data.conversation_id,
-        date: Date.now(),
-        lastMessage: data.text,
-        lastSender: otherUserId,
-      };
-    } else {
-      console.log("update existing conversation");
+  const conversation = state.conversations[index];
 
-      conversation.conversation = {
-        ...(conversation.conversation || {}),
-        date: Date.now(),
-        lastMessage: data.text,
-        lastSender: otherUserId,
-      };
-    }
+  conversation.conversation = {
+    ...(conversation.conversation || {}),
+    conversationId:
+      conversation.conversation?.conversationId || data.conversation_id,
+    date: Date.now(),
+    lastMessage: data.text,
+    lastSender: otherUserId,
+  };
 
-    console.log(conversation);
-  }
+  // ⭐ Move this conversation to the beginning
+  state.conversations.splice(index, 1);
+  state.conversations.unshift(conversation);
 
   renderUsers();
 };
 
 export const reRenderMessages = (data) => {
-  console.log("=== Realtime Message Received ===");
-
-  const { conversation_id, text, created_at } = data;
-
+  const { conversation_id, text, created_at,isNewConversation } = data;
+console.log(data)
 
   if (!dom.chatMessages) return;
-    if (!state.currentConversationId && conversation_id) {
-    state.currentConversationId = conversation_id;
-  }
-  // 2. Safely extract sender ID handling both snake_case or camelCase properties just in case
+
+
   const incomingSenderId = data.sender_id 
-  // 3. Force both to strings and compare cleanly
+
+  if(isNewConversation && state.currentReceiverId===incomingSenderId){
+  let conv = state.conversations.find((c)=>c.conversation.conversationId==conversation_id)
+  
+     state.currentConversationId=conv.conversation.conversationId
+}
+
   const isMine = String(incomingSenderId) === String(window.profile?.id);
-  console.log("Calculated isMine evaluation result:",incomingSenderId, isMine,window.profile.id);
-  console.log("=================================");
+
 
   if (String(state.currentConversationId) === String(conversation_id)) {
     
-    if (String(incomingSenderId) === String(state.currentReceiverId)) {
+    if (String(incomingSenderId) === String(state.currentReceiverId)
+) {
       setPartnerTyping(false);
     }
-
+console.log("new conv messages")
     const incomingMsg = {
       sender_id: incomingSenderId,
       text: text,
       created_at: created_at || new Date().toISOString()
     };
-    console.log("append messages")
+
     appendMessage(incomingMsg, isMine);
     state.offset++
   }else{
-    console.log("new conv",state.currentConversationId,conversation_id)
+    console.log("not new",state.currentConversationId,conversation_id)
+
   }
 };
 
@@ -570,10 +550,8 @@ function evaluateTypingIndicatorState() {
   
   // If showTyping is manually turned on, render it immediately
   if (state.showTyping || state.isTyping) {
-    console.log(`💬 [Typing State]: Active (${state.showTyping ? 'Forced Overwrite' : 'Network Event'})`);
     renderTypingIndicator(currentNickname);
   } else {
-    console.log(`🚫 [Typing State]: Stopped / Hidden.`);
     removeTypingIndicator();
   }
 }
@@ -597,7 +575,7 @@ function renderTypingIndicator(nickname) {
   group.className = "message-group theirs";
   group.id = "typingIndicator";
   group.innerHTML = `
-    <div class="message-sender">${escapeHTML(nickname)}</div>
+    <div class="message-sender">${sanitize(nickname)}</div>
     <div class="message-row">
       <div class="typing-indicator-container">
         <div class="typing-dots">
@@ -621,7 +599,6 @@ export const handleIncomingTypingEvent = (data) => {
   // 🟢 Extract the correct camelCase fields coming from your server logs
   const { conversationId, userId, is_typing } = data;
   
-  console.log("the data coming", data);
   
   // 🟢 Compare against the correct variable keys
   if (
@@ -636,9 +613,7 @@ export const handleIncomingTypingEvent = (data) => {
 /* =========================
    HELPERS & RENDER LAYOUTS
 ========================= */
-function escapeHTML(str) {
-  return str.replace(/[&<>"']/g, (m) => HTML_CHARS[m] || m);
-}
+
 
 function renderEmptyConversation(user) {
   dom.chatMessages.innerHTML = `

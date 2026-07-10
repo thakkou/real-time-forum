@@ -1,4 +1,5 @@
 const serverURI = env.serverUri;
+import { handleAuthError } from "./helperApi.js";
 
 export const CreatComment = async ({ data }) => {
   const response = await fetch(
@@ -15,6 +16,8 @@ export const CreatComment = async ({ data }) => {
       }),
     }
   );
+    if (handleAuthError(response)) return;
+
 
   const result = await response.json();
 
@@ -35,6 +38,7 @@ export const CommentResolver = async ({ id, type }) => {
       credentials: "include",
     }
   );
+  if (handleAuthError(response)) return;
 
   const data = await response.json();
 

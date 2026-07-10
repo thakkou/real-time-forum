@@ -2,6 +2,7 @@ package utilities
 
 import (
 	"fmt"
+	"net/http"
 	"net/mail"
 	"regexp"
 	"strconv"
@@ -72,4 +73,17 @@ func ToInt(v any) (int, error) {
 	default:
 		return 0, fmt.Errorf("cannot convert %T to int", v)
 	}
+}
+
+// check if size biger in kb
+// check if request size is bigger than limit in KB
+func IsSizeBiggerThan(size float64, r *http.Request, w http.ResponseWriter, errormsg string) bool {
+	maxBytes := int64(size * 1024)
+
+	if r.ContentLength > maxBytes {
+		WriteJSON(w, http.StatusBadRequest, errormsg, nil)
+		return true
+	}
+
+	return false
 }

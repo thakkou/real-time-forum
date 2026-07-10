@@ -60,27 +60,37 @@ export const routes = { // turn it to map !
 // . comment creation in Post
 // . register form in RegisterForm
 
-async function guard(path) {
+async function guard(path, pushToHistory = true) {
+    console.log("qguards",path)
     const matched = matchRoute(path);
 
-     if (!matched) {
+    if (!matched) {
         await router.error(404, "page not found");
         return null;
     }
-   
 
     const requiresAuth = matched.route.auth;
-
     me = await isAuthenticated();
+    
+    let targetPath = path;
 
+    // Check auth overrides
     if (requiresAuth && !me.authenticated) {
-        path = "/login";
+        targetPath = "/login";
     } else if (!requiresAuth && me.authenticated) {
-        path = "/";
+        targetPath = "/";
     }
 
-    history.pushState({}, "", path);
-
+    // If the path was hijacked by auth guard rules
+    if (targetPath !== path) {
+        // Force replace the history state so the address bar corrects itself 
+        // even if we arrived here via a back-button action
+        history.replaceState({}, "", targetPath);
+    } else if (pushToHistory) {
+        // Regular forward navigation
+        history.pushState({}, "", targetPath);
+    }
+console.log(me)
     return me.nickname;
 }
 async function handleLogout() {
@@ -114,7 +124,6 @@ function setupHeader(nickname) {
 }
 function extractPath(path) {
     const parts = path.split("/").filter(Boolean);
-console.log(parts)
     // no path => default page
     if (parts.length === 0) {
         return "feed";
@@ -185,9 +194,19 @@ console.log("start navigate to ",scriptName,"from path")
     async init() {
 
         window.addEventListener('popstate', async () => {
-            const nickname = await guard(location.pathname);
-            this.render({ nickname });
-        });
+    // 1. Tell guard NOT to call pushState again
+    const nickname = await guard(location.pathname, false); 
+    
+    if (nickname === null) return;
+
+    // 2. Refresh the layout
+    setupHeader(nickname);
+    await this.render({ nickname });
+
+    // 3. CRITICAL: Reload the scripts so event listeners bind!
+    const scriptName = extractPath(location.pathname);
+    await loadPageScript(scriptName);
+});
     
 
         const nickname = await guard(location.pathname);

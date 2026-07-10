@@ -1,7 +1,8 @@
 const serverURI = env.serverUri;
+import { handleAuthError } from "./helperApi.js";
 
 export const getPosts = async ({
-  offset = 0,
+  lastId = null,
   limit = 30,
   categories = [],
   isLiked = false,
@@ -9,19 +10,19 @@ export const getPosts = async ({
 } = {}) => {
   const params = new URLSearchParams();
 
-  // pagination
-  params.append("offset", offset);
+  if (lastId !== null) {
+    params.append("lastId", lastId);
+  }
   params.append("limit", limit);
 
-  // categories
   categories.forEach((c) => params.append("categories", c));
 
   if (isLiked) {
-    params.append("my-liked-posts", "");
+    params.append("my-liked-posts", "true");
   }
 
   if (isCreatedByMe) {
-    params.append("my-creat-posts", "");
+    params.append("my-creat-posts", "true");
   }
 
   const response = await fetch(
@@ -31,6 +32,9 @@ export const getPosts = async ({
       credentials: "include",
     }
   );
+
+  // Check for unauthorized access before parsing JSON
+  if (handleAuthError(response)) return;
 
   const data = await response.json();
 
@@ -49,6 +53,8 @@ export const getPostByID = async ({ id }) => {
       credentials: "include",
     }
   );
+
+  if (handleAuthError(response)) return;
 
   const data = await response.json();
 
@@ -76,6 +82,8 @@ export const CreatePost = async ({ data }) => {
     }
   );
 
+  if (handleAuthError(response)) return;
+
   const result = await response.json();
 
   if (!response.ok) {
@@ -86,7 +94,7 @@ export const CreatePost = async ({ data }) => {
 };
 
 export const PostResolver = async ({ id, type }) => {
-  console.log("call api to",type,"for",id)
+  console.log("call api to", type, "for", id);
   const method = type === "delete" ? "DELETE" : "POST";
 
   const response = await fetch(
@@ -96,6 +104,8 @@ export const PostResolver = async ({ id, type }) => {
       credentials: "include",
     }
   );
+
+  if (handleAuthError(response)) return;
 
   const data = await response.json();
 

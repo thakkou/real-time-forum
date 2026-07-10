@@ -1,5 +1,5 @@
 const serverURI = window.env.serverUri;
-
+import { handleAuthError } from "./helperApi.js";
 export const getConversations = async ({
   offset = 0,
   limit = 30,
@@ -11,6 +11,7 @@ export const getConversations = async ({
       credentials: "include",
     }
   );
+  if (handleAuthError(response)) return;
 
   const result = await response.json();
 

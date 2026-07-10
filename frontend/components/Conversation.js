@@ -1,4 +1,4 @@
-import { formatTime } from '../scripts/helpers.js';
+import { formatTime ,sanitize} from '../scripts/helpers.js';
 
 export const Conversation = (item) => {
     const u = item.profile;
@@ -14,18 +14,18 @@ export const Conversation = (item) => {
 
     div.innerHTML = `
         <div class="user-avatar">
-            <div class="avatar-circle">${u.nickname.slice(0,2)}</div>
+            <div class="avatar-circle">${sanitize(u.nickname.slice(0,2))}</div>
             <span class="online-dot ${c.lastSeen ? "offline" : "online"}"></span>
         </div>
 
         <div class="user-info">
             <div class="user-name-row">
-                <span class="user-name">${u.nickname}</span>
+                <span class="user-name">${sanitize(u.nickname)}</span>
                 <span class="user-time">${formatTime(c.date)}</span>
             </div>
 
             <div class="user-preview">
-                ${c.lastMessage || "No messages yet"}
+                ${sanitize(c.lastMessage) || "No messages yet"}
             </div>
         </div>
     `;

@@ -1,3 +1,4 @@
+import { sanitize } from "../scripts/helpers.js";
 export const Comment = (comment) => (`
     <div class="comment" data-comment-id="${comment.Id}">
         <div class="comment-header">
@@ -23,7 +24,7 @@ export const Comment = (comment) => (`
         </div>
 
         <div class="comment-text">
-            ${comment.Text}
+            ${sanitize(comment.Text)}
         </div>
 
        <div class="comment-actions">

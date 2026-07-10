@@ -61,6 +61,7 @@ class WSService {
     }
 
     disconnect() {
+        console.log("disconect")
         this.socket?.close();
     }
 }

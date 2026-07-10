@@ -1,12 +1,12 @@
 import { Comment } from "./Comment.js";
-
+import { sanitize } from "../scripts/helpers.js";
 export const Post = (post, options = { withComments: false }) => `
 	${ options.withComments ? `<a onclick="navigate('/')" style="font-size: 12px;">← Back to Home</a>` : '' }
 
 	<article class="post ${ options.withComments ? 'detailed-post' : '' }" data-post-id="${post.Id}">
 		<div class="post-header">
 			<div class="delete-block">
-				<h3>${post.Title}</h3>
+				<h3>${sanitize(post.Title)}</h3>
 
 				${window.profile?.id == post.UserId ? `
 					<button data-id="${post.Id}" class="delete-btn btn small danger" type="button">
@@ -36,7 +36,7 @@ export const Post = (post, options = { withComments: false }) => `
 		` : ""}
 
 		<div class="post-body">
-			<pre>${post.Text}</pre>
+			<pre>${sanitize(post.Text)}</pre>
 		</div>
 
 		<div class="post-actions">
@@ -51,8 +51,7 @@ export const Post = (post, options = { withComments: false }) => `
 
 		${ options.withComments ? `
 			<section class="comments">
-				<h4>Comments (${post.Comments?.length || 0})</h4>
-
+<h4>Comments (<span class="comment-count">${post.Comments?.length || 0}</span>)</h4>
 				<div class="comments-list">
 				${ post.Comments?.length ?
 					post.Comments.map(Comment).join("") : `
