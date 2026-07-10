@@ -1,20 +1,33 @@
 import { Toast } from '../components/Toast.js';
 
-export function showToast(message, type = 'info',title="", duration = 5000) {
-    // available types: success, error, warning...
-    const container = document.getElementById('toast-container');
 
-    const toast = Toast(message, type,title);
+export function showToast(
+    message,
+    type = "info",
+    title = "",
+    duration = 5000,
+    position = "bottom" // "top" or "bottom"
+) {
+    const container = document.getElementById("toast-container");
 
-    // var doc = new DOMParser().parseFromString(toast, "text/xml");
+    // Set container position
+    container.classList.toggle("top", position === "top");
+    container.classList.toggle("bottom", position !== "top");
+
+    // Max 2 toasts
+    while (container.children.length >= 2) {
+        container.firstElementChild.remove();
+    }
+
+    const toast = Toast(message, type, title);
     container.appendChild(toast);
 
     requestAnimationFrame(() => {
-        toast.classList.add('show');
+        toast.classList.add("show");
     });
 
     setTimeout(() => {
-        toast.classList.remove('show');
+        toast.classList.remove("show");
 
         setTimeout(() => {
             toast.remove();

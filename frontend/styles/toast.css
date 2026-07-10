@@ -1,14 +1,23 @@
 #toast-container {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1000;
+    position: fixed;
+    right: 1rem;
+    z-index: 1000;
 
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 
-  width: min(380px, calc(100vw - 2rem));
+    width: min(380px, calc(100vw - 2rem));
+}
+
+#toast-container.top {
+    top: 1rem;
+    bottom: auto;
+}
+
+#toast-container.bottom {
+    bottom: 1rem;
+    top: auto;
 }
 
 .toast {
@@ -83,9 +92,9 @@
 .toast.attention .toast-header::before { background: #ff9f43; }
 
 @media (max-width: 480px) {
-  #toast-container {
-    left: 1rem;
-    right: 1rem;
-    width: auto;
-  }
+    #toast-container {
+        left: 1rem;
+        right: 1rem;
+        width: auto;
+    }
 }

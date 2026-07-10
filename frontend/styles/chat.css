@@ -89,23 +89,7 @@
         background: var(--surface-2);
         border-left-color: var(--accent);
       }
- 
-      .user-item.unread .user-preview {
-        color: var(--text);
-        font-weight: 500;
-      }
- 
-      .user-item.unread::after {
-        content: '';
-        position: absolute;
-        right: 1.25rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 7px;
-        height: 7px;
-        background: var(--accent);
-        border-radius: 50%;
-      }
+
  
       .user-avatar {
         position: relative;

@@ -1,4 +1,4 @@
-import { formatTime } from './helpers.js';
+import { formatTime,formatDate } from './helpers.js';
 import { getConversations, getConversationById } from "../api/conversations.js";
 import { createMessage } from "../api/messages.js";
 import { onlineUsers } from "../services/router.js";
@@ -15,6 +15,7 @@ const state = {
 
   currentConversationId: null,
   currentReceiverId: null,
+    currentReceiverName: "them", // <-- add this
   isTyping: false,         // Tracks if the counter-party is typing
   showTyping: false,        // FORCE OVERRIDE: Set to true to see the animation all the time!
   
@@ -266,6 +267,7 @@ async function openConversation(item) {
   }
 
   state.currentReceiverId = user.id;
+  state.currentReceiverName = user.nickname;
   state.currentConversationId = chat?.conversationId ?? null;
   dom.chatHeaderName.textContent = user.nickname;
   
@@ -280,15 +282,15 @@ async function openConversation(item) {
   }
 
   const chatStatusDot = document.getElementById("chatStatusDot");
-  if (chat?.lastSeen) {
-    dom.chatHeaderStatus.textContent = "● Offline";
-    dom.chatHeaderStatus.className = "chat-header-status offline";
-    if (chatStatusDot) chatStatusDot.className = "online-dot offline";
-  } else {
-    dom.chatHeaderStatus.textContent = "● Online";
-    dom.chatHeaderStatus.className = "chat-header-status online";
-    if (chatStatusDot) chatStatusDot.className = "online-dot online";
-  }
+  
+const isOnline = onlineUsers.has(String(user.id));
+
+dom.chatHeaderStatus.textContent = isOnline ? "● Online" : "● Offline";
+dom.chatHeaderStatus.className = `chat-header-status ${isOnline ? "online" : "offline"}`;
+
+if (chatStatusDot) {
+  chatStatusDot.className = `online-dot ${isOnline ? "online" : "offline"}`;
+}
 
   dom.chatView.style.display = "flex";
   dom.chatEmpty.style.display = "none";
@@ -337,10 +339,11 @@ function appendMessage(m, mine = false, prepend = false) {
   const group = document.createElement("div");
   group.className = `message-group ${mine ? "mine" : "theirs"}`;
   group.innerHTML = `
-    <div class="message-sender">${mine ? "you" : "them"}</div>
-    <div class="message-row">
+<div class="message-sender">
+  ${mine ? "You" : sanitize(state.currentReceiverName || "them")}
+</div>    <div class="message-row">
       <div class="message-bubble">${sanitize(m.text)}</div>
-      <div class="message-meta">${formatTime(m.created_at)}</div>
+      <div class="message-meta">${formatDate(m.created_at)} at ${formatTime(m.created_at)}</div>
     </div>`;
 
   if (prepend) {
@@ -511,8 +514,10 @@ console.log(data)
 
 
   const incomingSenderId = data.sender_id 
+  console.log("incomming",incomingSenderId,state.currentReceiverId)
 
   if(isNewConversation && state.currentReceiverId===incomingSenderId){
+    console.log("is new")
   let conv = state.conversations.find((c)=>c.conversation.conversationId==conversation_id)
   
      state.currentConversationId=conv.conversation.conversationId
@@ -527,7 +532,9 @@ console.log(data)
 ) {
       setPartnerTyping(false);
     }
+
 console.log("new conv messages")
+
     const incomingMsg = {
       sender_id: incomingSenderId,
       text: text,
@@ -546,17 +553,14 @@ console.log("new conv messages")
    TYPING INDICATOR CONTROL
 ========================= */
 function evaluateTypingIndicatorState() {
-  const currentNickname = dom.chatHeaderName?.textContent || "them";
-  
-  // If showTyping is manually turned on, render it immediately
-  if (state.showTyping || state.isTyping) {
-    renderTypingIndicator(currentNickname);
-  } else {
-    removeTypingIndicator();
-  }
+if (state.showTyping || state.isTyping) {
+  renderTypingIndicator();
+} else {
+  removeTypingIndicator();
+}
 }
 
-export function setPartnerTyping(isTyping, nickname = "them") {
+export function setPartnerTyping(isTyping) {
   state.isTyping = isTyping;
   evaluateTypingIndicatorState();
 }
@@ -567,7 +571,7 @@ export function toggleOverrideTyping(forceVisible) {
   evaluateTypingIndicatorState();
 }
 
-function renderTypingIndicator(nickname) {
+function renderTypingIndicator() {
   if (!dom.chatMessages) return;
   if (document.getElementById("typingIndicator")) return;
 
@@ -575,8 +579,9 @@ function renderTypingIndicator(nickname) {
   group.className = "message-group theirs";
   group.id = "typingIndicator";
   group.innerHTML = `
-    <div class="message-sender">${sanitize(nickname)}</div>
-    <div class="message-row">
+<div class="message-sender">
+  ${sanitize(state.currentReceiverName || "them")}
+</div>    <div class="message-row">
       <div class="typing-indicator-container">
         <div class="typing-dots">
           <span></span><span></span><span></span>
@@ -605,8 +610,7 @@ export const handleIncomingTypingEvent = (data) => {
     String(state.currentConversationId) === String(conversationId) &&
     String(state.currentReceiverId) === String(userId)
   ) {
-    const activeName = dom.chatHeaderName ? dom.chatHeaderName.textContent : "them";
-    setPartnerTyping(is_typing, activeName);
+    setPartnerTyping(is_typing);
   }
 };
 
