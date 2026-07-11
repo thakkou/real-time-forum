@@ -15,7 +15,8 @@
 -use replace instead of push in login,register //--in review
 
 
+-clean up -----//in progress
+-sanitize(+max lenght in front ,trim in backend) the message inputs ---done
+-update status code in like posts comments----done 
+-in message the \n not print
 -midlware size  cors
--sanitize(+max lenght in front ,trim in backend) the message inputs
--update status code in like posts comments 
--clean up

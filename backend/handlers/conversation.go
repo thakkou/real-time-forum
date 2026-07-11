@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"forum/database"
 	"forum/utilities"
@@ -82,6 +83,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		utilities.WriteJSON(w, 400, "invalid request body", nil)
 		return
 	}
+	req.Text = strings.TrimSpace(req.Text)
 
 	fmt.Printf(
 		"[REQUEST] receiver=%d text=%q conversation_id=%v\n",
@@ -159,8 +161,8 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 
 			utilities.WriteJSON(
 				w,
-				400,
-				"invalid conversation",
+				http.StatusNotFound,
+				"conversation not found",
 				nil,
 			)
 			return
@@ -378,11 +380,14 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 func GetConversation(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("start get users")
 
-	cookie, _ := r.Cookie("session_id")
-
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		utilities.WriteJSON(w, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
 	userId, err := utilities.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		utilities.WriteJSON(w, 405, "not authorized", nil)
+		utilities.WriteJSON(w, http.StatusUnauthorized, "not authorized", nil)
 		return
 	}
 

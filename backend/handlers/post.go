@@ -170,7 +170,10 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		utilities.WriteJSON(w, http.StatusInternalServerError, "commit failed", nil)
+		return
+	}
 	createdPost, err := GetPost(int(postID))
 
 	go ws.BroadcastExcept(strconv.Itoa(userId), "new_post", createdPost)
@@ -213,8 +216,8 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := ReactToPost(userId, postId, 1); err != nil {
-			utilities.WriteJSON(w, 500, err.Error(), nil)
+		if status, err := ReactToPost(userId, postId, 1); err != nil {
+			utilities.WriteJSON(w, status, err.Error(), nil)
 			return
 		}
 
@@ -237,8 +240,8 @@ func PostResolver(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := ReactToPost(userId, postId, -1); err != nil {
-			utilities.WriteJSON(w, 500, err.Error(), nil)
+		if status, err := ReactToPost(userId, postId, -1); err != nil {
+			utilities.WriteJSON(w, status, err.Error(), nil)
 			return
 		}
 

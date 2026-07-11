@@ -67,7 +67,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("session_id")
 	userId, err := utilities.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		utilities.WriteJSON(w, http.StatusBadRequest, "Invalid or expired session", nil)
+		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid or expired session", nil)
 		return
 	}
 	var nickname string
@@ -147,8 +147,8 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
 			return
 		}
-		if err := ReactToComment(userId, commentId, 1); err != nil {
-			utilities.WriteJSON(w, http.StatusInternalServerError, "Could not react to comment", nil)
+		if status, err := ReactToComment(userId, commentId, 1); err != nil {
+			utilities.WriteJSON(w, status, "Could not react to comment", nil)
 			return
 		}
 
@@ -175,8 +175,8 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 			utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
 			return
 		}
-		if err := ReactToComment(userId, commentId, -1); err != nil {
-			utilities.WriteJSON(w, http.StatusInternalServerError, "Could not react to comment", nil)
+		if status, err := ReactToComment(userId, commentId, -1); err != nil {
+			utilities.WriteJSON(w, status, "Could not react to comment", nil)
 			return
 		}
 		likes, dislikes, err := GetReactionsByComment(commentId)
@@ -204,7 +204,7 @@ func CommentResolver(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := DeleteComment(commentId, userId); err != nil {
 			fmt.Println("error deleting comment", commentId, err)
-			utilities.WriteJSON(w, http.StatusForbidden, err.Error(), nil)
+			utilities.WriteJSON(w, http.StatusBadRequest, err.Error(), nil)
 			return
 		}
 		utilities.WriteJSON(w, http.StatusOK, "Comment deleted successfully", nil)

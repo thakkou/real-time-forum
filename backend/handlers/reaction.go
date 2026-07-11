@@ -3,80 +3,166 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 
 	"forum/database"
 )
 
-func ReactToPost(userId, postId int, isLikeInt int) error {
-	var isLikedInt int
+func ReactToPost(userId, postId int, isLikeInt int) (int, error) {
+	// Validate reaction
+	if isLikeInt != 1 && isLikeInt != -1 {
+		return http.StatusBadRequest, fmt.Errorf("invalid reaction")
+	}
+
+	// Check if post exists
+	var exists int
 	err := database.Database.QueryRow(
+		"SELECT id FROM posts WHERE id = ?",
+		postId,
+	).Scan(&exists)
+
+	if err == sql.ErrNoRows {
+		return http.StatusNotFound, fmt.Errorf("post not found")
+	}
+
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("checking post existence: %w", err)
+	}
+
+	// Check existing reaction
+	var oldReaction int
+	err = database.Database.QueryRow(
 		"SELECT is_like FROM post_reactions WHERE user_id = ? AND post_id = ?",
 		userId,
 		postId,
-	).Scan(&isLikedInt)
+	).Scan(&oldReaction)
 
+	if err != nil && err != sql.ErrNoRows {
+		return http.StatusInternalServerError, fmt.Errorf("checking reaction: %w", err)
+	}
+
+	// Existing reaction
 	if err == nil {
-		// delete previous reaction
-		if _, err := database.Database.Exec(
-			"DELETE FROM post_reactions WHERE user_id = ? AND post_id = ?",
-			userId,
-			postId,
-		); err != nil {
-			return fmt.Errorf("ReactToPost delete error: %v", err)
-		}
-	}
 
-	isLike := isLikeInt == 1
-	isLiked := isLikedInt == 1
-	if isLike && (err != nil || !isLiked) ||
-		!isLike && (err != nil || isLiked) {
-		if _, err := database.Database.Exec(
-			"INSERT INTO post_reactions (user_id, post_id, is_like) VALUES (?, ?, ?)",
-			userId,
-			postId,
+		// Remove reaction if same
+		if oldReaction == isLikeInt {
+			_, err = database.Database.Exec(
+				"DELETE FROM post_reactions WHERE user_id = ? AND post_id = ?",
+				userId,
+				postId,
+			)
+			if err != nil {
+				return http.StatusInternalServerError, err
+			}
+
+			return http.StatusOK, nil
+		}
+
+		// Update reaction
+		_, err = database.Database.Exec(
+			"UPDATE post_reactions SET is_like = ? WHERE user_id = ? AND post_id = ?",
 			isLikeInt,
-		); err != nil {
-			return fmt.Errorf("ReactToPost insert error: %v", err)
+			userId,
+			postId,
+		)
+		if err != nil {
+			return http.StatusInternalServerError, err
 		}
+
+		return http.StatusOK, nil
 	}
 
-	return nil
+	// Create reaction
+	_, err = database.Database.Exec(
+		"INSERT INTO post_reactions (user_id, post_id, is_like) VALUES (?, ?, ?)",
+		userId,
+		postId,
+		isLikeInt,
+	)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusCreated, nil
 }
 
 // ReactToComment
-func ReactToComment(userId, commentId int, isLikeInt int) error {
-	var isLikedInt int
+func ReactToComment(userId, commentId int, isLikeInt int) (int, error) {
+	// Validate reaction
+	if isLikeInt != 1 && isLikeInt != -1 {
+		return http.StatusBadRequest, fmt.Errorf("invalid reaction")
+	}
+
+	// Check if comment exists
+	var exists int
 	err := database.Database.QueryRow(
+		"SELECT id FROM comments WHERE id = ?",
+		commentId,
+	).Scan(&exists)
+
+	if err == sql.ErrNoRows {
+		return http.StatusNotFound, fmt.Errorf("comment not found")
+	}
+
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("checking comment existence: %w", err)
+	}
+
+	// Check existing reaction
+	var oldReaction int
+	err = database.Database.QueryRow(
 		"SELECT is_like FROM comment_reactions WHERE user_id = ? AND comment_id = ?",
 		userId,
 		commentId,
-	).Scan(&isLikedInt)
+	).Scan(&oldReaction)
 
+	if err != nil && err != sql.ErrNoRows {
+		return http.StatusInternalServerError, fmt.Errorf("checking reaction: %w", err)
+	}
+
+	// Existing reaction
 	if err == nil {
-		if _, err := database.Database.Exec(
-			"DELETE FROM comment_reactions WHERE user_id = ? AND comment_id = ?",
-			userId,
-			commentId,
-		); err != nil {
-			return fmt.Errorf("ReactToComment delete error: %v", err)
-		}
-	}
 
-	isLike := isLikeInt == 1
-	isLiked := isLikedInt == 1
-	if isLike && (err != nil || !isLiked) ||
-		!isLike && (err != nil || isLiked) {
-		if _, err := database.Database.Exec(
-			"INSERT INTO comment_reactions (user_id, comment_id, is_like) VALUES (?, ?, ?)",
-			userId,
-			commentId,
+		// Same reaction -> remove it
+		if oldReaction == isLikeInt {
+			_, err = database.Database.Exec(
+				"DELETE FROM comment_reactions WHERE user_id = ? AND comment_id = ?",
+				userId,
+				commentId,
+			)
+			if err != nil {
+				return http.StatusInternalServerError, fmt.Errorf("delete reaction: %w", err)
+			}
+
+			return http.StatusOK, nil
+		}
+
+		// Different reaction -> update it
+		_, err = database.Database.Exec(
+			"UPDATE comment_reactions SET is_like = ? WHERE user_id = ? AND comment_id = ?",
 			isLikeInt,
-		); err != nil {
-			return fmt.Errorf("ReactToComment insert error: %v", err)
+			userId,
+			commentId,
+		)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("update reaction: %w", err)
 		}
+
+		return http.StatusOK, nil
 	}
 
-	return nil
+	// No reaction -> insert
+	_, err = database.Database.Exec(
+		"INSERT INTO comment_reactions (user_id, comment_id, is_like) VALUES (?, ?, ?)",
+		userId,
+		commentId,
+		isLikeInt,
+	)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("insert reaction: %w", err)
+	}
+
+	return http.StatusCreated, nil
 }
 
 // GetReactionsByPost
@@ -90,10 +176,10 @@ func GetReactionsByPost(postId int) (int, int, error) {
 		).Scan(n)
 	}
 	if err := getNumOfReactions(1, &like_count); err != nil {
-		return 0, 0, fmt.Errorf("GetReactionsByPost likes error: %v", err)
+		return 0, 0, fmt.Errorf("GetReactionsByPost likes error: %w", err)
 	}
 	if err := getNumOfReactions(-1, &dislike_count); err != nil {
-		return 0, 0, fmt.Errorf("GetReactionsByPost dislikes error: %v", err)
+		return 0, 0, fmt.Errorf("GetReactionsByPost dislikes error: %w", err)
 	}
 	return like_count, dislike_count, nil
 }
@@ -133,10 +219,10 @@ func GetReactionsByComment(commentId int) (int, int, error) {
 		).Scan(n)
 	}
 	if err := getNumOfReactions(1, &like_count); err != nil {
-		return 0, 0, fmt.Errorf("GetReactionsByComment likes error: %v", err)
+		return 0, 0, fmt.Errorf("GetReactionsByComment likes error: %w", err)
 	}
 	if err := getNumOfReactions(-1, &dislike_count); err != nil {
-		return 0, 0, fmt.Errorf("GetReactionsByComment dislikes error: %v", err)
+		return 0, 0, fmt.Errorf("GetReactionsByComment dislikes error: %w", err)
 	}
 	return like_count, dislike_count, nil
 }

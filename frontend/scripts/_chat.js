@@ -337,7 +337,7 @@ function renderMessages(messages, receiverId) {
 }
 
 function appendMessage(m, mine = false, prepend = false) {
-
+console.log(m.text)
   const group = document.createElement("div");
   group.className = `message-group ${mine ? "mine" : "theirs"}`;
   group.innerHTML = `
@@ -345,6 +345,7 @@ function appendMessage(m, mine = false, prepend = false) {
   ${mine ? "You" : sanitize(state.currentReceiverName || "them")}
 </div>    <div class="message-row">
       <div class="message-bubble">${sanitize(m.text)}</div>
+
       <div class="message-meta">${formatDate(m.created_at)} at ${formatTime(m.created_at)}</div>
     </div>`;
 
@@ -415,6 +416,7 @@ async function loadMoreMessages() {
       // If your initial render reverses the messages,
       // keep the same order here.
     olderMessages.forEach((m) => {
+
     appendMessage(m, m.sender_id !== state.currentReceiverId, true);
 });
 
