@@ -218,6 +218,13 @@ function renderUsers() {
   updateOnlineCountText();
 }
 
+function clearEmptyStatePlaceholder() {
+  const emptyState = dom.chatMessages?.querySelector(".chat-empty-state");
+  if (emptyState) {
+    emptyState.remove();
+  }
+}
+
 function createNoResultsState() {
   const div = document.createElement("div");
   div.className = "no-results-state";
@@ -582,6 +589,7 @@ export const reRenderMessages = (data) => {
     // currently open chat belongs to the sender or receiver of this event.
     if (isMine || String(incomingSenderId) === String(state.currentReceiverId)) {
       state.currentConversationId = conversation_id;
+            clearEmptyStatePlaceholder();
     }
   }
 
