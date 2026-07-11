@@ -104,6 +104,18 @@ export const RegisterForm = () => (`
       </div>
       <button id="register-btn" type="submit">Register</button>
     </form>
+    <!-- add socal auth -->
+
+    <div class="link-row">
+      Already have an account? <a onclick="navigate('/login')"> Login</a>
+    </div>
+  </div>
+`);
+
+
+
+/* social auth
+
 
     <!-- start -->
     <div class="social-auth">
@@ -127,8 +139,4 @@ export const RegisterForm = () => (`
     </div>
     <!-- end -->
 
-    <div class="link-row">
-      Already have an account? <a onclick="navigate('/login')"> Login</a>
-    </div>
-  </div>
-`);
+*/
