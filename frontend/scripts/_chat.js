@@ -239,7 +239,7 @@ export const reRender = (type, userId) => {
     const chatStatusDot = document.getElementById("chatStatusDot");
 
     if (dom.chatHeaderStatus) {
-      dom.chatHeaderStatus.textContent = isOnline ? "● Online" : "● Offline";
+      dom.chatHeaderStatus.textContent = isOnline ? " Online" : " Offline";
       dom.chatHeaderStatus.className = `chat-header-status ${isOnline ? "online" : "offline"}`;
     }
     
@@ -252,7 +252,9 @@ export const reRender = (type, userId) => {
 function updateOnlineCountText() {
   const countEl = document.getElementById("onlineCount");
   if (countEl) {
-    countEl.textContent = `● ${onlineUsers.size} online`;
+    const count= onlineUsers.size - 1 
+
+    countEl.textContent = `● ${countEl < 0 ? 0 : count} online`;
   }
 }
 
@@ -285,7 +287,7 @@ async function openConversation(item) {
   
 const isOnline = onlineUsers.has(String(user.id));
 
-dom.chatHeaderStatus.textContent = isOnline ? "● Online" : "● Offline";
+dom.chatHeaderStatus.textContent = isOnline ? " Online" : " Offline";
 dom.chatHeaderStatus.className = `chat-header-status ${isOnline ? "online" : "offline"}`;
 
 if (chatStatusDot) {

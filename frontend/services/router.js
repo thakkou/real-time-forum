@@ -73,18 +73,20 @@ async function guard(path, pushToHistory = true) {
     me = await isAuthenticated();
     
     let targetPath = path;
+    let shouldReplaceHistory = false;
 
     // Check auth overrides
     if (requiresAuth && !me.authenticated) {
         targetPath = "/login";
+        shouldReplaceHistory = true;
     } else if (!requiresAuth && me.authenticated) {
         targetPath = "/";
+        shouldReplaceHistory = true;
     }
 
     // If the path was hijacked by auth guard rules
     if (targetPath !== path) {
-        // Force replace the history state so the address bar corrects itself 
-        // even if we arrived here via a back-button action
+        // Always replace history for auth violations to prevent back-button access
         history.replaceState({}, "", targetPath);
     } else if (pushToHistory) {
         // Regular forward navigation

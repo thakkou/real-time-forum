@@ -92,7 +92,9 @@ export function setup() {
 
             console.log("registration successful");
             showToast('Registration successful!', 'success');
-            router.navigate('/login');
+            // Replace the register entry in history so back button doesn't return to register
+            history.replaceState({}, "", "/login");
+            await router.navigate('/login');
         } catch (err) {
             errorBox.style.display = "block";
             errorBox.textContent = err.message || "Registration failed"; // err.message for debugging (but script is loaded !)
