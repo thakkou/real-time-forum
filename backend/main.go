@@ -21,7 +21,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 
 func maxBodySizeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		const maxSize = 0.25 * 1024 * 1024
+		const maxSize = 0.25 * 1024
 		if r.ContentLength > maxSize {
 
 			utilities.WriteJSON(w, http.StatusRequestEntityTooLarge, "Request body too large", nil)
@@ -76,8 +76,8 @@ func main() {
 
 	log.Println("Server running on http://localhost:8080")
 
-	handler := corsMiddleware(http.DefaultServeMux)
-	handler = maxBodySizeMiddleware(handler)
+	handler := maxBodySizeMiddleware(http.DefaultServeMux)
+	handler = corsMiddleware(handler)
 
 	if err := http.ListenAndServe(":8080", handler); err != nil {
 		log.Fatal(err)

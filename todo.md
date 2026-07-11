@@ -18,5 +18,5 @@
 -clean up -----//in progress
 -sanitize(+max lenght in front ,trim in backend) the message inputs ---done
 -update status code in like posts comments----done 
--in message the \n not print
--midlware size  cors
+-in message the \n not print----done
+-midlware size  cors ----------done
