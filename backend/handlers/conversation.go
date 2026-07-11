@@ -126,22 +126,18 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		utilities.WriteJSON(w, 500, "db error", nil)
 		return
 	}
-
 	defer tx.Rollback()
 
 	var conversationID int
 	isNewConversation := false
 
 	// -------------------------
-	// CASE 1:
-	// conversation_id provided
+	// CASE 1: conversation_id provided
 	// -------------------------
 	if req.ConversationID != nil {
-
 		conversationID = *req.ConversationID
 
 		var exists int
-
 		err := tx.QueryRow(`
 			SELECT id
 			FROM CONVERSATIONS
@@ -154,27 +150,15 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			user2,
 		).Scan(&exists)
 		if err != nil {
-			fmt.Println(
-				"[CONVERSATION] invalid conversation:",
-				err,
-			)
-
-			utilities.WriteJSON(
-				w,
-				http.StatusNotFound,
-				"conversation not found",
-				nil,
-			)
+			fmt.Println("[CONVERSATION] invalid conversation:", err)
+			utilities.WriteJSON(w, http.StatusNotFound, "conversation not found", nil)
 			return
 		}
 
 	} else {
-
 		// -------------------------
-		// CASE 2:
-		// Find or create conversation
+		// CASE 2: Find or create conversation
 		// -------------------------
-
 		err := tx.QueryRow(`
 			SELECT id
 			FROM CONVERSATIONS
@@ -185,90 +169,47 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			user2,
 		).Scan(&conversationID)
 
-		if err == sql.ErrNoRows {
-
+		switch {
+		case err == sql.ErrNoRows:
 			res, err := tx.Exec(`
-				INSERT INTO CONVERSATIONS (
-					user1_id,
-					user2_id
-				)
+				INSERT INTO CONVERSATIONS (user1_id, user2_id)
 				VALUES (?, ?)
 			`,
 				user1,
 				user2,
 			)
 			if err != nil {
-				fmt.Println(
-					"[CONVERSATION] create error:",
-					err,
-				)
-
-				utilities.WriteJSON(
-					w,
-					500,
-					"failed to create conversation",
-					nil,
-				)
+				fmt.Println("[CONVERSATION] create error:", err)
+				utilities.WriteJSON(w, 500, "failed to create conversation", nil)
 				return
 			}
 
 			id, err := res.LastInsertId()
 			if err != nil {
-				fmt.Println(
-					"[CONVERSATION] last insert id error:",
-					err,
-				)
-
-				utilities.WriteJSON(
-					w,
-					500,
-					"failed to create conversation",
-					nil,
-				)
+				fmt.Println("[CONVERSATION] last insert id error:", err)
+				utilities.WriteJSON(w, 500, "failed to create conversation", nil)
 				return
 			}
 
 			conversationID = int(id)
 			isNewConversation = true
+			fmt.Printf("[CONVERSATION] created id=%d\n", conversationID)
 
-			fmt.Printf(
-				"[CONVERSATION] created id=%d\n",
-				conversationID,
-			)
-
-		} else if err != nil {
-
-			fmt.Println(
-				"[CONVERSATION] lookup error:",
-				err,
-			)
-
-			utilities.WriteJSON(
-				w,
-				500,
-				"db error",
-				nil,
-			)
+		case err != nil:
+			fmt.Println("[CONVERSATION] lookup error:", err)
+			utilities.WriteJSON(w, 500, "db error", nil)
 			return
 
-		} else {
-			fmt.Printf(
-				"[CONVERSATION] found id=%d\n",
-				conversationID,
-			)
+		default:
+			fmt.Printf("[CONVERSATION] found id=%d\n", conversationID)
 		}
 	}
 
 	// -------------------------
 	// Insert message
 	// -------------------------
-
 	result, err := tx.Exec(`
-		INSERT INTO MESSAGES (
-			conversation_id,
-			sender_id,
-			text
-		)
+		INSERT INTO MESSAGES (conversation_id, sender_id, text)
 		VALUES (?, ?, ?)
 	`,
 		conversationID,
@@ -276,17 +217,8 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		req.Text,
 	)
 	if err != nil {
-		fmt.Println(
-			"[MESSAGE] insert error:",
-			err,
-		)
-
-		utilities.WriteJSON(
-			w,
-			500,
-			"failed to send message",
-			nil,
-		)
+		fmt.Println("[MESSAGE] insert error:", err)
+		utilities.WriteJSON(w, 500, "failed to send message", nil)
 		return
 	}
 
@@ -295,29 +227,37 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	// -------------------------
 	// Update conversation preview
 	// -------------------------
-
 	_, err = tx.Exec(`
 		UPDATE CONVERSATIONS
-		SET
-			last_message = ?,
-			last_message_at = CURRENT_TIMESTAMP
+		SET last_message = ?, last_message_at = CURRENT_TIMESTAMP
 		WHERE id = ?
 	`,
 		req.Text,
 		conversationID,
 	)
 	if err != nil {
-		fmt.Println(
-			"[CONVERSATION] update preview error:",
-			err,
-		)
+		fmt.Println("[CONVERSATION] update preview error:", err)
+		utilities.WriteJSON(w, 500, "failed to update conversation", nil)
+		return
+	}
 
-		utilities.WriteJSON(
-			w,
-			500,
-			"failed to update conversation",
-			nil,
-		)
+	// -------------------------
+	// Get sender nickname
+	// ⚠️ MUST happen before commit — tx is unusable afterwards
+	// -------------------------
+	var nickname string
+	err = tx.QueryRow(`
+		SELECT nickname
+		FROM USERS
+		WHERE id = ?
+	`, senderID).Scan(&nickname)
+	if err != nil {
+		fmt.Println("[USER] failed to get nickname:", err)
+		if err == sql.ErrNoRows {
+			utilities.WriteJSON(w, 404, "user not found", nil)
+		} else {
+			utilities.WriteJSON(w, 500, "db error", nil)
+		}
 		return
 	}
 
@@ -326,27 +266,24 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	// -------------------------
 	if err := tx.Commit(); err != nil {
 		fmt.Println("[DB] commit error:", err)
-
-		utilities.WriteJSON(
-			w,
-			500,
-			"commit failed",
-			nil,
-		)
+		utilities.WriteJSON(w, 500, "commit failed", nil)
 		return
 	}
 
+	// -------------------------
+	// Notify both users over websocket
+	// -------------------------
 	ws.NotifyUser(
 		strconv.Itoa(req.ReceiverID),
 		"new_message",
 		map[string]interface{}{
 			"isMine":            false,
 			"isNewConversation": isNewConversation,
-
-			"conversation_id": conversationID,
-			"message_id":      messageID,
-			"sender_id":       senderID,
-			"text":            req.Text,
+			"nickname":          nickname,
+			"conversation_id":   conversationID,
+			"message_id":        messageID,
+			"sender_id":         senderID,
+			"text":              req.Text,
 		},
 	)
 
@@ -356,14 +293,16 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		map[string]interface{}{
 			"isMine":            true,
 			"isNewConversation": isNewConversation,
-
-			"conversation_id": conversationID,
-			"message_id":      messageID,
-			"sender_id":       senderID,
-			"text":            req.Text,
+			"conversation_id":   conversationID,
+			"message_id":        messageID,
+			"sender_id":         senderID,
+			"text":              req.Text,
 		},
 	)
 
+	// -------------------------
+	// Respond
+	// -------------------------
 	utilities.WriteJSON(
 		w,
 		200,

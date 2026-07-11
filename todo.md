@@ -20,10 +20,8 @@
 -update status code in like posts comments----done 
 -in message the \n not print----done
 -midlware size  cors ----------done
+-search bar //done
+-add nickname in toast notif ///done
 
 check
--post detaille and comment
 -updaate the moda creat post (event + cursor to pointer)
--search bar
-add nickname in toast notif
--add nickname in message inputs

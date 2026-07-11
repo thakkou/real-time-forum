@@ -880,7 +880,75 @@ textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-dim);
 }
+/* ── Create Post Toggle (summary) ─────────────────────────────── */
+#create-post-details summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.9rem 1.5rem;
+  border: 1px dashed var(--border-loud);
+  border-radius: 12px;
+  background: var(--surface-2);
+  transition: all 0.15s ease;
+  user-select: none;
+}
 
+#create-post-details summary:hover {
+  border-color: var(--accent);
+  background: rgba(232, 255, 71, 0.05);
+}
+
+#create-post-details summary h2 {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin: 0;
+  transition: color 0.15s ease;
+}
+
+#create-post-details summary:hover h2 {
+  color: var(--accent);
+}
+
+/* Optional: little "+" before the label, common pattern for "add new" triggers */
+#create-post-details summary h2::before {
+  content: '+ ';
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* When open, tone the summary down since the form below is now the focus */
+#create-post-details[open] summary {
+  border-style: solid;
+  border-color: var(--border);
+  background: transparent;
+  margin-bottom: 1rem;
+}
+
+#create-post-details[open] summary h2::before {
+  content: '− ';
+}
+
+/* Round the whole create-post card to match, a bit more than your default --radius */
+.create-post {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* Keep the inner form fields consistent but slightly rounder than the rest of the site */
+.create-post input[type='text'],
+.create-post textarea,
+.create-post .categories {
+  border-radius: 10px;
+}
+
+.create-post button[type='submit'] {
+  border-radius: 10px;
+}
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .container {

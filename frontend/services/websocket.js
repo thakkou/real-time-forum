@@ -111,9 +111,9 @@ ws.on("init", (data) => {
                 
 
                  if(!isMe){
-                    console.log("append me ")
+                    console.log(data)
 
-              showToast(data.text, "success");
+              showToast(data.text, "success",data.nickname);
 
              reRenderMessages(data,false)
 
