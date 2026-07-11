@@ -20,8 +20,47 @@ function resetState(){
 /* ======================
    INIT
 ====================== */
+/* ======================
+   EVENT HANDLER REFERENCES
+====================== */
+let cachedScrollHandler = null;
+let cachedClickHandler = null;
+let cachedToggleHandler = null;
+let cachedCreateSubmitHandler = null;
+let cachedFilterSubmitHandler = null;
+
+export function cleanup() {
+  console.log("Cleaning up old feed event listeners...");
+
+  if (cachedScrollHandler) {
+    console.log(cachedScrollHandler)
+    window.removeEventListener("scroll", cachedScrollHandler);
+  }
+  if (cachedClickHandler) {
+    document.removeEventListener("click", cachedClickHandler);
+  }
+
+  const details = document.getElementById("create-post-details");
+  if (details && cachedToggleHandler) {
+    details.removeEventListener("toggle", cachedToggleHandler);
+  }
+
+  const createPostForm = document.getElementById("create-post-form");
+  if (createPostForm && cachedCreateSubmitHandler) {
+    createPostForm.removeEventListener("submit", cachedCreateSubmitHandler);
+  }
+
+  const filterForm = document.getElementById("filter-form");
+  if (filterForm && cachedFilterSubmitHandler) {
+    filterForm.removeEventListener("submit", cachedFilterSubmitHandler);
+  }
+}
+
+
 export function setup() {
 resetState()
+cleanup(); // Wipe out any lingering event listeners before binding fresh ones
+
   fetchPosts();
   setupEvents();
 }
@@ -169,8 +208,6 @@ function toggleFilter(name, button) {
   button.classList.toggle("active");
   input.value = isActive ? "" : "true";
 
-  resetFeed();
-  fetchPosts();
 }
 
 
@@ -180,96 +217,105 @@ function toggleFilter(name, button) {
    EVENTS
 ====================== */
 
+/* ======================
+   EVENTS SETUP
+====================== */
 function setupEvents() {
   const details = document.getElementById("create-post-details");
-
-  details?.addEventListener("toggle", () => {
-    console.log(details.open ? "Form opened" : "Form closed");
-  });
-
-  window.addEventListener(
-    "scroll",
-    throttle(() => {
-      const scrollTop = window.scrollY;
-
-      const windowHeight = window.innerHeight;
-      const docHeight = document.documentElement.scrollHeight;
-
-      if (scrollTop + windowHeight >= docHeight - 200) {
-        fetchPosts();
-      }
-    }, 200)
-  );
-
   const createPostForm = document.getElementById("create-post-form");
+  const filterForm = document.getElementById("filter-form");
 
-  createPostForm?.addEventListener("submit", (e) => {
+  // 1. Details toggle listener
+  cachedToggleHandler = () => {
+    console.log(details.open ? "Form opened" : "Form closed");
+  };
+  details?.addEventListener("toggle", cachedToggleHandler);
+
+  // 2. Window Scroll infinite loading listener
+  cachedScrollHandler = throttle(() => {
+    const scrollTop = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+
+    if (scrollTop + windowHeight >= docHeight - 200) {
+      fetchPosts();
+    }
+  }, 200);
+  window.addEventListener("scroll", cachedScrollHandler);
+
+  // 3. Post Form creation submit listener
+  cachedCreateSubmitHandler = (e) => {
     e.preventDefault();
     handleCreatePost(e.target);
-  });
+  };
+  createPostForm?.addEventListener("submit", cachedCreateSubmitHandler);
 
-  document.addEventListener("click", (e) => {
+  // 4. Global Click delegation handler
+  cachedClickHandler = async (e) => {
     const post = e.target.closest(".post");
-
-    if (!post) return;
-
-    if (
-      e.target.closest("button") ||
-      e.target.closest(".like-btn") ||
-      e.target.closest(".dislike-btn")
-    ) {
-      return;
-    }
-    router.navigate(`/post/${post.dataset.postId}`);
-  });
-
-  document.addEventListener("click", async (e) => {
     const likeBtn = e.target.closest(".like-btn");
     const dislikeBtn = e.target.closest(".dislike-btn");
     const deleteBtn = e.target.closest(".delete-btn");
-
     const createdBtn = e.target.closest("[name='my-creat-postes']");
     const likedBtn = e.target.closest("[name='my-liked-post']");
 
+    // Filter Buttons triggers
     if (createdBtn) return toggleFilter("my-creat-postes", createdBtn);
     if (likedBtn) return toggleFilter("my-liked-post", likedBtn);
 
+    // Like Action
     if (likeBtn) {
       const res = await handleAction(likeBtn.dataset.id, "like");
       if (res?.message === "liked") {
         updatePostUI(likeBtn.dataset.id, "like", res.data);
       }
+      return;
     }
 
+    // Dislike Action
     if (dislikeBtn) {
       const res = await handleAction(dislikeBtn.dataset.id, "dislike");
       if (res?.message === "disliked") {
         updatePostUI(dislikeBtn.dataset.id, "dislike", res.data);
       }
+      return;
     }
 
+    // Delete Action
     if (deleteBtn) {
       const res = await handleAction(deleteBtn.dataset.id, "delete");
       if (res?.message === "deleted") {
         updatePostUI(deleteBtn.dataset.id, "delete");
         showToast("deleted post", "success");
       }
+      return;
     }
-  });
 
-  document
-    .getElementById("filter-form")
-    ?.addEventListener("submit", (e) => {
-      e.preventDefault();
+    // Row Click Redirection (Ignore if clicking general buttons/actions)
+    if (post) {
+      if (e.target.closest("button") || likeBtn || dislikeBtn || deleteBtn) {
+        return;
+      }
+    cleanup()
+      
+      router.navigate(`/post/${post.dataset.postId}`);
+    }
+  };
+  document.addEventListener("click", cachedClickHandler);
 
-      const params = new URLSearchParams(new FormData(e.target));
-      const url = new URL(window.location);
+  // 5. Filter Form submission listener
+  cachedFilterSubmitHandler = (e) => {
+    e.preventDefault();
 
-      window.history.pushState({}, "", `${url.pathname}?${params.toString()}`);
+    const params = new URLSearchParams(new FormData(e.target));
+    const url = new URL(window.location);
 
-      resetFeed();
-      fetchPosts();
-    });
+    window.history.pushState({}, "", `${url.pathname}?${params.toString()}`);
+
+    resetFeed();
+    fetchPosts();
+  };
+  filterForm?.addEventListener("submit", cachedFilterSubmitHandler);
 }
 
 /* ======================

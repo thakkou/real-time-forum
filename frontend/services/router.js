@@ -267,14 +267,31 @@ function matchRoute(path) {
     return null;
 }
 
+// async function loadPageScript(pageName) {
+// //   if (window.currentPageScript && typeof window.currentPageScript.cleanup === 'function') {
+// //     window.currentPageScript.cleanup();
+// //   } // ?!
+  
+//   if (pageScripts[pageName]) {
+//     const script = await pageScripts[pageName]();
+//     await script.setup();
+//     window.currentPage = pageName; // need to be done before !!!
+//   }
+// }
+// Inside your router file
+let currentCleanup = null;
+
 async function loadPageScript(pageName) {
-//   if (window.currentPageScript && typeof window.currentPageScript.cleanup === 'function') {
-//     window.currentPageScript.cleanup();
-//   } // ?!
+  // Call the cleanup function of the previous script before loading the new one
+  if (currentCleanup && typeof currentCleanup === 'function') {
+    currentCleanup();
+    currentCleanup = null;
+  }
   
   if (pageScripts[pageName]) {
     const script = await pageScripts[pageName]();
-    await script.setup();
-    window.currentPage = pageName; // need to be done before !!!
+    // Save the cleanup function returned by setup
+    currentCleanup = await script.setup();
+    window.currentPage = pageName;
   }
 }

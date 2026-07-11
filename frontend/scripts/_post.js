@@ -7,6 +7,7 @@ import { getPostByID, PostResolver } from "../api/posts.js";
 import { CommentResolver, CreatComment } from "../api/comments.js";
 import { updatePostUI } from './_feed.js';
 import { showToast } from '../services/toast.js';
+import { router } from '../services/router.js';
 /* ================================================================
    INITIALIZATION & RENDER LIEFOCYCLE
    ================================================================ */
@@ -41,6 +42,12 @@ const state = {
   hasMoreComments: false,
   isLoadingComments: false,
 };
+/* ================================================================
+   EVENT HANDLER REFERENCES
+================================================================ */
+let cachedClickHandler = null;
+let cachedSubmitHandler = null;
+let cachedLoadMoreHandler = null;
 
 function cacheUI() {
   ui.post = document.querySelector(".post");
@@ -59,7 +66,23 @@ function cacheUI() {
   ui.commentForm = ui.post.querySelector("#comment-form");
 }
 
+export function cleanup() {
+  console.log("Cleaning up old post event listeners...");
+
+  if (cachedClickHandler) {
+    document.removeEventListener("click", cachedClickHandler);
+  }
+  if (cachedSubmitHandler) {
+    document.removeEventListener("submit", cachedSubmitHandler);
+  }
+  if (ui.loadMoreBtn && cachedLoadMoreHandler) {
+    ui.loadMoreBtn.removeEventListener("click", cachedLoadMoreHandler);
+  }
+}
+
+
 export async function setup() {
+  cleanup()
   console.log("setup post id")
   try {
     setupEventListeners();
@@ -175,7 +198,7 @@ function renderComments(comments, append = false) {
 function attachLoadMoreHandler() {
   ui.loadMoreBtn = ui.post.querySelector("#loadMoreCommentsBtn");
   if (!ui.loadMoreBtn) return;
-
+cachedLoadMoreHandler = loadMoreComments;
   ui.loadMoreBtn.addEventListener("click", loadMoreComments);
   updateLoadMoreButton();
 }
@@ -210,7 +233,8 @@ async function loadMoreComments() {
    ================================================================ */
 function setupEventListeners() {
   
-  document.addEventListener("click", async (e) => {
+  // 1. Global Click Handler Definition
+  cachedClickHandler = async (e) => {
     const likeBtn = e.target.closest(".like-btn");
     const dislikeBtn = e.target.closest(".dislike-btn");
     const commentLikeBtn = e.target.closest(".comment-like-btn");
@@ -218,16 +242,15 @@ function setupEventListeners() {
     const commentDeleteBtn = e.target.closest(".comment-delete-btn"); 
     const deleteBtn = e.target.closest(".delete-btn");
 
-
     // Post Like/Dislike
     if (likeBtn || dislikeBtn) {
       e.stopPropagation();
       const id = (likeBtn || dislikeBtn).dataset.id;
       const type = likeBtn ? "like" : "dislike";
       try {
-        const data =  await PostResolver({ id, type });
-        if(data){
-           updatePostUI(id,type,data.data)
+        const data = await PostResolver({ id, type });
+        if (data) {
+           updatePostUI(id, type, data.data);
         }
       } catch (err) {
         console.error(err);
@@ -238,14 +261,12 @@ function setupEventListeners() {
 
     // Comment Like/Dislike
     if (commentLikeBtn || commentDislikeBtn) {
-
       const id = (commentLikeBtn || commentDislikeBtn).dataset.id;
       const type = commentLikeBtn ? "like" : "dislike";
       try {
         const data = await CommentResolver({ id, type });
-
-updateCommentUI(id,type,data.data) 
-     } catch (err) {
+        updateCommentUI(id, type, data.data); 
+      } catch (err) {
         console.error(err);
         showToast(err.message || "Action failed", "error");
       }
@@ -261,7 +282,8 @@ updateCommentUI(id,type,data.data)
       const commentTarget = commentDeleteBtn.closest(".comment"); 
       if (commentTarget) {
         commentTarget.remove(); 
-        updateCommentCount(-1);      }
+        updateCommentCount(-1);      
+      }
 
       try {
         await CommentResolver({ id, type: "delete" });
@@ -286,7 +308,11 @@ updateCommentUI(id,type,data.data)
 
       try {
         await PostResolver({ id: postId, type: "delete" });
-        navigate("/"); 
+        if (window.router) {
+          window.router.navigate("/");
+        } else {
+          router.navigate("/");
+        }
       } catch (err) {
         console.error("Server failed to delete post:", err);
         showToast(err.message || "Failed to delete post from database. Reloading...", "error");
@@ -294,10 +320,11 @@ updateCommentUI(id,type,data.data)
       }
       return;
     }
-  });
+  };
+  document.addEventListener("click", cachedClickHandler);
 
-  // INSTANT: Form Submission handler (Comment Creation)
-  document.addEventListener("submit", async (e) => {
+  // 2. Global Submit Handler Definition (Comment Creation)
+  cachedSubmitHandler = async (e) => {
     const form = e.target.closest("#comment-form");
     if (!form) return;
     
@@ -321,13 +348,13 @@ updateCommentUI(id,type,data.data)
       } else {
         await setupPostPage(); 
       }
-
     } catch (err) {
       console.error("Comment creation failed:", err);
       showToast(err.message || "Failed to post comment. Please try again.", "error");
       await setupPostPage(); 
     }
-  });
+  };
+  document.addEventListener("submit", cachedSubmitHandler);
 }
 
 /* ================================================================
