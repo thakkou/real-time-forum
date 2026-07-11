@@ -413,9 +413,9 @@ User A (Client 1)       WebSocket Hub           User B (Client 2)
 ```
 1. Request arrives at main.go
    ↓
-2. CORS middleware adds headers
+2. Max body size middleware checks size
    ↓
-3. Max body size middleware checks size
+3. CORS middleware adds headers
    ↓
 4. Router directs to handler
    ↓
@@ -704,13 +704,6 @@ Backend: http://localhost:8080 (Go server)
 Database: ./forum.db (SQLite file)
 ```
 
-### Production (Docker)
-```
-docker-compose up -d
-├─ frontend service (port 3000)
-├─ backend service (port 8080)
-└─ shared volume for database
-```
 
 ### Environment Configuration
 ```
