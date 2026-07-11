@@ -25,9 +25,11 @@ const state = {
   
   // 🔄 Pagination States
   isLoadingOlder: false,
+  
   hasMoreMessages: true,
   limit: 10,
   offset: 0,
+    searchQuery: "", // 🟢 new
 };
 
 /* =========================
@@ -42,6 +44,7 @@ const dom = {
   sendBtn: null,
   chatEmpty: null,
   chatView: null,
+    searchInput: null, // 🟢 new
 };
 
 
@@ -59,7 +62,7 @@ export async function setup() {
   setupMobileUI();
   setupSendMessage();
   setupScrollPagination();
-
+  setupSearch(); 
   try {
    const resp = await getConversations();
 
@@ -76,6 +79,36 @@ if (state.conversations.length > 0) {
     console.error("Failed to initialize conversation list:", err);
     showEmptyState();
   }
+}
+
+/* =========================
+   SEARCH
+========================= */
+function setupSearch() {
+  if (!dom.searchInput) return;
+
+  let debounceTimer = null;
+
+  dom.searchInput.addEventListener("input", (e) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      state.searchQuery = e.target.value.trim().toLowerCase();
+      renderUsers();
+    }, 150);
+  });
+}
+
+function getFilteredConversations() {
+  if (!state.searchQuery) return state.conversations;
+
+  return state.conversations.filter((item) => {
+    const nickname = (item.profile?.nickname || "").toLowerCase();
+    const lastMessage = (item.conversation?.lastMessage || "").toLowerCase();
+    return (
+      nickname.includes(state.searchQuery) ||
+      lastMessage.includes(state.searchQuery)
+    );
+  });
 }
 
 /* =========================
@@ -130,6 +163,7 @@ function cacheDom() {
   dom.sendBtn = document.getElementById("sendBtn");
   dom.chatEmpty = document.getElementById("chatEmpty");
   dom.chatView = document.getElementById("chatView");
+    dom.searchInput = document.getElementById("userSearch"); // 🟢 matches your HTML
 }
 
 /* =========================
@@ -152,8 +186,10 @@ function renderUsers() {
   const offline = [];
 
   dom.usersList.innerHTML = "";
-  state.conversations.forEach((item) => {
 
+  const list = getFilteredConversations(); // 🟢 new
+
+  list.forEach((item) => {
     const userId = String(item.profile.id);
 
     if (onlineUsers.has(userId)) {
@@ -163,13 +199,33 @@ function renderUsers() {
     }
   });
 
-  dom.usersList.appendChild(createSectionTitle("Online"));
-  online.forEach(renderUserItem);
+  if (list.length === 0) { // 🟢 new
+    dom.usersList.appendChild(createNoResultsState());
+    updateOnlineCountText();
+    return;
+  }
 
-  dom.usersList.appendChild(createSectionTitle("Offline"));
-  offline.forEach(renderUserItem);
+  if (online.length > 0) {
+    dom.usersList.appendChild(createSectionTitle("Online"));
+    online.forEach(renderUserItem);
+  }
+
+  if (offline.length > 0) {
+    dom.usersList.appendChild(createSectionTitle("Offline"));
+    offline.forEach(renderUserItem);
+  }
 
   updateOnlineCountText();
+}
+
+function createNoResultsState() {
+  const div = document.createElement("div");
+  div.className = "no-results-state";
+  div.style.cssText = "text-align:center; padding: 1.5rem 0.5rem; color: var(--text-dim); font-family: var(--mono); font-size: 0.75rem;";
+  div.textContent = state.searchQuery
+    ? `No conversations matching "${state.searchQuery}"`
+    : "No conversations yet";
+  return div;
 }
 function createSectionTitle(text) {
   const div = document.createElement("div");

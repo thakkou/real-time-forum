@@ -139,7 +139,7 @@ export async function render(data = {}) {
                 <textarea
                   class="chat-input"
                   id="messageInput"
-                  placeholder="Message k0r3y..."
+                  placeholder="Message ..."
                   rows="1"
                   maxlength="1000"
                 ></textarea>
