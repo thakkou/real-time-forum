@@ -35,7 +35,9 @@ testButtons.forEach((btn) => {
 			showToast('Login successful!', 'success');
 			// Replace the login entry in history so back button doesn't return to login
 			history.replaceState({}, "", "/");
+			ws.connect()
 			await router.navigate("/");
+			
 			// Store user globally
 			window.user = resp.data; // ?!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		} catch (err) {

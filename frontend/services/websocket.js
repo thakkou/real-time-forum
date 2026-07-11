@@ -1,3 +1,9 @@
+import { reRender, reRenderMessages, updateTheConv } from '../scripts/_chat.js';
+import { showToast } from './toast.js';
+import { handleIncomingTypingEvent } from '../scripts/_chat.js';
+
+export const onlineUsers = new Set()
+
 class WSService {
     constructor() {
         this.socket = null;
@@ -68,6 +74,75 @@ class WSService {
 
 
 export const ws = new WSService();
+
+ws.on("init", (data) => {
+                console.log("init users:", data);
+                data.forEach(id => onlineUsers.add(id));
+            });
+
+
+            ws.on("force_logout",(data)=>{
+                console.log("force logout")
+                this.navigate("/login")
+            })
+
+            ws.on("client_connect", (userId) => {
+                console.log("user connected:", userId);
+                onlineUsers.add(userId);
+                reRender("connect",userId)
+            });
+
+            ws.on("client_disconnect", (userId) => {
+                console.log("user disconnected:", userId);
+                onlineUsers.delete(userId);
+    reRender("disconnect",userId)
+            });
+
+
+            ws.on("new_post",(data)=>{
+            });
+
+            ws.on("new_message", (data) => {
+                const isMe = data.isMine
+                const isNew=data.isNewConversation
+               
+
+                    updateTheConv(data,isNew)
+                
+
+                 if(!isMe){
+                    console.log("append me ")
+
+              showToast(data.text, "success");
+
+             reRenderMessages(data,false)
+
+                 }else{
+                    console.log("append him ")
+
+                    reRenderMessages(data,true)
+                 }
+
+
+ });
+
+          ws.on("typing:start", (data) => {
+  console.log("someone is start typing:", data);
+
+  handleIncomingTypingEvent({
+    ...data,
+    is_typing: true
+  });
+});
+
+ws.on("typing:stop", (data) => {
+  console.log("someone is stop typing:", data);
+
+  handleIncomingTypingEvent({
+    ...data,
+    is_typing: false
+  });
+});
 
 
 // CORE

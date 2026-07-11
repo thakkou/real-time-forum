@@ -1,7 +1,7 @@
 import { formatTime,formatDate } from './helpers.js';
 import { getConversations, getConversationById } from "../api/conversations.js";
 import { createMessage } from "../api/messages.js";
-import { onlineUsers } from "../services/router.js";
+import { onlineUsers } from "../services/websocket.js";
 import { Conversation } from "../components/Conversation.js";
 import { ws } from '../services/websocket.js';
 import { sanitize } from './helpers.js';

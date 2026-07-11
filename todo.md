@@ -14,3 +14,7 @@
 -when no session i send the socket ///-done
 -use replace instead of push in login,register //--in review
 
+
+-midlware size  cors
+-sanitize(+max lenght in front ,trim in backend) the message inputs
+-update status code in like posts comments 

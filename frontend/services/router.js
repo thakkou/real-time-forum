@@ -1,11 +1,7 @@
 import { isAuthenticated } from '../services/auth.js';
 import { ws } from './websocket.js';
-import { showToast } from './toast.js';
-import { reRender, reRenderMessages, updateTheConv } from '../scripts/_chat.js';
 import { Header } from '../components/Header.js';
-import { handleIncomingTypingEvent } from '../scripts/_chat.js';
 import { logout } from '../api/auth.js';
-export const onlineUsers = new Set()
 let me = null;
 
 export const routes = { // turn it to map !
@@ -194,21 +190,20 @@ export const router = {
     },
 
     async init() {
-
         window.addEventListener('popstate', async () => {
-    // 1. Tell guard NOT to call pushState again
-    const nickname = await guard(location.pathname, false); 
-    
-    if (nickname === null) return;
+                // 1. Tell guard NOT to call pushState again
+                const nickname = await guard(location.pathname, false); 
+                
+                if (nickname === null) return;
 
-    // 2. Refresh the layout
-    setupHeader(nickname);
-    await this.render({ nickname });
+                // 2. Refresh the layout
+                setupHeader(nickname);
+                await this.render({ nickname });
 
-    // 3. CRITICAL: Reload the scripts so event listeners bind!
-    const scriptName = extractPath(location.pathname);
-    await loadPageScript(scriptName);
-});
+                // 3. CRITICAL: Reload the scripts so event listeners bind!
+                const scriptName = extractPath(location.pathname);
+            await loadPageScript(scriptName);
+           });
     
 
         const nickname = await guard(location.pathname);
@@ -218,74 +213,9 @@ export const router = {
             console.log("user connect and set the header ")
             ws.connect();
 
-
-            ws.on("init", (data) => {
-                console.log("init users:", data);
-                data.forEach(id => onlineUsers.add(id));
-           
-            });
-            ws.on("force_logout",(data)=>{
-                console.log("force logout")
-                this.navigate("/login")
-            })
-
-            ws.on("client_connect", (userId) => {
-                console.log("user connected:", userId);
-                onlineUsers.add(userId);
-                reRender("connect",userId)
-            });
-
-            ws.on("client_disconnect", (userId) => {
-                console.log("user disconnected:", userId);
-                onlineUsers.delete(userId);
-    reRender("disconnect",userId)
-            });
-
-
-            ws.on("new_post",(data)=>{
-            });
-
-            ws.on("new_message", (data) => {
-                const isMe = data.isMine
-                const isNew=data.isNewConversation
-               
-
-                    updateTheConv(data,isNew)
-                
-
-                 if(!isMe){
-                    console.log("append me ")
-
-              showToast(data.text, "success");
-
-             reRenderMessages(data,false)
-
-                 }else{
-                    console.log("append him ")
-
-                    reRenderMessages(data,true)
-                 }
-
-
- });
-
-          ws.on("typing:start", (data) => {
-  console.log("someone is start typing:", data);
-
-  handleIncomingTypingEvent({
-    ...data,
-    is_typing: true
-  });
-});
-
-ws.on("typing:stop", (data) => {
-  console.log("someone is stop typing:", data);
-
-  handleIncomingTypingEvent({
-    ...data,
-    is_typing: false
-  });
-});
+            //
+        }else{
+            console.log("not")
         }
 
         // the page is fully rendered first, then the specific scripts are loded after !

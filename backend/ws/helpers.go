@@ -127,7 +127,6 @@ func StoreClient(userID string, conn *websocket.Conn) *Client {
 	}
 
 	mu.Unlock()
-
 	NotifyUser(userID, "init", online)
 	BroadcastExcept(userID, "client_connect", userID)
 
