@@ -147,10 +147,7 @@ export async function render(data = {}) {
               <button class="send-btn" id="sendBtn">Send ↵</button>
             </div>
 
-            <div class="ws-status">
-              <span class="ws-dot connected" id="wsDot"></span>
-              <span id="wsStatusText">Connected</span>
-            </div>
+        
           </div>
 
         </div>

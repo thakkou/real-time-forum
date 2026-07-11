@@ -18,3 +18,4 @@
 -midlware size  cors
 -sanitize(+max lenght in front ,trim in backend) the message inputs
 -update status code in like posts comments 
+-clean up
