@@ -2,11 +2,10 @@
 
 ## Table of Contents
 1. [Overview](#overview)
-2. [WebSocket Connection](#websocket-connection)
-3. [Real-Time Events](#real-time-events)
+2. [WebSocket Events](#websocket-events)
+3. [Conversations API](#conversations-api)
 4. [Message API](#message-api)
-5. [Conversations API](#conversations-api)
-6. [Error Handling](#error-handling)
+5. [Error Handling](#error-handling)
 
 ---
 
@@ -19,217 +18,26 @@ The Real-Time Messaging system provides:
 - **User presence tracking** (online/offline status)
 
 ### Technology
-- **Protocol**: WebSocket (ws://)
+- **Protocol**: WebSocket (ws://) for real-time, REST for history
 - **Format**: JSON
 - **Authentication**: Session cookie validation
 
 ---
 
-## WebSocket Connection
+## WebSocket Events
 
-### Establish Connection
+> **📖 For complete WebSocket event documentation, see [websocket-events.md](./websocket-events.md)**
 
-#### URL
-```
-ws://localhost:8080/ws
-wss://api.example.com/ws  (production)
-```
+Key events for messaging:
 
-#### Connection Process
+- **`init`** - Initial online users list upon connection
+- **`client_connect`** - User came online
+- **`client_disconnect`** - User went offline
+- **`new_message`** - Incoming private message
+- **`new_post`** - New forum post created
+- **`force_logout`** - Force user logout (multi-tab sync)
 
-```javascript
-const ws = new WebSocket('ws://localhost:8080/ws');
-
-ws.onopen = () => {
-  console.log('Connected to WebSocket');
-};
-
-ws.onmessage = (event) => {
-  const message = JSON.parse(event.data);
-  handleMessage(message);
-};
-
-ws.onerror = (error) => {
-  console.error('WebSocket error:', error);
-};
-
-ws.onclose = () => {
-  console.log('WebSocket closed');
-  // Attempt reconnect with exponential backoff
-};
-```
-
-### Authentication
-
-The server validates the session cookie from the initial WebSocket upgrade request:
-
-```http
-GET /ws HTTP/1.1
-Connection: Upgrade
-Upgrade: websocket
-Cookie: session_id=550e8400-e29b-41d4-a716-446655440000
-```
-
-**Invalid Session Response:**
-```http
-HTTP/1.1 401 Unauthorized
-{"error": "not authenticated"}
-```
-
----
-
-## Real-Time Events
-
-### Server-to-Client Events
-
-#### 1. `init`
-
-Sent when user first connects. Contains list of currently online users.
-
-```json
-{
-  "event": "init",
-  "data": [1, 3, 5, 7]
-}
-```
-
-**Usage:** Initialize online users list
-
----
-
-#### 2. `client_connect`
-
-Notifies when another user comes online.
-
-```json
-{
-  "event": "client_connect",
-  "data": 2
-}
-```
-
-**Data:** User ID of user who came online
-
-**Usage:** Update presence indicator (green dot)
-
----
-
-#### 3. `client_disconnect`
-
-Notifies when another user goes offline.
-
-```json
-{
-  "event": "client_disconnect",
-  "data": 2
-}
-```
-
-**Data:** User ID of user who went offline
-
-**Usage:** Update presence indicator (gray dot)
-
----
-
-#### 4. `new_message`
-
-Incoming private message from another user.
-
-```json
-{
-  "event": "new_message",
-  "data": {
-    "senderId": 1,
-    "conversationId": 42,
-    "text": "Hey, how are you?",
-    "timestamp": "2026-06-20T10:30:00Z",
-    "isMine": false,
-    "isNewConversation": false
-  }
-}
-```
-
-**Data Fields:**
-| Field | Type | Description |
-|-------|------|-------------|
-| senderId | integer | User ID of message sender |
-| conversationId | integer | Conversation ID |
-| text | string | Message content |
-| timestamp | string | ISO timestamp |
-| isMine | boolean | False (always from others) |
-| isNewConversation | boolean | True if first message in conversation |
-
-**Usage:** Display new message, play notification sound
-
----
-
-#### 5. `new_post`
-
-Notification of new post created by another user.
-
-```json
-{
-  "event": "new_post",
-  "data": {
-    "postId": 42,
-    "title": "Amazing Discovery",
-    "author": "john_doe"
-  }
-}
-```
-
-**Usage:** Optional - show "new post" indicator in feed
-
----
-
-#### 6. `force_logout`
-
-Server forces logout of all tabs/devices (multi-tab sync).
-
-```json
-{
-  "event": "force_logout",
-  "data": {}
-}
-```
-
-**Causes:**
-- User logged out on another device
-- Admin action
-- Session invalidated
-
-**Usage:** Clear session, redirect to login page
-
----
-
-### Client-to-Server Events
-
-#### Send Message
-
-```json
-{
-  "type": "message",
-  "data": {
-    "recipientId": 2,
-    "text": "Hello!",
-    "conversationId": 42
-  }
-}
-```
-
-**Implementation:**
-```javascript
-function sendMessage(recipientId, text, conversationId) {
-  ws.send(JSON.stringify({
-    type: 'message',
-    data: {
-      recipientId,
-      text,
-      conversationId
-    }
-  }));
-}
-```
+See [websocket-events.md](./websocket-events.md) for detailed event schemas, examples, and implementation patterns.
 
 ---
 

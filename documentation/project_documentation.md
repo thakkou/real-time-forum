@@ -352,5 +352,6 @@ For detailed information on specific components:
   - [Comments](./api_doc/comments.md)
   - [Likes/Reactions](./api_doc/likes.md)
   - [Messaging](./api_doc/notification.md)
+  - [WebSocket Events](./api_doc/websocket-events.md)
   - [Profile](./api_doc/profile.md)
 

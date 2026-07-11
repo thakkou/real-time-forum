@@ -217,7 +217,7 @@ Deletes a comment (owner only).
 
 #### Endpoint
 ```http
-DELETE /api/comments/{id}
+DELETE /api/comments/{id}/delete
 ```
 
 #### URL Parameters
@@ -256,6 +256,18 @@ DELETE /api/comments/{id}
   "status_code": 403,
   "message": "Unauthorized"
 }
+```
+
+---
+
+## Resolver Pattern
+
+Comments use a flexible resolver pattern for actions:
+
+```http
+POST /api/comments/{id}/like      # Like comment
+POST /api/comments/{id}/dislike   # Dislike comment
+DELETE /api/comments/{id}/delete  # Delete comment
 ```
 
 ---

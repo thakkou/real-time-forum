@@ -169,13 +169,15 @@ Returns posts ordered by creation date (newest first).
 ### Endpoint
 
 ```http
-GET /api/posts/getPosts
+GET /api/posts
 ```
 
 ### Query Parameters
 
 | Parameter      | Type     | Required | Description                          |
 | -------------- | -------- | -------- | ------------------------------------ |
+| lastId         | integer  | No       | Pagination anchor (last post ID)     |
+| limit          | integer  | No       | Posts per page (default: 30)         |
 | categories     | string[] | No       | Filter by categories                 |
 | my-liked-posts | boolean  | No       | Return posts liked by current user   |
 | my-creat-posts | boolean  | No       | Return posts created by current user |
@@ -187,31 +189,37 @@ GET /api/posts/getPosts
 #### Get All Posts
 
 ```http
-GET /api/posts/getPosts
+GET /api/posts
+```
+
+#### Paginate with Limit
+
+```http
+GET /api/posts?limit=15&lastId=
 ```
 
 #### Filter By Categories
 
 ```http
-GET /api/posts/getPosts?categories=Education&categories=Lifestyle
+GET /api/posts?categories=Education&categories=Lifestyle
 ```
 
 #### Get My Posts
 
 ```http
-GET /api/posts/getPosts?my-creat-posts=true
+GET /api/posts?my-creat-posts=true
 ```
 
 #### Get Posts I Liked
 
 ```http
-GET /api/posts/getPosts?my-liked-posts=true
+GET /api/posts?my-liked-posts=true
 ```
 
-#### Combined Filters
+#### Combined with Pagination
 
 ```http
-GET /api/posts/getPosts?my-liked-posts=true&categories=Education
+GET /api/posts?limit=10&lastId=21&categories=Education
 ```
 
 ---
@@ -290,6 +298,91 @@ GET /api/posts/getPosts?my-liked-posts=true&categories=Education
 {
   "status_code": 500,
   "message": "failed to get posts"
+}
+```
+
+---
+
+## Get Single Post
+
+Returns a single post with its comments by ID.
+
+### Endpoint
+
+```http
+GET /api/posts/{id}
+```
+
+### URL Parameters
+
+| Parameter | Type    | Required | Description |
+| --------- | ------- | -------- | ----------- |
+| id        | integer | Yes      | Post ID     |
+
+### Success Response
+
+**Status:** `200 OK`
+
+```json
+{
+  "status_code": 200,
+  "message": "post fetched successfully",
+  "data": {
+    "Id": 2,
+    "UserId": 1,
+    "Nickname": "john_doe",
+    "Created_at": "2026-06-18T13:51:55.859009543+01:00",
+    "TimeAgo": "2 days ago",
+    "Title": "Go Best Practices",
+    "Text": "This is a comprehensive guide to Go best practices",
+    "LikeCount": 5,
+    "DislikeCount": 1,
+    "IsLiked": 1,
+    "Comments": [
+      {
+        "Id": 1,
+        "UserId": 2,
+        "Nickname": "jane_doe",
+        "Created_at": "2026-06-18T16:56:57.973285361+01:00",
+        "TimeAgo": "1 day ago",
+        "Text": "Great post, very informative!",
+        "LikeCount": 2,
+        "DislikeCount": 0,
+        "IsLiked": 0
+      }
+    ],
+    "Categories": ["Education", "Technology"],
+    "Image": ""
+  }
+}
+```
+
+### Error Responses
+
+#### Post Not Found
+
+```json
+{
+  "status_code": 404,
+  "message": "Post not found"
+}
+```
+
+#### Invalid Post ID
+
+```json
+{
+  "status_code": 400,
+  "message": "Invalid post ID"
+}
+```
+
+#### Internal Server Error
+
+```json
+{
+  "status_code": 500,
+  "message": "failed to get post"
 }
 ```
 
