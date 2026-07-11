@@ -19,7 +19,6 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		utilities.WriteJSON(w, http.StatusNotFound, "Page not found", nil)
 		return
 	}
-	fmt.Println("start creating comment")
 
 	if r.Method != http.MethodPost {
 		utilities.WriteJSON(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
@@ -44,7 +43,6 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 	postId := comment.PostId
 	text := comment.Text
-	fmt.Println("postId", postId, "texts", text)
 
 	if text == "" {
 		utilities.WriteJSON(w, http.StatusBadRequest, "Comment cannot be empty", nil)

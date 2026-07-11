@@ -11,6 +11,6 @@
 -if not autorize redirect the user to the login -----////----done
 -sanitize inputs in back end  ----///done--by adding a middlware
 -add the offset by last id comments //-done
--when no session i send the socket //done
+-when no session i send the socket ///-done
 -use replace instead of push in login,register //--in review
 

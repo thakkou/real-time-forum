@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"forum/database"
 	"forum/models"
 	"forum/utilities"
+	"forum/ws"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -110,6 +111,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		utilities.WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", nil)
 		return
 	}
+	ws.NotifyUser(strconv.Itoa(userID), "force_logout", nil)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
@@ -217,7 +219,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		!utilities.IsValidGender(user.Gender) ||
 		!utilities.IsValidEmail(user.Email) ||
 		!utilities.IsValidPassword(user.Password) {
-		fmt.Println(user)
 
 		utilities.WriteJSON(w, http.StatusBadRequest, "invalid input", RULES)
 		return

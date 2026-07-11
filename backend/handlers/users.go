@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -51,10 +50,8 @@ func GetUsersById(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUsernameByToken(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("")
 	// errors not checked !!!
 	cookie, _ := r.Cookie("session_id")
-	fmt.Println("=*=*=*=*=*=**=*=*=start get  auth=========")
 
 	var userId, nickname, lastSeen string
 
@@ -67,7 +64,6 @@ func GetUsernameByToken(w http.ResponseWriter, r *http.Request) {
 		"SELECT nickname,last_seen FROM users WHERE id = ?",
 		userId,
 	).Scan(&nickname, &lastSeen)
-	fmt.Println("=*=*=*=*=*=**=*=*=succes auth=========")
 	utilities.WriteJSON(w, 200, "success", map[string]any{
 		"authenticated": true,
 		"id":            userId,

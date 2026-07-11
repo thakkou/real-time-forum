@@ -53,8 +53,6 @@ type UserFeedItem struct {
 }
 
 func SendMessage(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("========== SEND MESSAGE START ==========")
-
 	// -------------------------
 	// Get sender from session
 	// -------------------------
@@ -117,12 +115,6 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		user1, user2 = user2, user1
 	}
 
-	fmt.Printf(
-		"[CONVERSATION] normalized pair=(%d,%d)\n",
-		user1,
-		user2,
-	)
-
 	// -------------------------
 	// Start transaction
 	// -------------------------
@@ -137,6 +129,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 
 	var conversationID int
 	isNewConversation := false
+
 	// -------------------------
 	// CASE 1:
 	// conversation_id provided
@@ -144,11 +137,6 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	if req.ConversationID != nil {
 
 		conversationID = *req.ConversationID
-
-		fmt.Printf(
-			"[CONVERSATION] validating conversation_id=%d\n",
-			conversationID,
-		)
 
 		var exists int
 
@@ -178,22 +166,12 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Printf(
-			"[CONVERSATION] validated id=%d\n",
-			exists,
-		)
-
 	} else {
 
 		// -------------------------
 		// CASE 2:
 		// Find or create conversation
 		// -------------------------
-		fmt.Printf(
-			"[CONVERSATION] searching (%d,%d)\n",
-			user1,
-			user2,
-		)
 
 		err := tx.QueryRow(`
 			SELECT id
@@ -206,12 +184,6 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		).Scan(&conversationID)
 
 		if err == sql.ErrNoRows {
-
-			fmt.Printf(
-				"[CONVERSATION] not found, creating (%d,%d)\n",
-				user1,
-				user2,
-			)
 
 			res, err := tx.Exec(`
 				INSERT INTO CONVERSATIONS (
@@ -288,11 +260,6 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	// -------------------------
 	// Insert message
 	// -------------------------
-	fmt.Printf(
-		"[MESSAGE] inserting conversation=%d sender=%d\n",
-		conversationID,
-		senderID,
-	)
 
 	result, err := tx.Exec(`
 		INSERT INTO MESSAGES (
@@ -323,18 +290,9 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 
 	messageID, _ := result.LastInsertId()
 
-	fmt.Printf(
-		"[MESSAGE] created id=%d\n",
-		messageID,
-	)
-
 	// -------------------------
 	// Update conversation preview
 	// -------------------------
-	fmt.Printf(
-		"[CONVERSATION] updating preview id=%d\n",
-		conversationID,
-	)
 
 	_, err = tx.Exec(`
 		UPDATE CONVERSATIONS
@@ -376,16 +334,6 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf(
-		"[SUCCESS] conversation=%d message=%d sender=%d receiver=%d\n",
-		conversationID,
-		messageID,
-		senderID,
-		req.ReceiverID,
-	)
-
-	fmt.Println("========== send the socket events ==========")
-
 	ws.NotifyUser(
 		strconv.Itoa(req.ReceiverID),
 		"new_message",
@@ -399,7 +347,6 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			"text":            req.Text,
 		},
 	)
-	fmt.Println("notify user sender")
 
 	ws.NotifyUser(
 		strconv.Itoa(senderID),
@@ -414,8 +361,6 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			"text":            req.Text,
 		},
 	)
-
-	fmt.Println("========== SEND MESSAGE END ==========")
 
 	utilities.WriteJSON(
 		w,
@@ -621,8 +566,6 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetConversationByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("========== GET CONVERSATION BY ID ==========")
-
 	// -------------------------
 	// AUTH
 	// -------------------------
@@ -663,8 +606,6 @@ func GetConversationByID(w http.ResponseWriter, r *http.Request) {
 	if limit > 50 {
 		limit = 50
 	}
-
-	fmt.Println("conversation:", conversationID, "offset:", offset, "limit:", limit)
 
 	// -------------------------
 	// VERIFY USER BELONGS TO CONVERSATION

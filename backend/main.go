@@ -22,7 +22,6 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 func maxBodySizeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		const maxSize = 0.25 * 1024 * 1024
-		fmt.Println("start pass from size middlware")
 		if r.ContentLength > maxSize {
 
 			utilities.WriteJSON(w, http.StatusRequestEntityTooLarge, "Request body too large", nil)

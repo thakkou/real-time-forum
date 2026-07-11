@@ -222,6 +222,10 @@ export const router = {
                 data.forEach(id => onlineUsers.add(id));
            
             });
+            ws.on("force_logout",(data)=>{
+                console.log("force logout")
+                this.navigate("/login")
+            })
 
             ws.on("client_connect", (userId) => {
                 console.log("user connected:", userId);

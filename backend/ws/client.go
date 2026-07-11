@@ -15,6 +15,7 @@ func HandleClient(client *Client) {
 		_, stillOnline := Clients[client.id]
 		mu.RUnlock()
 
+		fmt.Println("handling client")
 		if !stillOnline {
 			BroadcastExcept(client.id, "client_disconnect", client.id)
 		}

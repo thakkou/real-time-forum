@@ -2,7 +2,6 @@ package utilities
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -15,7 +14,6 @@ type Response struct {
 func WriteJSON(w http.ResponseWriter, statusCode int, message string, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	fmt.Println("status code", statusCode, "message", message)
 	json.NewEncoder(w).Encode(Response{
 		StatusCode: statusCode,
 		Message:    message,
