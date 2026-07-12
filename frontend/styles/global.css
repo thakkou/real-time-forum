@@ -544,6 +544,7 @@ textarea {
 .delete-block {
   display: flex;
   justify-content: space-between;
+  word-wrap: anywhere;
 }
 
 /* Categories inside post-header */
@@ -567,6 +568,11 @@ textarea {
   color: #c8c8c8;
   font-size: 0.9rem;
   line-height: 1.7;
+}
+
+.post-body > pre {
+  white-space: pre-wrap;       /* Preserves spaces/breaks but forces wrapping */
+  overflow-wrap: break-word;
 }
 
 .category {
