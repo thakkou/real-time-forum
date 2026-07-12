@@ -6,12 +6,17 @@ export const Post = (post, options = { withComments: false }) => `
 	<article class="post ${ options.withComments ? 'detailed-post' : '' }" data-post-id="${post.Id}">
 		<div class="post-header">
 			<div class="delete-block">
+		
 				<h3>${sanitize(post.Title)}</h3>
 
+				
 				${window.profile?.id == post.UserId ? `
+					<div id="delete-btn-container">
 					<button data-id="${post.Id}" class="delete-btn btn small danger" type="button">
 					<i class="fa-solid fa-trash" style="color: rgb(255, 255, 255);"></i>
 					</button>
+					</div>
+
 				` : ""}
 			</div>
 
