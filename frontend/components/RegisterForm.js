@@ -87,7 +87,7 @@ export const RegisterForm = () => (`
           name="password"
           required
           minlength="6"
-          maxlength="20"
+          maxlength="90"
           autocomplete="new-password"
         />
       </div>
@@ -98,7 +98,7 @@ export const RegisterForm = () => (`
           name="confirm_password"
           required
           minlength="6"
-          maxlength="20"
+          maxlength="90"
           autocomplete="new-password"
         />
       </div>

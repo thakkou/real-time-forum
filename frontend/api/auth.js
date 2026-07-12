@@ -1,3 +1,4 @@
+
 const serverURI = env.serverUri;
 
 export const login = async (credentials) => {
@@ -26,6 +27,7 @@ export const login = async (credentials) => {
 };
 
 export const register = async (userData) => {
+
     try {
         const response = await fetch(`${serverURI}/register`, {
             method: "POST",

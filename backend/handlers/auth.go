@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,12 +17,6 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-const RULES string = `
-. name (valid)  : 2 ~ 50  chars
-. age           : 1 <= x <= 99
-. email (valid) : 5 ~ 100 chars
-. password      : 6 ~ 20  chars`
 
 // Login
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -70,11 +65,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		userLog.Identifier,
 	).Scan(&userID, &nickname, &hashedPassword)
 	if err != nil {
+		log.Printf("[LOGIN] User not found: %q (%v)", userLog.Identifier, err)
+
 		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid email/username or password.", nil)
 		return
 	}
 
 	if !hashedPassword.Valid {
+		log.Printf("[LOGIN] User %q has no valid password hash", userLog.Identifier)
+
 		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid email/username or password.", nil)
 		return
 	}
@@ -83,6 +82,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		[]byte(hashedPassword.String),
 		[]byte(userLog.Password),
 	); err != nil {
+		log.Printf("[LOGIN] Invalid password for user %q password=%q", userLog.Identifier, userLog.Password)
 		utilities.WriteJSON(w, http.StatusUnauthorized, "Invalid email/username or password.", nil)
 		return
 	}
@@ -210,17 +210,41 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
+	fmt.Println("pass", user.Password, user.Password == user.ConfirmPassword)
 	// Validate fields
-	if !utilities.IsValidName(user.Nickname) ||
-		!utilities.IsValidName(user.FirstName) ||
-		!utilities.IsValidName(user.LastName) ||
-		!utilities.IsValidAge(user.Age) ||
-		!utilities.IsValidGender(user.Gender) ||
-		!utilities.IsValidEmail(user.Email) ||
-		!utilities.IsValidPassword(user.Password) {
+	// Validate fields one by one
+	if !utilities.IsValidName(user.Nickname) {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid nickname: use only letters (2-50 characters)", nil)
+		return
+	}
 
-		utilities.WriteJSON(w, http.StatusBadRequest, "invalid input", RULES)
+	if !utilities.IsValidName(user.FirstName) {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid first name: use only letters (2-50 characters)", nil)
+		return
+	}
+
+	if !utilities.IsValidName(user.LastName) {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid last name: use only letters (2-50 characters)", nil)
+		return
+	}
+
+	if !utilities.IsValidAge(user.Age) {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid age: must be between 1 and 99", nil)
+		return
+	}
+
+	if !utilities.IsValidGender(user.Gender) {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid gender: must be 'Male' or 'Female'", nil)
+		return
+	}
+
+	if !utilities.IsValidEmail(user.Email) {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid email: must be a valid email address", nil)
+		return
+	}
+
+	if !utilities.IsValidPassword(user.Password) {
+		utilities.WriteJSON(w, http.StatusBadRequest, "invalid password: must be 6-25 characters", nil)
 		return
 	}
 
