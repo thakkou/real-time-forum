@@ -23,7 +23,7 @@ func IsValidEmail(email string) bool {
 
 // IsValidPassword
 func IsValidPassword(password string) bool {
-	return len(password) >= 6 && len(password) <= 20
+	return len(password) >= 6 && len(password) <= 25
 }
 
 func IsValidAge(age any) bool {

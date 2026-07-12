@@ -5,6 +5,7 @@ import { onlineUsers } from "../services/websocket.js";
 import { Conversation } from "../components/Conversation.js";
 import { ws } from '../services/websocket.js';
 import { sanitize } from './helpers.js';
+import { showToast } from '../services/toast.js';
 
 /* =========================
    STATE MANAGEMENT
@@ -294,6 +295,8 @@ export const reRender = (type, userId) => {
       targetUserItem.classList.add("is-offline-user");
       targetUserItem.classList.remove("is-online-user");
     }
+  }else{
+showToast("refresh to talk to them","succes","welcom new user")
   }
 
   updateOnlineCountText();
