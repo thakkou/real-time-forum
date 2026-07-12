@@ -30,10 +30,8 @@ let cachedCreateSubmitHandler = null;
 let cachedFilterSubmitHandler = null;
 
 export function cleanup() {
-  console.log("Cleaning up old feed event listeners...");
 
   if (cachedScrollHandler) {
-    console.log(cachedScrollHandler)
     window.removeEventListener("scroll", cachedScrollHandler);
   }
   if (cachedClickHandler) {
@@ -99,7 +97,6 @@ async function fetchPosts() {
   const isCreatedByMe = params.get("my-creat-postes") === "true";
 
   try {
-    console.log("getPosts",state.lastId)
     const res = await getPosts({
       lastId: state.lastId, // Pass lastId instead of offset
       limit: state.limite,
@@ -112,14 +109,13 @@ async function fetchPosts() {
 
     if (posts?.length) {
       state.posts.push(...posts);
-      console.log(posts)
       // The oldest post in this freshly fetched batch becomes our new anchor point
       state.lastId = posts[posts.length - 1].Id; 
       
       renderPosts(posts);
     }
   } catch (err) {
-    console.error("Failed to load posts:", err);
+    console.log("Failed to load posts:", err);
   } finally {
     state.loading = false;
   }
@@ -130,7 +126,7 @@ async function handleAction(postId, type) {
   try {
     return await PostResolver({ id: postId, type });
   } catch (err) {
-    console.error(err);
+    console.log(err);
   }
 }
 
@@ -179,7 +175,7 @@ async function handleCreatePost(form) {
 
     form.reset();
   } catch (err) {
-    console.error("Create post failed:", err.message);
+    console.log("Create post failed:", err.message);
     showToast(err.message || "Failed to create post", "error");
   }
 }
@@ -323,7 +319,6 @@ function setupEvents() {
 ====================== */
 
 export function updatePostUI(postId, action, data) {
-  console.log("start update the post UI", postId, action, data);
 
   const post = document.querySelector(`.post[data-post-id="${postId}"]`);
   if (!post) return;

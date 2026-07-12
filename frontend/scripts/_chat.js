@@ -56,7 +56,7 @@ export async function setup() {
   cacheDom();
 
   if (!dom.usersList) {
-    console.error("Chat DOM not found — page not rendered yet");
+    console.log("Chat DOM not found — page not rendered yet");
     return;
   }
 
@@ -77,7 +77,7 @@ if (state.conversations.length > 0) {
       showEmptyState();
     }
   } catch (err) {
-    console.error("Failed to initialize conversation list:", err);
+    console.log("Failed to initialize conversation list:", err);
     showEmptyState();
   }
 }
@@ -388,7 +388,7 @@ async function loadInitialMessages(receiverId) {
     // Only increment once
     state.offset += messages.length;
   } catch (err) {
-    console.error("Error loading chat history:", err);
+    console.log("Error loading chat history:", err);
   }
 }
 
@@ -403,7 +403,6 @@ function renderMessages(messages, receiverId) {
 }
 
 function appendMessage(m, mine = false, prepend = false) {
-console.log(m.text)
   const group = document.createElement("div");
   group.className = `message-group ${mine ? "mine" : "theirs"}`;
   group.innerHTML = `
@@ -494,7 +493,7 @@ async function loadMoreMessages() {
         dom.chatMessages.scrollHeight - previousScrollHeight;
     }
   } catch (err) {
-    console.error("Failed loading historical messages:", err);
+    console.log("Failed loading historical messages:", err);
   } finally {
     state.isLoadingOlder = false;
   }
@@ -543,7 +542,7 @@ async function sendMessage() {
       state.currentConversationId = res.data.conversation_id;
     }
   } catch (err) { 
-    console.error("send failed", err); 
+    console.log("send failed", err); 
   }
 }
 
@@ -578,14 +577,12 @@ export const updateTheConv = (data, isNew) => {
 
 export const reRenderMessages = (data) => {
   const { conversation_id, text, created_at, isNewConversation } = data;
-  console.log(data);
 
   if (!dom.chatMessages) return;
 
   const incomingSenderId = data.sender_id;
   const isMine = Boolean(data.isMine);
 
-  console.log("incoming", incomingSenderId, state.currentReceiverId);
 
   if (isNewConversation && !state.currentConversationId) {
     // For a brand new conversation, assign the conversation ID when the
@@ -601,7 +598,6 @@ export const reRenderMessages = (data) => {
       setPartnerTyping(false);
     }
 
-    console.log("new conv messages");
 
     const incomingMsg = {
       sender_id: incomingSenderId,
@@ -611,8 +607,6 @@ export const reRenderMessages = (data) => {
 
     appendMessage(incomingMsg, isMine);
     state.offset++;
-  } else {
-    console.log("not new", state.currentConversationId, conversation_id);
   }
 };
 

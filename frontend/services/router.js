@@ -57,7 +57,6 @@ export const routes = { // turn it to map !
 // . register form in RegisterForm
 
 async function guard(path, pushToHistory = true) {
-    console.log("qguards",path)
     const matched = matchRoute(path);
 
     if (!matched) {
@@ -88,7 +87,6 @@ async function guard(path, pushToHistory = true) {
         // Regular forward navigation
         history.pushState({}, "", targetPath);
     }
-console.log(me)
     return me.nickname;
 }
 async function handleLogout() {
@@ -97,7 +95,7 @@ async function handleLogout() {
     localStorage.clear();
     window.location.href = "/login";
   } catch (err) {
-    console.error("Logout failed:", err);
+    console.log("Logout failed:", err);
   }
 }
 
@@ -162,7 +160,6 @@ export const router = {
     await this.render({ nickname });
 
     const scriptName = extractPath(location.pathname);
-    console.log("start navigate to ", scriptName, "from path", location.pathname);
     await loadPageScript(scriptName);
 },
 
@@ -210,12 +207,7 @@ export const router = {
         setupHeader(nickname);
 
         if (nickname) {
-            console.log("user connect and set the header ")
             ws.connect();
-
-            //
-        }else{
-            console.log("not")
         }
 
         // the page is fully rendered first, then the specific scripts are loded after !

@@ -10,14 +10,15 @@ export function setup() {
 	const btn = document.getElementById("login-btn");
 	if (!form) return;
 	// Fill credentials for test users
-	const testButtons = document.querySelectorAll(".test-user-btn");
-testButtons.forEach((btn) => {
-	btn.addEventListener("click", () => {
-		form.identifier.value = btn.dataset.user;
-		form.password.value = "password123";
-		form.identifier.focus();
-	});
-});
+
+// 	const testButtons = document.querySelectorAll(".test-user-btn");
+// testButtons.forEach((btn) => {
+// 	btn.addEventListener("click", () => {
+// 		form.identifier.value = btn.dataset.user;
+// 		form.password.value = "password123";
+// 		form.identifier.focus();
+// 	});
+// });
 
 	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
@@ -31,7 +32,6 @@ testButtons.forEach((btn) => {
 		try {
 			const resp = await login({ identifier, password });
 
-			console.log("login successful");
 			showToast('Login successful!', 'success');
 			// Replace the login entry in history so back button doesn't return to login
 			history.replaceState({}, "", "/");

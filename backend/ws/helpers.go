@@ -2,7 +2,6 @@ package ws
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"sync"
 
@@ -111,7 +110,7 @@ func StoreClient(userID string, conn *websocket.Conn) *Client {
 		conn: conn,
 		id:   userID,
 	}
-	fmt.Println("store client ", userID)
+	// fmt.Println("store client ", userID)
 	mu.Lock()
 
 	if Clients[userID] == nil {
@@ -134,28 +133,28 @@ func StoreClient(userID string, conn *websocket.Conn) *Client {
 }
 
 func HandleMessage(client *Client, raw []byte) {
-	fmt.Println(string(raw))
+	// fmt.Println(string(raw))
 
 	var msg WSMessage
 	if err := json.Unmarshal(raw, &msg); err != nil {
-		fmt.Println(err)
+		// fmt.Println(err)
 		return
 	}
 
-	fmt.Printf("Type: %s\n", msg.Type)
-	fmt.Printf("Data: %s\n", string(msg.Data))
+	// fmt.Printf("Type: %s\n", msg.Type)
+	// fmt.Printf("Data: %s\n", string(msg.Data))
 
 	switch msg.Type {
 	case "new_posts": // for all users exepts u
-		fmt.Println("new posts_notification")
+		// fmt.Println("new posts_notification")
 	case "like_posts": // for u
-		fmt.Println("user a liked ur posts")
+		// fmt.Println("user a liked ur posts")
 	case "new_comments": // for u
-		fmt.Println("new comments_notification")
+		// fmt.Println("new comments_notification")
 	case "like_commnets": // for u
-		fmt.Println("user a liked ur comments")
+		// fmt.Println("user a liked ur comments")
 	case "send_message": // for u
-		fmt.Println("message sent to user a")
+		// fmt.Println("message sent to user a")
 	case "typing:start":
 		var data TypingData
 
@@ -185,6 +184,6 @@ func HandleMessage(client *Client, raw []byte) {
 
 		NotifyUser(strconv.Itoa(data.ReceiverID), "typing:stop", data)
 	default:
-		fmt.Println("unknown event:", msg.Type)
+		// fmt.Println("unknown event:", msg.Type)
 	}
 }

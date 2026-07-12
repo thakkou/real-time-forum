@@ -21,7 +21,7 @@ export const login = async (credentials) => {
 		}
 		return data;
 	} catch (error) {
-		console.error("Login error:", error);
+		console.log("Login error:", error);
 		throw error;
 	}
 };
@@ -44,7 +44,7 @@ export const register = async (userData) => {
         }
         return data;
     } catch (error) {
-        console.error("Register error:", error);
+        console.log("Register error:", error);
         throw error;
     }
 };
@@ -64,7 +64,7 @@ export const logout = async () => {
 
     return data;
   } catch (error) {
-    console.error("Logout error:", error);
+    console.log("Logout error:", error);
     throw error;
   }
 };

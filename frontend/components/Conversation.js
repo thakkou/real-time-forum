@@ -1,7 +1,6 @@
 import { formatTime, formatDate, sanitize } from '../scripts/helpers.js';
 
 export const Conversation = (item) => {
-    console.log(item)
     const u = item.profile;
     const c = item.conversation;
 

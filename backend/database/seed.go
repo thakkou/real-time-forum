@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	"golang.org/x/crypto/bcrypt"
@@ -54,7 +53,7 @@ func RefreshAndSeed(db *sql.DB) error {
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 	if err != nil {
-		fmt.Println("err users")
+		// fmt.Println("err users")
 		return err
 	}
 
@@ -136,7 +135,7 @@ VALUES
 (20, datetime('now'), 'Learning', 'Today I practiced SQL joins.', NULL)
 `)
 	if err != nil {
-		fmt.Println("err posts")
+		// fmt.Println("err posts")
 
 		return err
 	}

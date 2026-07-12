@@ -3,7 +3,6 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -59,19 +58,19 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	// -------------------------
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		fmt.Println("[AUTH] missing session cookie")
+		// fmt.Println("[AUTH] missing session cookie")
 		utilities.WriteJSON(w, 401, "unauthorized", nil)
 		return
 	}
 
 	senderID, err := utilities.GetUserIDFromCookie(cookie.Value)
 	if err != nil {
-		fmt.Println("[AUTH] invalid session:", err)
+		// fmt.Println("[AUTH] invalid session:", err)
 		utilities.WriteJSON(w, 401, "unauthorized", nil)
 		return
 	}
 
-	fmt.Printf("[AUTH] sender=%d\n", senderID)
+	// fmt.Printf("[AUTH] sender=%d\n", senderID)
 
 	// -------------------------
 	// Decode request
@@ -79,30 +78,23 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	var req SendMessageRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		fmt.Println("[REQUEST] decode error:", err)
+		// fmt.Println("[REQUEST] decode error:", err)
 		utilities.WriteJSON(w, 400, "invalid request body", nil)
 		return
 	}
 	req.Text = strings.TrimSpace(req.Text)
 
-	fmt.Printf(
-		"[REQUEST] receiver=%d text=%q conversation_id=%v\n",
-		req.ReceiverID,
-		req.Text,
-		req.ConversationID,
-	)
-
 	// -------------------------
 	// Validate
 	// -------------------------
 	if req.ReceiverID == 0 || req.Text == "" {
-		fmt.Println("[VALIDATION] missing fields")
+		// fmt.Println("[VALIDATION] missing fields")
 		utilities.WriteJSON(w, 400, "missing fields", nil)
 		return
 	}
 
 	if senderID == req.ReceiverID {
-		fmt.Println("[VALIDATION] user tried to message himself")
+		// fmt.Println("[VALIDATION] user tried to message himself")
 		utilities.WriteJSON(w, 400, "cannot send message to yourself", nil)
 		return
 	}
@@ -122,7 +114,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	// -------------------------
 	tx, err := database.Database.Begin()
 	if err != nil {
-		fmt.Println("[DB] begin transaction error:", err)
+		// fmt.Println("[DB] begin transaction error:", err)
 		utilities.WriteJSON(w, 500, "db error", nil)
 		return
 	}
@@ -150,7 +142,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 			user2,
 		).Scan(&exists)
 		if err != nil {
-			fmt.Println("[CONVERSATION] invalid conversation:", err)
+			// fmt.Println("[CONVERSATION] invalid conversation:", err)
 			utilities.WriteJSON(w, http.StatusNotFound, "conversation not found", nil)
 			return
 		}
@@ -179,29 +171,29 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 				user2,
 			)
 			if err != nil {
-				fmt.Println("[CONVERSATION] create error:", err)
+				// fmt.Println("[CONVERSATION] create error:", err)
 				utilities.WriteJSON(w, 500, "failed to create conversation", nil)
 				return
 			}
 
 			id, err := res.LastInsertId()
 			if err != nil {
-				fmt.Println("[CONVERSATION] last insert id error:", err)
+				// fmt.Println("[CONVERSATION] last insert id error:", err)
 				utilities.WriteJSON(w, 500, "failed to create conversation", nil)
 				return
 			}
 
 			conversationID = int(id)
 			isNewConversation = true
-			fmt.Printf("[CONVERSATION] created id=%d\n", conversationID)
+			// fmt.Printf("[CONVERSATION] created id=%d\n", conversationID)
 
 		case err != nil:
-			fmt.Println("[CONVERSATION] lookup error:", err)
+			// fmt.Println("[CONVERSATION] lookup error:", err)
 			utilities.WriteJSON(w, 500, "db error", nil)
 			return
 
 		default:
-			fmt.Printf("[CONVERSATION] found id=%d\n", conversationID)
+			// fmt.Printf("[CONVERSATION] found id=%d\n", conversationID)
 		}
 	}
 
@@ -217,7 +209,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		req.Text,
 	)
 	if err != nil {
-		fmt.Println("[MESSAGE] insert error:", err)
+		// fmt.Println("[MESSAGE] insert error:", err)
 		utilities.WriteJSON(w, 500, "failed to send message", nil)
 		return
 	}
@@ -236,7 +228,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		conversationID,
 	)
 	if err != nil {
-		fmt.Println("[CONVERSATION] update preview error:", err)
+		// fmt.Println("[CONVERSATION] update preview error:", err)
 		utilities.WriteJSON(w, 500, "failed to update conversation", nil)
 		return
 	}
@@ -252,7 +244,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		WHERE id = ?
 	`, senderID).Scan(&nickname)
 	if err != nil {
-		fmt.Println("[USER] failed to get nickname:", err)
+		// fmt.Println("[USER] failed to get nickname:", err)
 		if err == sql.ErrNoRows {
 			utilities.WriteJSON(w, 404, "user not found", nil)
 		} else {
@@ -265,7 +257,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	// Commit
 	// -------------------------
 	if err := tx.Commit(); err != nil {
-		fmt.Println("[DB] commit error:", err)
+		// fmt.Println("[DB] commit error:", err)
 		utilities.WriteJSON(w, 500, "commit failed", nil)
 		return
 	}
@@ -317,7 +309,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 // get all users to show in the UI the first 30 and add throttle to add more 30 by 30   (?offset=10&limit=10)
 // rule of sorting 1 for last conversation then alphabitique
 func GetConversation(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("start get users")
+	// fmt.Println("start get users")
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {

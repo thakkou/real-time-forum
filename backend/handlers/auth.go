@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -210,7 +209,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fmt.Println("pass", user.Password, user.Password == user.ConfirmPassword)
 	// Validate fields
 	// Validate fields one by one
 	if !utilities.IsValidName(user.Nickname) {

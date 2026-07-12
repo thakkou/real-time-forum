@@ -26,7 +26,7 @@ class WSService {
         };
 
         this.socket.onerror = (err) => {
-            console.error(err);
+            console.log(err);
         };
 
         this.socket.onmessage = (event) => {
@@ -76,24 +76,20 @@ class WSService {
 export const ws = new WSService();
 
 ws.on("init", (data) => {
-                console.log("init users:", data);
                 data.forEach(id => onlineUsers.add(id));
             });
 
 
             ws.on("force_logout",(data)=>{
-                console.log("force logout")
                 this.navigate("/login")
             })
 
             ws.on("client_connect", (userId) => {
-                console.log("user connected:", userId);
                 onlineUsers.add(userId);
                 reRender("connect",userId)
             });
 
             ws.on("client_disconnect", (userId) => {
-                console.log("user disconnected:", userId);
                 onlineUsers.delete(userId);
     reRender("disconnect",userId)
             });
@@ -111,14 +107,12 @@ ws.on("init", (data) => {
                 
 
                  if(!isMe){
-                    console.log(data)
 
               showToast(data.text, "success",data.nickname);
 
              reRenderMessages(data,false)
 
                  }else{
-                    console.log("append him ")
 
                     reRenderMessages(data,true)
                  }
@@ -127,7 +121,6 @@ ws.on("init", (data) => {
  });
 
           ws.on("typing:start", (data) => {
-  console.log("someone is start typing:", data);
 
   handleIncomingTypingEvent({
     ...data,
@@ -136,7 +129,6 @@ ws.on("init", (data) => {
 });
 
 ws.on("typing:stop", (data) => {
-  console.log("someone is stop typing:", data);
 
   handleIncomingTypingEvent({
     ...data,

@@ -29,6 +29,15 @@ export const LoginForm = () => (`
 
     <!-- here u can add the social oauth on comment  -->
  
+
+    <div class="link-row">No account? <a onclick="navigate('/register')"> Register</a></div>
+  </div>
+`);
+
+
+
+/*test users
+
     <div class="test-users">
   <p>Test Users</p>
   <div class="test-user-buttons">
@@ -47,13 +56,9 @@ export const LoginForm = () => (`
   </div>
 </div>
 
-    <div class="link-row">No account? <a onclick="navigate('/register')"> Register</a></div>
-  </div>
-`);
 
 
-
-
+*/
 
 /*
 

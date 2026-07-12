@@ -7,7 +7,6 @@ export const isAuthenticated = async () => {
       },
     });
 
-    console.log("send me ")
     const resp = await response.json();
 
     if (!response.ok || resp.status_code === 401) {
@@ -30,7 +29,7 @@ export const isAuthenticated = async () => {
     };
   } catch (err) {
 
-    console.error(err);
+    console.log(err);
 
     window.profile = null;
 

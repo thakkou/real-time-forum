@@ -101,7 +101,6 @@ export const CreatePost = async ({ data }) => {
 };
 
 export const PostResolver = async ({ id, type }) => {
-  console.log("call api to", type, "for", id);
   const method = type === "delete" ? "DELETE" : "POST";
 
   const response = await fetch(

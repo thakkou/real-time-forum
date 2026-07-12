@@ -67,7 +67,6 @@ function cacheUI() {
 }
 
 export function cleanup() {
-  console.log("Cleaning up old post event listeners...");
 
   if (cachedClickHandler) {
     document.removeEventListener("click", cachedClickHandler);
@@ -83,12 +82,11 @@ export function cleanup() {
 
 export async function setup() {
   cleanup()
-  console.log("setup post id")
   try {
     setupEventListeners();
     await setupPostPage(); 
   } catch (err) {
-    console.error("Failed to load page:", err.message);
+    console.log("Failed to load page:", err.message);
   }
 }
 
@@ -126,7 +124,7 @@ async function setupPostPage() {
   try {
     await loadPostPage(postId, false);
   } catch (err) {
-    console.error("Failed to synchronize layout view:", err);
+    console.log("Failed to synchronize layout view:", err);
     wrapper.innerHTML = PostNotFound();
   }
 }
@@ -219,7 +217,7 @@ async function loadMoreComments() {
   try {
     await loadPostPage(state.postId, true);
   } catch (err) {
-    console.error("Failed to load more comments:", err);
+    console.log("Failed to load more comments:", err);
   } finally {
     state.isLoadingComments = false;
     if (ui.loadMoreBtn) {
@@ -253,7 +251,7 @@ function setupEventListeners() {
            updatePostUI(id, type, data.data);
         }
       } catch (err) {
-        console.error(err);
+        console.log(err);
         showToast(err.message || "Action failed", "error");
       }
       return;
@@ -267,7 +265,7 @@ function setupEventListeners() {
         const data = await CommentResolver({ id, type });
         updateCommentUI(id, type, data.data); 
       } catch (err) {
-        console.error(err);
+        console.log(err);
         showToast(err.message || "Action failed", "error");
       }
       return;
@@ -288,7 +286,7 @@ function setupEventListeners() {
       try {
         await CommentResolver({ id, type: "delete" });
       } catch (err) {
-        console.error("Server failed to delete comment:", err);
+        console.log("Server failed to delete comment:", err);
         showToast(err.message || "Could not remove comment from server. Reloading feed...", "error");
         await setupPostPage(); 
       }
@@ -314,7 +312,7 @@ function setupEventListeners() {
           router.navigate("/");
         }
       } catch (err) {
-        console.error("Server failed to delete post:", err);
+        console.log("Server failed to delete post:", err);
         showToast(err.message || "Failed to delete post from database. Reloading...", "error");
         await setupPostPage(); 
       }
@@ -349,7 +347,7 @@ function setupEventListeners() {
         await setupPostPage(); 
       }
     } catch (err) {
-      console.error("Comment creation failed:", err);
+      console.log("Comment creation failed:", err);
       showToast(err.message || "Failed to post comment. Please try again.", "error");
       await setupPostPage(); 
     }
@@ -397,7 +395,6 @@ const updateCommentUI = (id, type, data) => {
   const comment = document.querySelector(`.comment[data-id="${id}"]`) 
     || document.querySelector(`.comment[data-comment-id="${id}"]`);
 
-    console.log("update coment ui",data)
   if (!comment) return;
 
   // Delete case
@@ -405,23 +402,19 @@ const updateCommentUI = (id, type, data) => {
     comment.remove();
     return;
   }
-  console.log(comment)
 
   const likeBtn = comment.querySelector(".comment-like-btn");
   const dislikeBtn = comment.querySelector(".comment-dislike-btn");
 
   const likeCount = comment.querySelector(".comment-like-count");
   const dislikeCount = comment.querySelector(".comment-dislike-count");
-console.log(likeCount)
-console.log(dislikeCount)
+
   // Update counters
   if (likeCount) {
-    console.log("likes",data.likes)
     likeCount.textContent = data.likes;
   }
 
   if (dislikeCount) {
-        console.log("dislikes",data.dislikes)
 
     dislikeCount.textContent = data.dislikes;
   }

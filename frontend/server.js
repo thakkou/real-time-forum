@@ -86,7 +86,6 @@ const server = http.createServer((req, res) => { // async
         });
 
     } catch (err) {
-        console.error(err);
 
         if (err.code === 'ENOENT') {
             res.writeHead(404, { 'Content-Type': 'text/plain' });

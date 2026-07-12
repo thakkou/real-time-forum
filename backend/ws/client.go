@@ -1,9 +1,5 @@
 package ws
 
-import (
-	"fmt"
-)
-
 func HandleClient(client *Client) {
 	defer func() {
 		// 1. Use your existing RemoveClient function instead of deleting the whole user map
@@ -15,7 +11,7 @@ func HandleClient(client *Client) {
 		_, stillOnline := Clients[client.id]
 		mu.RUnlock()
 
-		fmt.Println("handling client")
+		// fmt.Println("handling client")
 		if !stillOnline {
 			BroadcastExcept(client.id, "client_disconnect", client.id)
 		}
@@ -24,7 +20,7 @@ func HandleClient(client *Client) {
 	for {
 		_, msg, err := client.conn.ReadMessage()
 		if err != nil {
-			fmt.Println("client disconnected:", client.id)
+			// fmt.Println("client disconnected:", client.id)
 			return
 		}
 

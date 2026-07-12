@@ -90,7 +90,6 @@ export function setup() {
                 confirm_password,
             });
 
-            console.log("registration successful");
             showToast('Registration successful!', 'success');
             // Replace the register entry in history so back button doesn't return to register
             history.replaceState({}, "", "/login");
