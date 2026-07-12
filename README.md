@@ -1,24 +1,24 @@
-# Documentation Index
+# real-time-forum
 
 Welcome to the Real-Time Forum Documentation! This is your comprehensive guide to understanding and working with the project.
 
 ## Quick Navigation
 
 ### 📚 For Everyone
-- **[Project Documentation](./project_documentation.md)** - Start here! Overview of features, tech stack, and getting started
+- **[Project Documentation](./documentation/project_documentation.md)** - Start here! Overview of features, tech stack, and getting started
 
 ### 🏗️ For Developers
-- **[Architecture Documentation](./archi_doc.md)** - System design, component breakdown, data flow, WebSocket communication
-- **[Database Schema](./db.md)** - Complete database design, tables, relationships, and query patterns
+- **[Architecture Documentation](./documentation/archi_doc.md)** - System design, component breakdown, data flow, WebSocket communication
+- **[Database Schema](./documentation/db.md)** - Complete database design, tables, relationships, and query patterns
 
 ### 🔌 For API Integration
-- **[Authentication](./api_doc/authentification.md)** - Login, register, sessions, and security
-- **[Posts API](./api_doc/posts.md)** - Create, retrieve, filter, and manage posts
-- **[Comments API](./api_doc/comments.md)** - Comment operations and reactions
-- **[Likes & Reactions](./api_doc/likes.md)** - Like/dislike system for posts and comments
-- **[Real-Time Messaging](./api_doc/notification.md)** - WebSocket events, messaging, conversations
-- **[User Profiles](./api_doc/profile.md)** - User information and presence tracking
-- **[Admin API](./api_doc/admin.md)** - Admin operations (future)
+- **[Authentication](./documentation/api_doc/authentification.md)** - Login, register, sessions, and security
+- **[Posts API](./documentation/api_doc/posts.md)** - Create, retrieve, filter, and manage posts
+- **[Comments API](./documentation/api_doc/comments.md)** - Comment operations and reactions
+- **[Likes & Reactions](./documentation/api_doc/likes.md)** - Like/dislike system for posts and comments
+- **[Real-Time Messaging](./documentation/api_doc/notification.md)** - WebSocket events, messaging, conversations
+- **[User Profiles](./documentation/api_doc/profile.md)** - User information and presence tracking
+- **[Admin API](./documentation/api_doc/admin.md)** - Admin operations (future)
 
 ---
 
@@ -46,14 +46,14 @@ documentation/
 ## Getting Started
 
 ### 1. **New to the Project?**
-   → Read [project_documentation.md](./project_documentation.md)
+   → Read [project_documentation.md](./documentation/project_documentation.md)
    - Features overview
    - Technology stack
    - System architecture at high level
    - Getting started guide
 
 ### 2. **Want to Understand the Architecture?**
-   → Read [archi_doc.md](./archi_doc.md)
+   → Read [archi_doc.md](./documentation/archi_doc.md)
    - Frontend/backend layer breakdown
    - Component interactions
    - Data flow diagrams
@@ -61,14 +61,14 @@ documentation/
    - Performance optimizations
 
 ### 3. **Need Database Information?**
-   → Read [db.md](./db.md)
+   → Read [db.md](./documentation/db.md)
    - All tables and relationships
    - Schema diagrams
    - Query patterns
    - Data integrity rules
 
 ### 4. **Building API Integration?**
-   → Browse [api_doc/](./api_doc/)
+   → Browse [api_doc/](./documentation/api_doc/)
    - Each endpoint documented separately
    - Request/response examples
    - Error handling
@@ -79,36 +79,36 @@ documentation/
 ## Key Sections by Topic
 
 ### 🔐 Authentication & Security
-- **Where:** [archi_doc.md > Security Architecture](./archi_doc.md#security-architecture)
-- **Where:** [authentification.md](./api_doc/authentification.md)
+- **Where:** [archi_doc.md > Security Architecture](./documentation/archi_doc.md#security-architecture)
+- **Where:** [authentification.md](./documentation/api_doc/authentification.md)
 - **Topics:** Session management, password hashing, middleware validation
 
 ### 📝 Posts & Content
-- **Where:** [api_doc/posts.md](./api_doc/posts.md)
-- **Where:** [db.md > POST_CATEGORY](./db.md#5-post_category)
+- **Where:** [api_doc/posts.md](./documentation/api_doc/posts.md)
+- **Where:** [db.md > POST_CATEGORY](./documentation/db.md#5-post_category)
 - **Topics:** Creating, filtering, categorization
 
 ### 💬 Comments & Reactions
-- **Where:** [api_doc/comments.md](./api_doc/comments.md)
-- **Where:** [api_doc/likes.md](./api_doc/likes.md)
-- **Where:** [db.md > COMMENT_REACTIONS](./db.md#8-comment_reactions)
+- **Where:** [api_doc/comments.md](./documentation/api_doc/comments.md)
+- **Where:** [api_doc/likes.md](./documentation/api_doc/likes.md)
+- **Where:** [db.md > COMMENT_REACTIONS](./documentation/db.md#8-comment_reactions)
 
 ### 💬 Messaging & Real-Time
-- **Where:** [api_doc/notification.md](./api_doc/notification.md)
-- **Where:** [archi_doc.md > WebSocket Communication](./archi_doc.md#websocket-communication)
-- **Where:** [db.md > CONVERSATIONS & MESSAGES](./db.md)
+- **Where:** [api_doc/notification.md](./documentation/api_doc/notification.md)
+- **Where:** [archi_doc.md > WebSocket Communication](./documentation/archi_doc.md#websocket-communication)
+- **Where:** [db.md > CONVERSATIONS & MESSAGES](./documentation/db.md)
 
 ### 👤 Users & Profiles
-- **Where:** [api_doc/profile.md](./api_doc/profile.md)
-- **Where:** [db.md > USERS](./db.md#1-users)
+- **Where:** [api_doc/profile.md](./documentation/api_doc/profile.md)
+- **Where:** [db.md > USERS](./documentation/db.md#1-users)
 
 ### 🏗️ Frontend Components
-- **Where:** [archi_doc.md > Frontend Architecture](./archi_doc.md#frontend-architecture-layers)
+- **Where:** [archi_doc.md > Frontend Architecture](./documentation/archi_doc.md#frontend-architecture-layers)
 - **Pages:** Feed, Post detail, Chat, Auth
 - **Components:** Post, Comment, Message, Header
 
 ### 🗄️ Backend Handlers
-- **Where:** [archi_doc.md > Backend Architecture](./archi_doc.md#backend-architecture-layers)
+- **Where:** [archi_doc.md > Backend Architecture](./documentation/archi_doc.md#backend-architecture-layers)
 - **Handlers:** Auth, Posts, Comments, Messages, WebSocket
 
 ---
@@ -281,15 +281,15 @@ docker-compose up -d
 
 ### Common Issues
 See specific API docs for error handling:
-- Auth errors → [authentification.md](./api_doc/authentification.md)
-- Post errors → [posts.md](./api_doc/posts.md)
-- WebSocket errors → [notification.md](./api_doc/notification.md)
+- Auth errors → [authentification.md](./documentation/api_doc/authentification.md)
+- Post errors → [posts.md](./documentation/api_doc/posts.md)
+- WebSocket errors → [notification.md](./documentation/api_doc/notification.md)
 
 ### Performance Tips
-See [archi_doc.md > Performance Optimizations](./archi_doc.md#performance-optimizations)
+See [archi_doc.md > Performance Optimizations](./documentation/archi_doc.md#performance-optimizations)
 
 ### Security Concerns
-See [archi_doc.md > Security Architecture](./archi_doc.md#security-architecture)
+See [archi_doc.md > Security Architecture](./documentation/archi_doc.md#security-architecture)
 
 ---
 
@@ -324,3 +324,7 @@ For questions about:
 **Documentation Version:** 2.0
 **Project Version:** Latest
 
+## Authors
+
+- [herrabba](https://github.com/hamzaerrhh)
+- [thakkou](https://github.com/thakkou)
